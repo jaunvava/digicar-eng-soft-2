@@ -1,0 +1,282 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{% block title %}DigiCAR{% endblock %} | {% if empresa %}{{ empresa.nome }}{% else %}DigiCAR{% endif %}</title>
+  <meta name="description" content="DigiCAR — Sistema de Ordens de Serviço">
+  <link rel="icon" type="image/x-icon" href="{% static 'img/favicon.ico' %}">
+  <link rel="apple-touch-icon" href="{% static 'img/logo.png' %}">
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <!-- SweetAlert2 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.6/dist/sweetalert2.min.css" rel="stylesheet">
+  <!-- App CSS -->
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+<div class="app-wrapper">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="sidebar" id="sidebar">
+    <!-- Brand -->
+    <a class="sidebar-brand" href="{% url 'core:dashboard' %}">
+      <span class="brand-text">DigiCAR</span>
+    </a>
+
+    <!-- Navigation -->
+    <nav class="sidebar-nav" id="sidebarNav">
+
+      <div class="sidebar-section-title">Menu Principal</div>
+
+      <!-- Dashboard -->
+      <div class="nav-item-sidebar">
+        <a href="{% url 'core:dashboard' %}" class="nav-link-sidebar {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+          <span class="nav-icon"><i class="bi bi-house-door"></i></span>
+          <span class="nav-label">Home</span>
+        </a>
+      </div>
+
+      <!-- Clientes -->
+      <div class="nav-item-sidebar">
+        <a href="{% url 'clientes:lista' %}" class="nav-link-sidebar {% if 'clientes' in request.resolver_match.app_name %}active{% endif %}">
+          <span class="nav-icon"><i class="bi bi-people"></i></span>
+          <span class="nav-label">Clientes</span>
+        </a>
+      </div>
+
+      <!-- Fornecedores -->
+      <div class="nav-item-sidebar">
+        <a href="{% url 'fornecedores:lista' %}" class="nav-link-sidebar {% if 'fornecedores' in request.resolver_match.app_name %}active{% endif %}">
+          <span class="nav-icon"><i class="bi bi-truck"></i></span>
+          <span class="nav-label">Fornecedores</span>
+        </a>
+      </div>
+
+      <!-- Produtos -->
+      <div class="nav-item-sidebar">
+        <a href="{% url 'produtos:lista' %}" class="nav-link-sidebar {% if 'produtos' in request.resolver_match.app_name %}active{% endif %}">
+          <span class="nav-icon"><i class="bi bi-box-seam"></i></span>
+          <span class="nav-label">Produtos</span>
+        </a>
+      </div>
+
+      <!-- Orçamentos -->
+      <div class="nav-item-sidebar">
+        <a href="{% url 'orcamentos:lista' %}" class="nav-link-sidebar {% if 'orcamentos' in request.resolver_match.app_name %}active{% endif %}">
+          <span class="nav-icon"><i class="bi bi-file-earmark-text"></i></span>
+          <span class="nav-label">Orçamentos</span>
+        </a>
+      </div>
+
+      <!-- Ordens de Serviço -->
+      <div class="nav-item-sidebar">
+        <a href="{% url 'ordens:lista' %}" class="nav-link-sidebar {% if 'ordens' in request.resolver_match.app_name %}active{% endif %}">
+          <span class="nav-icon"><i class="bi bi-tools"></i></span>
+          <span class="nav-label">Ordens de Serviço</span>
+        </a>
+      </div>
+
+      <!-- Relatórios -->
+      <div class="nav-item-sidebar">
+        <a href="{% url 'relatorios:index' %}" class="nav-link-sidebar {% if 'relatorios' in request.resolver_match.app_name %}active{% endif %}">
+          <span class="nav-icon"><i class="bi bi-graph-up"></i></span>
+          <span class="nav-label">Relatórios</span>
+        </a>
+      </div>
+
+      <!-- Financeiro -->
+      <div class="nav-item-sidebar">
+        <button class="nav-link-sidebar" onclick="toggleSubmenu('financeiroMenu', event)">
+          <span class="nav-icon"><i class="bi bi-cash-stack"></i></span>
+          <span class="nav-label">Financeiro</span>
+          <i class="bi bi-chevron-right nav-arrow" id="financeiroArrow"></i>
+        </button>
+        <div class="nav-submenu" id="financeiroMenu">
+          
+          <!-- Contas a Receber (Dropdown aninhado) -->
+          <div class="nav-item-sidebar">
+            <button class="nav-link-sidebar" onclick="toggleSubmenu('receberMenu', event)" style="padding-left: 44px; font-size: 13px;">
+              <span class="nav-icon"><i class="bi bi-arrow-down-circle"></i></span>
+              <span class="nav-label">Contas a Receber</span>
+              <i class="bi bi-chevron-right nav-arrow" id="receberArrow"></i>
+            </button>
+            <div class="nav-submenu" id="receberMenu">
+              <a href="{% url 'financeiro:contas_receber' %}" class="nav-link-sidebar {% if 'contas_receber' in request.resolver_match.url_name %}active{% endif %}" style="padding-left: 64px;">
+                <span class="nav-icon" style="font-size: 14px;"><i class="bi bi-list"></i></span>
+                <span class="nav-label" style="font-size: 12px;">Contas a Receber</span>
+              </a>
+              <a href="{% url 'financeiro:baixas' %}" class="nav-link-sidebar {% if 'baixas' in request.resolver_match.url_name %}active{% endif %}" style="padding-left: 64px;">
+                <span class="nav-icon" style="font-size: 14px;"><i class="bi bi-check2-circle"></i></span>
+                <span class="nav-label" style="font-size: 12px;">Baixa Contas a Receber</span>
+              </a>
+            </div>
+          </div>
+
+          <!-- Contas a Pagar (Dropdown aninhado) -->
+          <div class="nav-item-sidebar">
+            <button class="nav-link-sidebar" onclick="toggleSubmenu('pagarMenu', event)" style="padding-left: 44px; font-size: 13px;">
+              <span class="nav-icon"><i class="bi bi-arrow-up-circle"></i></span>
+              <span class="nav-label">Contas a Pagar</span>
+              <i class="bi bi-chevron-right nav-arrow" id="pagarArrow"></i>
+            </button>
+            <div class="nav-submenu" id="pagarMenu">
+              <a href="{% url 'financeiro:contas_pagar' %}" class="nav-link-sidebar {% if 'contas_pagar' in request.resolver_match.url_name %}active{% endif %}" style="padding-left: 64px;">
+                <span class="nav-icon" style="font-size: 14px;"><i class="bi bi-list"></i></span>
+                <span class="nav-label" style="font-size: 12px;">Contas a Pagar</span>
+              </a>
+              <!-- Link para Baixas a Pagar -->
+              <a href="{% url 'financeiro:baixas_pagar' %}" class="nav-link-sidebar {% if 'baixas_pagar' in request.resolver_match.url_name %}active{% endif %}" style="padding-left: 64px;">
+                <span class="nav-icon" style="font-size: 14px;"><i class="bi bi-check2-circle"></i></span>
+                <span class="nav-label" style="font-size: 12px;">Baixa Contas a Pagar</span>
+              </a>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+
+    </nav>
+
+    <!-- Sidebar Footer -->
+    <div class="sidebar-footer">
+      <div class="nav-item-sidebar">
+        <a href="{% url 'core:logout' %}" class="nav-link-sidebar text-danger-hover">
+          <span class="nav-icon"><i class="bi bi-box-arrow-right"></i></span>
+          <span class="nav-label">Sair</span>
+        </a>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ===== MAIN CONTENT ===== -->
+  <div class="main-content" id="mainContent">
+
+    <!-- ===== TOP NAVBAR ===== -->
+    <header class="top-navbar">
+      <!-- Breadcrumb -->
+      <div class="breadcrumb-nav">
+        <span>Home</span>
+        <i class="bi bi-chevron-right"></i>
+        <span class="bc-current">{% block breadcrumb %}Dashboard{% endblock %}</span>
+      </div>
+
+      <!-- Actions -->
+      <div class="navbar-actions ms-auto">
+        <a href="{% url 'core:configuracoes' %}" class="nav-action-btn" title="Configurações">
+          <i class="bi bi-gear"></i>
+        </a>
+        <a href="{% url 'core:perfil' %}" class="user-avatar" title="{{ request.user.username }}">
+          {{ request.user.first_name|first|upper }}{{ request.user.last_name|first|upper }}
+        </a>
+      </div>
+    </header>
+
+    <!-- ===== PAGE CONTENT ===== -->
+    <main class="page-content">
+      <!-- Mensagens (Fallback + JS SweetAlert) -->
+      {% if messages %}
+        <script>
+          document.addEventListener('DOMContentLoaded', function() {
+            {% for msg in messages %}
+              Toast.fire({
+                icon: "{% if msg.tags == 'error' or msg.tags == 'danger' %}error{% elif msg.tags == 'success' %}success{% elif msg.tags == 'warning' %}warning{% else %}info{% endif %}",
+                title: "{{ msg|escapejs }}",
+                timer: 4000
+              });
+            {% endfor %}
+          });
+        </script>
+      {% endif %}
+
+      {% block content %}{% endblock %}
+    </main>
+
+    <!-- ===== FOOTER ===== -->
+    <footer class="main-footer">
+      <span>
+        &copy; {% now "Y" %} DigiCAR &mdash; Sistema de Ordens de Serviço
+      </span>
+      <span>
+        Versão 1.0 &nbsp;|&nbsp; <a href="#" data-bs-toggle="modal" data-bs-target="#supportModal" style="color:inherit;text-decoration:none;">Suporte</a>
+      </span>
+    </footer>
+
+  </div><!-- /.main-content -->
+</div><!-- /.app-wrapper -->
+
+<!-- Modal Suporte -->
+<div class="modal fade" id="supportModal" tabindex="-1" aria-labelledby="supportModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius: 8px; border: none; box-shadow: var(--shadow-lg);">
+      <div class="modal-header" style="background: var(--primary); color: #fff; border-radius: 8px 8px 0 0; border: none;">
+        <h5 class="modal-title" id="supportModalLabel"><i class="bi bi-headset me-2"></i>Suporte & Desenvolvimento</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4 text-center">
+        <div class="mb-4">
+          <div style="width: 80px; height: 80px; background: rgba(37, 99, 235, 0.1); color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; font-size: 40px;">
+            <i class="bi bi-code-slash"></i>
+          </div>
+        </div>
+        <h4 style="font-weight: 700; color: var(--text-primary);">DigiCAR Support</h4>
+        <p class="text-muted">Precisa de ajuda ou encontrou algum problema? Entre em contato com nossa equipe de suporte!</p>
+        
+        <hr class="my-4" style="opacity: 0.1;">
+        
+        <div class="d-grid gap-3">
+          <a href="https://wa.me/5500000000000" target="_blank" class="btn btn-success p-3" style="border-radius: 5px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 10px; background: #25d366; border: none;">
+            <i class="bi bi-whatsapp" style="font-size: 20px;"></i> Atendimento via WhatsApp
+          </a>
+          <a href="mailto:suporte@digicar.com.br" class="btn btn-outline-secondary p-3" style="border-radius: 5px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 10px; border: 1px solid #e2e8f0; color: var(--text-secondary);">
+            <i class="bi bi-envelope" style="font-size: 20px;"></i> Enviar E-mail de Suporte
+          </a>
+        </div>
+      </div>
+      <div class="modal-footer justify-content-center" style="background: #f8fafc; border-top: 1px solid #e2e8f0; border-radius: 0 0 8px 8px; font-size: 13px; color: var(--text-muted);">
+        Disponível de Segunda a Sexta, das 08h às 18h
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+<!-- SweetAlert2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.6/dist/sweetalert2.all.min.js"></script>
+
+<script>
+  // Configuração global para SweetAlert2 para combinar com o design
+  const SwalCustom = Swal.mixin({
+    customClass: {
+      confirmButton: 'btn btn-primary px-4 py-2',
+      cancelButton: 'btn btn-secondary px-4 py-2 me-3'
+    },
+    buttonsStyling: false
+  });
+
+  // Toast notifications (Opcional, pode ser usado para substituir as Django messages depois)
+  const Toast = Swal.mixin({
+    toast: true,
+    position: "top-end",
+    showConfirmButton: false,
+    timer: 3000,
+    timerProgressBar: true,
+    didOpen: (toast) => {
+      toast.onmouseenter = Swal.stopTimer;
+      toast.onmouseleave = Swal.resumeTimer;
+    }
+  });
+</script>
+
+<script src="{% static 'js/app.js' %}"></script>
+
+{% block extra_js %}{% endblock %}
+</body>
+</html>

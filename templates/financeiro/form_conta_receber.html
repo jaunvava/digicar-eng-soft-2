@@ -1,0 +1,344 @@
+{% extends 'base.html' %}
+{% block title %}{% if conta %}Editar{% else %}Nova{% endif %} Conta a Receber{% endblock %}
+{% block breadcrumb %}Financeiro / {% if conta %}Editar{% else %}Nova{% endif %} Conta a Receber{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* ── Form geral ── */
+  .form-conta .form-control,
+  .form-conta .form-select {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-family: "Inter", sans-serif;
+    font-size: 14px;
+    color: var(--text-primary);
+    background: #fff;
+    transition: all 0.2s ease;
+  }
+  .form-conta .form-control:focus,
+  .form-conta .form-select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    outline: none;
+  }
+  .form-conta .form-floating > label {
+    padding: 1rem 0.75rem;
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+
+  /* ── Autocomplete Cliente ── */
+  .ac-wrap { position: relative; }
+  .ac-wrap .ac-icon {
+    position: absolute;
+    left: 13px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 15px;
+    pointer-events: none;
+    z-index: 5;
+  }
+  .ac-wrap input[type="text"] {
+    padding-left: 40px;
+    height: 48px;
+    width: 100%;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: "Inter", sans-serif;
+    color: var(--text-primary);
+    background: #fff;
+    transition: all 0.2s ease;
+  }
+  .ac-wrap input[type="text"]:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    outline: none;
+  }
+  .ac-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0; right: 0;
+    background: #fff;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    z-index: 9999;
+    max-height: 240px;
+    overflow-y: auto;
+    display: none;
+  }
+  .ac-dropdown.open { display: block; }
+  .ac-item {
+    padding: 10px 16px;
+    font-size: 13px;
+    cursor: pointer;
+    color: var(--text-primary);
+    transition: background 0.1s;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .ac-item:last-child { border-bottom: none; }
+  .ac-item:hover, .ac-item.selected { background: #eff6ff; color: var(--primary); }
+  .ac-empty {
+    padding: 12px 16px;
+    font-size: 13px;
+    color: var(--text-muted);
+    text-align: center;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex align-items-center justify-content-between">
+  <h1 class="page-title">
+    {% if conta %}Editar Conta a Receber{% else %}Nova Conta a Receber{% endif %}
+  </h1>
+</div>
+
+<div class="row justify-content-center">
+  <div class="col-lg-8 col-xl-7">
+    <div class="card">
+      <div class="card-body p-4 form-conta">
+        <form method="POST" id="form-conta">
+          {% csrf_token %}
+
+          <!-- Cliente -->
+          <div class="mb-3">
+            <label class="form-label-custom" style="font-weight:600;font-size:13px;color:var(--text-secondary);margin-bottom:8px;display:block;">Cliente *</label>
+            <div class="ac-wrap" id="acWrap">
+              <i class="bi bi-search ac-icon"></i>
+              <input type="text" id="cliente_search"
+                     placeholder="Selecione ou digite o nome do cliente"
+                     autocomplete="off"
+                     {% if conta %}value="{{ conta.cliente.nome }}"{% endif %}>
+              <div class="ac-dropdown" id="acDropdown"></div>
+              <input type="hidden" name="cliente" id="cliente_id"
+                     {% if conta %}value="{{ conta.cliente_id }}"{% endif %}>
+            </div>
+          </div>
+
+          <!-- Valor  +  Data Emissão -->
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <div class="form-floating">
+                <input type="text" class="form-control" id="id_valor" name="valor"
+                       placeholder="0,00" data-mask="currency"
+                       value="{% if conta %}{{ conta.valor|floatformat:2 }}{% endif %}">
+                <label for="id_valor">Valor (R$)</label>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-floating">
+                <input type="date" class="form-control" id="id_emissao" name="emissao"
+                       placeholder="yyyy-mm-dd"
+                       value="{% if conta %}{{ conta.emissao|date:'Y-m-d' }}{% else %}{% now 'Y-m-d' %}{% endif %}">
+                <label for="id_emissao">Data Emissão</label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dias Vencimento  +  Data Vencimento -->
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <div class="form-floating">
+                <input type="number" class="form-control" id="id_dias"
+                       name="dias_vencimento" placeholder="30" min="0" value="30">
+                <label for="id_dias">Dias Vencimento</label>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-floating">
+                <input type="date" class="form-control" id="id_vencimento" name="vencimento"
+                       placeholder="yyyy-mm-dd"
+                       value="{% if conta %}{{ conta.vencimento|date:'Y-m-d' }}{% endif %}"
+                       required>
+                <label for="id_vencimento">Data Vencimento</label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Parcelas  +  Situação -->
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <div class="form-floating">
+                <input type="number" class="form-control" id="id_parcelas"
+                       name="parcelas" placeholder="1" min="1"
+                       value="{{ total_parcelas|default:1 }}">
+                <label for="id_parcelas">Parcelas</label>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-floating">
+                <select class="form-select" id="id_status" name="status">
+                  <option value="pendente"  {% if not conta or conta.status == 'pendente'  %}selected{% endif %}>Pendente</option>
+                  <option value="parcial"   {% if conta and conta.status == 'parcial'   %}selected{% endif %}>Parcial</option>
+                  <option value="pago"      {% if conta and conta.status == 'pago'      %}selected{% endif %}>Pago</option>
+                  <option value="atrasado"  {% if conta and conta.status == 'atrasado'  %}selected{% endif %}>Atrasado</option>
+                  <option value="cancelado" {% if conta and conta.status == 'cancelado' %}selected{% endif %}>Cancelado</option>
+                </select>
+                <label for="id_status">Situação</label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Observações -->
+          <div class="mb-4">
+            <div class="form-floating">
+              <textarea class="form-control" id="id_obs" name="observacoes"
+                        placeholder="Observações"
+                        style="height:90px;">{% if conta %}{{ conta.observacoes }}{% endif %}</textarea>
+              <label for="id_obs">Observações</label>
+            </div>
+          </div>
+
+          <div class="d-flex gap-3">
+            <a href="{% url 'financeiro:contas_receber' %}" class="btn-outline-custom">Cancelar</a>
+            <button type="submit" class="btn-primary-custom">
+              <i class="bi bi-check-lg me-1"></i>
+              {% if conta %}Salvar Alterações{% else %}Salvar{% endif %}
+            </button>
+          </div>
+
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+  /* ── Autocomplete de Cliente (custom, sem datalist nativo) ── */
+  const searchEl  = document.getElementById('cliente_search');
+  const hiddenEl  = document.getElementById('cliente_id');
+  const dropdown  = document.getElementById('acDropdown');
+  const wrap      = document.getElementById('acWrap');
+
+  /* Lista de clientes injetada pelo Django */
+  const CLIENTES = [
+    {% for c in clientes %}{"id": {{ c.pk }}, "nome": "{{ c.nome|escapejs }}"},{% endfor %}
+  ];
+
+  let selIdx = -1;
+
+  function renderDropdown(termo) {
+    const q = termo.trim().toLowerCase();
+    if (!q) { closeDropdown(); return; }
+
+    const matches = CLIENTES.filter(c => c.nome.toLowerCase().includes(q)).slice(0, 10);
+    if (matches.length === 0) {
+      dropdown.innerHTML = '<div class="ac-empty">Nenhum cliente encontrado</div>';
+    } else {
+      dropdown.innerHTML = matches.map((c, i) =>
+        `<div class="ac-item" data-id="${c.id}" data-nome="${c.nome.replace(/"/g,'&quot;')}">${c.nome}</div>`
+      ).join('');
+      dropdown.querySelectorAll('.ac-item').forEach(item => {
+        item.addEventListener('mousedown', function (e) {
+          e.preventDefault(); /* evita blur antes do click */
+          selectCliente(this.dataset.id, this.dataset.nome);
+        });
+      });
+    }
+    dropdown.classList.add('open');
+    selIdx = -1;
+  }
+
+  function selectCliente(id, nome) {
+    searchEl.value  = nome;
+    hiddenEl.value  = id;
+    closeDropdown();
+  }
+
+  function closeDropdown() {
+    dropdown.classList.remove('open');
+    selIdx = -1;
+  }
+
+  searchEl.addEventListener('input', function () {
+    hiddenEl.value = ''; /* limpa seleção ao digitar */
+    renderDropdown(this.value);
+  });
+
+  searchEl.addEventListener('blur', function () {
+    setTimeout(closeDropdown, 150);
+  });
+
+  searchEl.addEventListener('focus', function () {
+    if (this.value.trim()) renderDropdown(this.value);
+  });
+
+  /* Navegação por teclado */
+  searchEl.addEventListener('keydown', function (e) {
+    const items = dropdown.querySelectorAll('.ac-item');
+    if (!dropdown.classList.contains('open') || items.length === 0) return;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      selIdx = Math.min(selIdx + 1, items.length - 1);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      selIdx = Math.max(selIdx - 1, 0);
+    } else if (e.key === 'Enter' && selIdx >= 0) {
+      e.preventDefault();
+      const item = items[selIdx];
+      selectCliente(item.dataset.id, item.dataset.nome);
+      return;
+    } else if (e.key === 'Escape') {
+      closeDropdown(); return;
+    }
+    items.forEach((item, i) => item.classList.toggle('selected', i === selIdx));
+  });
+
+  /* Fecha ao clicar fora */
+  document.addEventListener('click', function (e) {
+    if (!wrap.contains(e.target)) closeDropdown();
+  });
+
+  /* ── Dias Vencimento <-> Data Vencimento ── */
+  var emissaoEl = document.getElementById('id_emissao');
+  var diasEl    = document.getElementById('id_dias');
+  var vencEl    = document.getElementById('id_vencimento');
+
+  function parseDate(str) {
+    if (!str) return null;
+    var p = str.split('-');
+    return new Date(+p[0], +p[1] - 1, +p[2]);
+  }
+  function toISO(dt) {
+    var y = dt.getFullYear();
+    var m = String(dt.getMonth() + 1).padStart(2, '0');
+    var d = String(dt.getDate()).padStart(2, '0');
+    return y + '-' + m + '-' + d;
+  }
+  function updateVencimento() {
+    var em   = parseDate(emissaoEl.value);
+    var dias = parseInt(diasEl.value) || 0;
+    if (em) {
+      var v = new Date(em);
+      v.setDate(v.getDate() + dias);
+      vencEl.value = toISO(v);
+    }
+  }
+  function updateDias() {
+    var em   = parseDate(emissaoEl.value);
+    var venc = parseDate(vencEl.value);
+    if (em && venc)
+      diasEl.value = Math.max(0, Math.round((venc - em) / 86400000));
+  }
+
+  emissaoEl.addEventListener('change', updateVencimento);
+  diasEl.addEventListener('input',    updateVencimento);
+  vencEl.addEventListener('change',   updateDias);
+
+  {% if conta %}
+  updateDias();
+  {% else %}
+  diasEl.value = '30';
+  updateVencimento();
+  {% endif %}
+
+});
+</script>
+{% endblock %}

@@ -1,0 +1,278 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Relatório de Produtos — {{ empresa.nome }}</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', Arial, sans-serif;
+      font-size: 11px;
+      color: #1a1a1a;
+      background: #f0f0f0;
+    }
+
+    /* ── Wrapper de página ─────────────────────────────────────── */
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      margin: 20px auto;
+      background: #fff;
+      box-shadow: 0 2px 16px rgba(0,0,0,.15);
+      padding: 14mm 14mm 12mm;
+    }
+
+    /* ── Topo do sistema ──────────────────────────────────────── */
+    .system-label {
+      text-align: right;
+      font-size: 9px;
+      color: #999;
+      margin-bottom: 6px;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+    }
+
+    /* ── Cabeçalho da empresa ─────────────────────────────────── */
+    .header-box {
+      border: 1px solid #d0d0d0;
+      border-radius: 5px;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 14px;
+    }
+    .header-left { flex: 1; }
+    .header-right { text-align: right; font-size: 11px; color: #333; line-height: 1.8; }
+
+    .company-name {
+      font-size: 20px;
+      font-weight: 700;
+      color: #0f172a;
+      letter-spacing: -0.5px;
+    }
+    .company-name span { color: #6366f1; }
+
+    .company-info {
+      font-size: 10.5px;
+      color: #555;
+      margin-top: 4px;
+      line-height: 1.7;
+    }
+
+    /* ── Faixa do relatório ───────────────────────────────────── */
+    .report-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 5px;
+      padding: 8px 14px;
+      margin-bottom: 10px;
+    }
+    .report-title {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      color: #1e293b;
+    }
+    .report-date { font-size: 11px; color: #475569; }
+
+    /* ── Filtros aplicados ────────────────────────────────────── */
+    .filtros-bar {
+      font-size: 10.5px;
+      color: #64748b;
+      margin-bottom: 8px;
+      padding: 4px 14px;
+    }
+    .filtros-bar span { font-weight: 600; color: #334155; }
+
+    /* ── Tabela ───────────────────────────────────────────────── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+    }
+    thead tr {
+      background: #f1f5f9;
+    }
+    thead th {
+      padding: 7px 10px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: .4px;
+      color: #475569;
+      border-bottom: 2px solid #e2e8f0;
+    }
+    tbody tr { border-bottom: 1px solid #f1f5f9; }
+    tbody tr:nth-child(even) { background: #fafafa; }
+    tbody td { padding: 6px 10px; color: #1e293b; vertical-align: middle; }
+
+    .badge {
+      display: inline-block;
+      font-size: 9.5px;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 5px;
+    }
+    .badge-pf  { background: #dbeafe; color: #1e40af; }
+    .badge-pj  { background: #f3e8ff; color: #6b21a8; }
+    .badge-ok  { background: #d1fae5; color: #065f46; }
+    .badge-off { background: #fee2e2; color: #991b1b; }
+
+    /* ── Rodapé ───────────────────────────────────────────────── */
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid #e2e8f0;
+      margin-top: 14px;
+      padding-top: 8px;
+      font-size: 10px;
+      color: #94a3b8;
+    }
+
+    /* ── Botão imprimir (some ao imprimir) ────────────────────── */
+    .print-btn-area {
+      text-align: center;
+      margin: 20px 0 0;
+    }
+    .print-btn {
+      background: #6366f1;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      padding: 10px 28px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background .2s;
+    }
+    .print-btn:hover { background: #4f46e5; }
+
+    /* ── Impressão ────────────────────────────────────────────── */
+    @media print {
+      body { background: #fff; }
+      .page { margin: 0; box-shadow: none; padding: 10mm 12mm; }
+      .print-btn-area { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="page">
+  <!-- Label do sistema -->
+  <div class="system-label">DigiCAR · Sistema</div>
+
+  <!-- Cabeçalho da empresa -->
+  <div class="header-box">
+    <div class="header-left">
+      <div class="company-name">{{ empresa.nome }}<span>.</span></div>
+      <div class="company-info">
+        {% if empresa.cnpj %}CNPJ: {{ empresa.cnpj }}<br>{% endif %}
+        {% if empresa.endereco %}{{ empresa.endereco }}{% endif %}
+      </div>
+    </div>
+    <div class="header-right">
+      {% if empresa.telefone %}Tel: {{ empresa.telefone }}<br>{% endif %}
+      {% if empresa.email %}{{ empresa.email }}{% endif %}
+    </div>
+  </div>
+
+  <!-- Faixa do relatório -->
+  <div class="report-bar">
+    <div class="report-title">Relatório de Produtos</div>
+    <div class="report-date">Gerado em: {{ now|date:"d/m/Y" }} às {{ now|time:"H:i:s" }}</div>
+  </div>
+
+  <!-- Filtros aplicados -->
+  {% if q or tipo or situacao != 'todos' %}
+  <div class="filtros-bar">
+    Filtros:
+    {% if q %}<span>Nome/Código:</span> {{ q }} &nbsp;|&nbsp; {% endif %}
+    {% if tipo %}<span>Tipo:</span> {{ tipo|title }} &nbsp;|&nbsp; {% endif %}
+    <span>Situação:</span>
+    {% if situacao == 'ativo' %}Apenas Ativos
+    {% elif situacao == 'inativo' %}Apenas Inativos
+    {% else %}Todos{% endif %}
+  </div>
+  {% endif %}
+
+  <!-- Tabela -->
+  <table>
+    <thead>
+      <tr>
+        <th style="width:60px;">Código</th>
+        <th>Nome do Produto/Serviço</th>
+        <th style="width:60px;">Tipo</th>
+
+        <th style="width:80px;">Pr. Custo</th>
+        <th style="width:80px;">Pr. Venda</th>
+        <th style="width:60px;">Estoque</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in produtos %}
+      <tr>
+        <td style="color:#94a3b8;">{{ p.codigo|default:"-" }}</td>
+        <td style="font-weight:500;">{{ p.nome }}</td>
+        <td>
+          {% if p.tipo == 'servico' %}
+            <span class="badge badge-pf">Serviço</span>
+          {% else %}
+            <span class="badge badge-pj">Produto</span>
+          {% endif %}
+        </td>
+
+        <td>R$ {{ p.preco_custo|floatformat:2 }}</td>
+        <td>R$ {{ p.preco_venda|floatformat:2 }}</td>
+        <td>
+          {% if p.tipo == 'servico' %}
+            -
+          {% else %}
+            {{ p.estoque_atual|floatformat:0 }}
+          {% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="6" style="text-align:center;padding:30px;color:#94a3b8;">
+          Nenhum produto encontrado.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <!-- Rodapé -->
+  <div class="footer">
+    <span>Data de Emissão: {{ now|date:"d/m/Y" }}</span>
+    <span>Total: {{ total }} produto(s) &nbsp;·&nbsp; Relatório de Produtos</span>
+  </div>
+</div>
+
+<!-- Botão imprimir (some ao imprimir de verdade) -->
+<div class="print-btn-area">
+  <button class="print-btn" onclick="window.print()">
+    🖨️ &nbsp; Imprimir / Salvar PDF
+  </button>
+</div>
+
+<script>
+  window.addEventListener('load', function () {
+    setTimeout(function () { window.print(); }, 400);
+  });
+</script>
+</body>
+</html>

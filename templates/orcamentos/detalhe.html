@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% block title %}Orçamento #{{ orcamento.numero }}{% endblock %}
+{% block breadcrumb %}Orçamentos / #{{ orcamento.numero }}{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex align-items-center justify-content-between">
+  <div>
+    <h1 class="page-title">Orçamento #{{ orcamento.numero }}</h1>
+    <p class="page-subtitle">{{ orcamento.cliente.nome }} | Validade: {{ orcamento.validade|date:"d/m/Y" }}</p>
+  </div>
+  <div class="d-flex gap-2">
+    <form method="POST" action="{% url 'orcamentos:status' orcamento.pk %}" class="d-flex gap-2">
+      {% csrf_token %}
+      <select name="status" class="form-control-custom" style="width:160px;">
+        <option value="rascunho" {% if orcamento.status == 'rascunho' %}selected{% endif %}>Rascunho</option>
+        <option value="enviado"  {% if orcamento.status == 'enviado' %}selected{% endif %}>Enviado</option>
+        <option value="aprovado" {% if orcamento.status == 'aprovado' %}selected{% endif %}>Aprovado</option>
+        <option value="reprovado" {% if orcamento.status == 'reprovado' %}selected{% endif %}>Reprovado</option>
+      </select>
+      <button type="submit" class="btn-primary-custom">Atualizar</button>
+    </form>
+    <a href="{% url 'orcamentos:imprimir' orcamento.pk %}" target="_blank" class="btn-primary-custom" style="padding: 6px 16px; font-size:14px; height: 38px;"><i class="bi bi-printer me-1"></i> Imprimir</a>
+    <a href="{% url 'orcamentos:lista' %}" class="btn-outline-custom" style="padding: 6px 16px; font-size:14px; height: 38px;"><i class="bi bi-arrow-left me-1"></i> Voltar</a>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-xl-8">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-title">Itens do Orçamento</h5>
+        <span class="badge-status badge-{{ orcamento.status }}">{{ orcamento.get_status_display }}</span>
+      </div>
+      <div class="card-body p-0">
+        <table class="table-custom w-100">
+          <thead>
+            <tr><th>Produto</th><th>Qtd</th><th>Preço Unit.</th><th>Subtotal</th></tr>
+          </thead>
+          <tbody>
+            {% for item in itens %}
+            <tr>
+              <td>{{ item.produto.nome }}</td>
+              <td>{{ item.quantidade }}</td>
+              <td>R$ {{ item.preco_unitario|floatformat:2 }}</td>
+              <td><strong>R$ {{ item.subtotal|floatformat:2 }}</strong></td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" style="text-align:center;padding:24px;color:var(--text-muted);">Sem itens.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="card-body" style="border-top:1px solid var(--border-color);background:#f8fafc;">
+        <div class="d-flex justify-content-end">
+          <div style="min-width:200px;font-size:14px;">
+            <div class="d-flex justify-content-between mb-1">
+              <span>Subtotal:</span><span>R$ {{ orcamento.subtotal|floatformat:2 }}</span>
+            </div>
+            <div class="d-flex justify-content-between mb-2">
+              <span>Desconto:</span><span style="color:var(--danger);">- R$ {{ orcamento.desconto|floatformat:2 }}</span>
+            </div>
+            <div class="d-flex justify-content-between" style="font-size:17px;font-weight:700;border-top:1px solid var(--border-color);padding-top:8px;">
+              <span>Total:</span><span style="color:var(--primary);">R$ {{ orcamento.total|floatformat:2 }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-4">
+    <div class="card">
+      <div class="card-header"><h5 class="card-title">Informações</h5></div>
+      <div class="card-body" style="font-size:14px;">
+        <p><strong>Cliente:</strong> {{ orcamento.cliente.nome }}</p>
+        <p><strong>Vendedor:</strong> {{ orcamento.vendedor.get_full_name|default:orcamento.vendedor.username|default:"—" }}</p>
+        <p><strong>Validade:</strong> {{ orcamento.validade|date:"d/m/Y" }}</p>
+        <p><strong>Criado em:</strong> {{ orcamento.criado_em|date:"d/m/Y H:i" }}</p>
+        {% if orcamento.observacoes %}
+          <hr><p><strong>Obs:</strong> {{ orcamento.observacoes }}</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

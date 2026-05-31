@@ -1,0 +1,246 @@
+{% extends 'base.html' %}
+{% block title %}Produtos{% endblock %}
+{% block breadcrumb %}Produtos{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex align-items-center justify-content-between">
+  <div>
+    <h1 class="page-title">Produtos</h1>
+  </div>
+</div>
+
+<!-- Filtros de Pesquisa -->
+<div class="card mb-4">
+  <div class="card-header" style="padding:10px 20px;">
+    <h5 class="card-title" style="margin:0;font-size:14px;">
+      <i class="bi bi-funnel me-2"></i>Filtros de Pesquisa
+    </h5>
+  </div>
+  <div class="card-body" style="padding:14px 20px;">
+    <form method="GET" id="filtrosForm">
+      <!-- Linha de inputs -->
+      <div class="row g-2 mb-3">
+        <div class="col-md-4">
+          <input type="text" name="q" value="{{ q|default:'' }}"
+                 placeholder="Pesquisar por Nome ou Código"
+                 class="form-control-custom">
+        </div>
+        <div class="col-md-3">
+          <select name="tipo" class="form-control-custom">
+            <option value="">Todos os tipos</option>
+            <option value="produto" {% if tipo == 'produto' %}selected{% endif %}>Apenas Produtos</option>
+            <option value="servico" {% if tipo == 'servico' %}selected{% endif %}>Apenas Serviços</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <div style="position:relative;">
+            <label style="position:absolute;top:-9px;left:10px;font-size:10px;color:var(--text-muted);background:var(--card-bg,#1e293b);padding:0 4px;z-index:1;font-weight:500;">Situação</label>
+            <select name="situacao" class="form-control-custom">
+              <option value="ativo"    {% if situacao == 'ativo'    or not situacao %}selected{% endif %}>Apenas Ativos</option>
+              <option value="inativo"  {% if situacao == 'inativo'  %}selected{% endif %}>Apenas Inativos</option>
+              <option value="todos"    {% if situacao == 'todos'    %}selected{% endif %}>Todos</option>
+            </select>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Linha de ações -->
+      <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <span style="font-size:13px;color:var(--primary);font-weight:500;">
+          {{ total }} produto(s) no total
+        </span>
+        <div class="d-flex gap-2 flex-wrap">
+          <a href="{% url 'produtos:novo' %}" class="btn-action-green">
+            <i class="bi bi-plus-lg"></i> Novo
+          </a>
+          <button type="button" class="btn-action-teal" onclick="Swal.fire('Importação', 'Esta funcionalidade estará disponível em breve!', 'info')">
+            <i class="bi bi-upload"></i> Importar
+          </button>
+          <!-- Dropdown Imprimir / Exportar -->
+          <div class="btn-dropdown-wrap" id="printDropWrap">
+            <button type="button" class="btn-action-orange" id="printDropBtn" onclick="togglePrintDrop(event)">
+              <i class="bi bi-printer"></i> Imprimir
+              <i class="bi bi-chevron-down" style="font-size:10px;margin-left:2px;"></i>
+            </button>
+            <div class="btn-dropdown-menu" id="printDropMenu" style="display:none;">
+              <button type="button" class="btn-drop-item" onclick="abrirImpressao()">
+                <i class="bi bi-file-pdf" style="color:#ef4444;"></i> Imprimir PDF
+              </button>
+              <button type="button" class="btn-drop-item" onclick="exportarExcel()">
+                <i class="bi bi-file-earmark-excel" style="color:#16a34a;"></i> Exportar Excel
+              </button>
+            </div>
+          </div>
+
+          <a href="{% url 'produtos:lista' %}" class="btn-action-amber">
+            <i class="bi bi-x-lg"></i> Limpar
+          </a>
+          <button type="submit" class="btn-action-indigo">
+            <i class="bi bi-search"></i> Buscar
+          </button>
+        </div>
+      </div>
+    </form>
+  </di<div class="card">
+  <div class="card-body p-0">
+    <table class="table-custom w-100">
+      <thead>
+        <tr>
+          <th><i class="bi bi-upc me-1" style="font-size:10px;"></i>Cód. de Barras</th>
+          <th>Nome</th>
+          <th>Tipo</th>
+
+          <th>Preço Venda</th>
+          <th>Estoque</th>
+          <th>Status Est.</th>
+          <th>Status</th>
+          <th style="text-align:right; padding-right: 20px;">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in produtos %}
+        <tr>
+          <td style="color:var(--text-muted);font-size:11px;font-family:monospace;">{{ p.codigo|default:"-" }}</td>
+          <td><strong>{{ p.nome }}</strong></td>
+          <td>
+            {% if p.tipo == 'servico' %}
+              <span class="badge bg-info bg-opacity-10 text-info" style="font-size:10px;">Serviço</span>
+            {% else %}
+              <span class="badge bg-primary bg-opacity-10 text-primary" style="font-size:10px;">Produto</span>
+            {% endif %}
+          </td>
+
+          <td><strong style="color:var(--success);">R$ {{ p.preco_venda|floatformat:2 }}</strong></td>
+          <td>
+            {% if p.tipo == 'servico' %}
+              <span style="color:var(--text-muted);">—</span>
+            {% else %}
+              {{ p.estoque_atual|floatformat:0 }} {{ p.unidade }}
+            {% endif %}
+          </td>
+          <td class="p-0 text-center">
+            {% if p.tipo == 'servico' %}
+              <i class="bi bi-check-circle-fill text-success" style="font-size: 14px;"></i>
+            {% elif p.estoque_baixo %}
+              <i class="bi bi-exclamation-triangle-fill text-danger" title="Estoque Baixo" style="font-size: 14px;"></i>
+            {% else %}
+              <i class="bi bi-check-circle-fill text-success" style="font-size: 14px;"></i>
+            {% endif %}
+          </td>
+          <td>
+            {% if p.ativo %}
+              <span class="badge-status badge-pago" style="font-size: 10px; background: #dcfce7; color: #166534;">Ativo</span>
+            {% else %}
+              <span class="badge-status badge-cancelado" style="font-size: 10px; background: #fee2e2; color: #991b1b;">Inativo</span>
+            {% endif %}
+          </td>
+          <td style="text-align:right; padding-right: 20px;">
+            <div class="d-flex gap-1 justify-content-end">
+              <a href="{% url 'produtos:editar' p.pk %}" class="btn-outline-custom" style="padding:2px 6px;font-size:12px;">
+                <i class="bi bi-pencil"></i>
+              </a>
+              <button onclick="confirmDelete('{% url 'produtos:excluir' p.pk %}', 'Excluir {{ p.nome }}?')"
+                      class="btn btn-sm" style="background:#fee2e2;color:#b91c1c;border:none;border-radius: 4px;padding:2px 6px;">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="8" style="text-align:center;padding:40px;color:var(--text-muted);">
+            <i class="bi bi-box-seam" style="font-size:32px;display:block;margin-bottom:8px;"></i>
+            Nenhum produto cadastrado.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <!-- BARRA DE PAGINAÇÃO ESTILIZADA -->
+    <div class="pagination-container">
+      <div class="items-per-page-wrap">
+        <span>Itens por página:</span>
+        <select class="items-per-page-select" onchange="window.location.href='?q={{ q }}&tipo={{ tipo }}&situacao={{ situacao }}&per_page=' + this.value;">
+          <option value="20" {% if per_page == '20' %}selected{% endif %}>20</option>
+          <option value="50" {% if per_page == '50' %}selected{% endif %}>50</option>
+          <option value="100" {% if per_page == '100' %}selected{% endif %}>100</option>
+        </select>
+      </div>
+
+      <div class="pagination-info">
+        {{ page_obj.start_index }}-{{ page_obj.end_index }} de {{ total }}
+      </div>
+
+      <div class="pagination-nav-compact">
+        {% if page_obj.has_previous %}
+          <a href="?q={{ q }}&tipo={{ tipo }}&situacao={{ situacao }}&per_page={{ per_page }}&page=1" class="page-btn-compact" title="Primeira">
+            <i class="bi bi-chevron-double-left"></i>
+          </a>
+          <a href="?q={{ q }}&tipo={{ tipo }}&situacao={{ situacao }}&per_page={{ per_page }}&page={{ page_obj.previous_page_number }}" class="page-btn-compact">
+            <i class="bi bi-chevron-left"></i>
+          </a>
+        {% else %}
+          <span class="page-btn-compact disabled"><i class="bi bi-chevron-double-left"></i></span>
+          <span class="page-btn-compact disabled"><i class="bi bi-chevron-left"></i></span>
+        {% endif %}
+
+        {% if page_obj.has_next %}
+          <a href="?q={{ q }}&tipo={{ tipo }}&situacao={{ situacao }}&per_page={{ per_page }}&page={{ page_obj.next_page_number }}" class="page-btn-compact">
+            <i class="bi bi-chevron-right"></i>
+          </a>
+          <a href="?q={{ q }}&tipo={{ tipo }}&situacao={{ situacao }}&per_page={{ per_page }}&page={{ page_obj.paginator.num_pages }}" class="page-btn-compact" title="Última">
+            <i class="bi bi-chevron-double-right"></i>
+          </a>
+        {% else %}
+          <span class="page-btn-compact disabled"><i class="bi bi-chevron-right"></i></span>
+          <span class="page-btn-compact disabled"><i class="bi bi-chevron-double-right"></i></span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+
+
+{% block extra_js %}
+<script>
+  function abrirImpressao() {
+    var form   = document.getElementById('filtrosForm');
+    var params = new URLSearchParams(new FormData(form));
+    var url    = '{% url "produtos:imprimir" %}?' + params.toString();
+    window.open(url, '_blank');
+    fecharPrintDrop();
+  }
+
+  function exportarExcel() {
+    var form   = document.getElementById('filtrosForm');
+    var params = new URLSearchParams(new FormData(form));
+    var url    = '{% url "produtos:exportar_excel" %}?' + params.toString();
+    window.location.href = url;
+    fecharPrintDrop();
+  }
+
+  function togglePrintDrop(e) {
+    if(e) e.stopPropagation();
+    var menu = document.getElementById('printDropMenu');
+    if(menu.style.display === 'none' || menu.style.display === '') {
+      menu.style.display = 'block';
+    } else {
+      menu.style.display = 'none';
+    }
+  }
+  function fecharPrintDrop() {
+    var menu = document.getElementById('printDropMenu');
+    if(menu) menu.style.display = 'none';
+  }
+  document.addEventListener('click', function(e) {
+    var wrap = document.getElementById('printDropWrap');
+    if (wrap && !wrap.contains(e.target)) {
+      fecharPrintDrop();
+    }
+  });
+</script>
+{% endblock %}

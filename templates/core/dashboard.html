@@ -1,0 +1,264 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard{% endblock %}
+{% block breadcrumb %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- WELCOME BANNER -->
+<div class="welcome-banner">
+  <div class="welcome-msg">
+    Olá, <strong>{{ request.user.first_name|default:request.user.username|lower }}.</strong> 
+    <span style="opacity: 0.8; margin-left: 5px; font-weight: 400;">Dashboard Inicial</span>
+  </div>
+  <div class="welcome-actions d-none d-md-flex">
+    <a href="{% url 'relatorios:index' %}" class="welcome-action-item">
+      <i class="bi bi-bar-chart-line"></i> Relatórios
+    </a>
+  </div>
+</div>
+
+<!-- STAT CARDS -->
+<div class="row g-3 mb-4">
+  <div class="col-xl-3 col-sm-6">
+    <div class="stat-card primary">
+      <div class="stat-icon"><i class="bi bi-box-seam"></i></div>
+      <div class="stat-label">Total de Produtos</div>
+      <div class="stat-value">{{ total_produtos }}</div>
+      <div class="stat-change text-success">
+        <i class="bi bi-arrow-up-short"></i> Cadastrados no sistema
+      </div>
+    </div>
+  </div>
+  <div class="col-xl-3 col-sm-6">
+    <div class="stat-card success">
+      <div class="stat-icon"><i class="bi bi-people"></i></div>
+      <div class="stat-label">Total Clientes</div>
+      <div class="stat-value">{{ total_clientes }}</div>
+      <div class="stat-change text-success">
+        <i class="bi bi-arrow-up-short"></i> {{ clientes_mes }} novo(s) este mês
+      </div>
+    </div>
+  </div>
+  <div class="col-xl-3 col-sm-6">
+    <div class="stat-card warning">
+      <div class="stat-icon"><i class="bi bi-exclamation-circle"></i></div>
+      <div class="stat-label">Total Devedor</div>
+      <div class="stat-value">R$ {{ total_devedor|floatformat:2 }}</div>
+      <div class="stat-change text-danger">
+        <i class="bi bi-arrow-down-short"></i> Total a Receber
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CHARTS ROW -->
+<div class="row g-3 mb-4">
+  <!-- Status Recebimentos -->
+  <div class="col-xl-5">
+    <div class="card h-100">
+      <div class="card-header">
+        <h5 class="card-title">Status de Recebimentos</h5>
+      </div>
+      <div class="card-body d-flex flex-column align-items-center justify-content-center" style="min-height: 280px;">
+        <div style="position:relative;height:220px;width:100%;max-width:240px;">
+          <canvas id="recebimentosChart" style="display:block;"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM ROW -->
+<div class="row g-3">
+  <!-- Últimas OS -->
+  <div class="col-xl-7">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-title">Últimas Ordens de Serviço</h5>
+        <a href="{% url 'ordens:lista' %}" class="btn-outline-custom" style="padding:6px 14px;font-size:12px;">
+          Ver todas <i class="bi bi-arrow-right ms-1"></i>
+        </a>
+      </div>
+      <div class="card-body p-0">
+        <table class="table-custom w-100">
+          <thead>
+            <tr>
+              <th>OS</th>
+              <th>Cliente</th>
+              <th>Equipamento</th>
+              <th>Status</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for os in ultimas_os %}
+            <tr>
+              <td><strong>#{{ os.numero }}</strong></td>
+              <td>{{ os.cliente.nome|truncatechars:25 }}</td>
+              <td>{{ os.equipamento|truncatechars:20 }}</td>
+              <td><span class="badge-status badge-{{ os.status }}">{{ os.get_status_display }}</span></td>
+              <td>R$ {{ os.total|floatformat:2 }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="5" style="text-align:center;color:var(--text-muted);padding:24px;">
+                <i class="bi bi-inbox me-2"></i>Nenhuma OS cadastrada
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contas a Vencer -->
+  <div class="col-xl-5">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-title">Ranking de Inadimplência</h5>
+        <a href="{% url 'financeiro:contas_receber' %}" class="btn-outline-custom" style="padding:6px 14px;font-size:12px;">
+          Ver todas <i class="bi bi-arrow-right ms-1"></i>
+        </a>
+      </div>
+      <div class="card-body p-0">
+        <table class="table-custom w-100">
+          <thead>
+            <tr>
+              <th>Cliente</th>
+              <th>Valor</th>
+              <th>Vencimento</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for conta in contas_atrasadas %}
+            <tr>
+              <td>{{ conta.cliente.nome|truncatechars:22 }}</td>
+              <td style="color:var(--danger);font-weight:600;">R$ {{ conta.valor|floatformat:2 }}</td>
+              <td>
+                <span class="badge-status badge-atrasado">{{ conta.vencimento|date:"d/m/Y" }}</span>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="3" style="text-align:center;color:var(--text-muted);padding:24px;">
+                <i class="bi bi-check-circle text-success me-2"></i>Sem inadimplências
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CARROSSEL DE BANNERS GLOBAL -->
+{% if banners %}
+<div class="row mt-4 mb-2">
+  <div class="col-12">
+    <div class="card overflow-hidden" style="border: none; box-shadow: var(--shadow-md);">
+      <div id="dashboardCarousel" class="carousel slide" data-bs-ride="carousel">
+        <div class="carousel-indicators">
+          {% for banner in banners %}
+          <button type="button" data-bs-target="#dashboardCarousel" data-bs-slide-to="{{ forloop.counter0 }}" 
+                  class="{% if forloop.first %}active{% endif %}" aria-label="Slide {{ forloop.counter }}"></button>
+          {% endfor %}
+        </div>
+        <div class="carousel-inner" style="border-radius: var(--radius);">
+          {% for banner in banners %}
+          <div class="carousel-item {% if forloop.first %}active{% endif %}" data-bs-interval="5000">
+            {% if banner.link %}<a href="{{ banner.link }}" target="_blank">{% endif %}
+              <div style="position: relative; height: 320px; overflow: hidden;">
+                <img src="{{ banner.imagem.url }}" class="d-block w-100 h-100" style="object-fit: cover;" alt="Banner">
+              </div>
+            {% if banner.link %}</a>{% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+  'use strict';
+
+  function initDashboardCharts() {
+    // 1. Verificar se o Chart.js está disponível
+    var ChartLib = window.Chart;
+    if (!ChartLib) {
+      console.warn('Chart.js não foi carregado corretamente.');
+      return;
+    }
+
+    // Canvas checks
+    var doughCanvas = document.getElementById('recebimentosChart');
+
+    if (!doughCanvas) return;
+
+    // 2. Capturar dados do Django com fallback seguro
+    var recAtrasado  = parseFloat("{{ rec_atrasado|default:0 }}");
+    var recPago      = parseFloat("{{ rec_pago|default:0 }}");
+    var recPendente  = parseFloat("{{ rec_pendente|default:0 }}");
+
+    // Defaults globais
+    ChartLib.defaults.font.family = "'Inter', 'Segoe UI', Arial, sans-serif";
+    ChartLib.defaults.color       = '#94a3b8';
+
+    // ════════════════════════════════════════════════════════════════════════
+    //  GRÁFICO DE DONUT — Status de Recebimentos
+    // ════════════════════════════════════════════════════════════════════════
+    if (doughCanvas) {
+      var oldChart = ChartLib.getChart(doughCanvas);
+      if (oldChart) oldChart.destroy();
+
+      var totalRec = recAtrasado + recPago + recPendente;
+      var semDados = totalRec === 0;
+
+      new ChartLib(doughCanvas, {
+        type: 'doughnut',
+        data: {
+          labels: ['Atrasado', 'Pago', 'Pendente'],
+          datasets: [{
+            data: semDados ? [1, 1, 1] : [recAtrasado, recPago, recPendente],
+            backgroundColor: semDados ? ['#f1f5f9', '#f1f5f9', '#f1f5f9'] : ['#ef4444', '#10b981', '#f59e0b'],
+            borderWidth: 0,
+            hoverOffset: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '75%',
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                boxWidth: 12,
+                padding: 15,
+                font: { size: 11, weight: '500' }
+              }
+            }
+          }
+        }
+      });
+    }
+  }
+
+  // Inicializa na carga inicial ou swap do HTMX
+  initDashboardCharts();
+  
+  // Caso o HTMX execute antes do DOM estar pronto ou em transições complexas
+  document.body.addEventListener('htmx:afterSettle', initDashboardCharts);
+})();
+</script>
+{% endblock %}
+
+

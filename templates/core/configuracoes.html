@@ -1,0 +1,237 @@
+{% extends 'base.html' %}
+{% block title %}Configurações{% endblock %}
+{% block breadcrumb %}Sistema / Configurações{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="page-title"><i class="bi bi-gear me-2"></i>Configurações do Sistema</h1>
+        <p class="text-muted small mb-0">Gerencie usuários, permissões e dados da sua loja.</p>
+    </div>
+</div>
+
+<div class="card p-0" style="border: none; background: transparent; box-shadow: none;">
+    <!-- Tabs Navigation -->
+    <ul class="nav nav-tabs border-0" id="configTabs" role="tablist" style="gap: 0; background-color: #f8fafc; border-radius: 8px 8px 0 0; padding: 0 10px; display: inline-flex;">
+        <li class="nav-item">
+            <button class="nav-link active border-0" id="users-tab" data-bs-toggle="tab" data-bs-target="#users" type="button" 
+                    style="border-radius: 8px 8px 0 0; padding: 10px 20px; font-weight: 600; font-size: 13px; background: #fff; color: var(--text-primary); margin-top: 5px;">
+                <i class="bi bi-people me-2"></i>Gerenciar Usuários
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link border-0" id="issuer-tab" data-bs-toggle="tab" data-bs-target="#issuer" type="button"
+                    style="border-radius: 8px 8px 0 0; padding: 10px 20px; font-weight: 600; font-size: 13px; background: transparent; color: var(--text-muted); margin-top: 5px;">
+                <i class="bi bi-building me-2"></i>Dados da Loja
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link border-0" id="system-tab" data-bs-toggle="tab" data-bs-target="#system" type="button"
+                    style="border-radius: 8px 8px 0 0; padding: 10px 20px; font-weight: 600; font-size: 13px; background: transparent; color: var(--text-muted); margin-top: 5px;">
+                <i class="bi bi-laptop me-2"></i>Configurações do Sistema
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="configTabsContent">
+        <!-- TAB: USUÁRIOS -->
+        <div class="tab-pane fade show active" id="users" role="tabpanel">
+            <div class="card" style="border-top-left-radius: 0;">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title m-0">Usuários Ativos</h5>
+                    <span class="badge bg-light text-muted border">Somente Visualização</span>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table-custom w-100">
+                        <thead>
+                            <tr>
+                                <th style="padding-left: 20px;">Nome / Usuário</th>
+                                <th>Perfil</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for p in usuarios %}
+                            <tr>
+                                <td style="padding-left: 20px;">
+                                    <div style="font-weight: 600; color: var(--text-primary);">{{ p.user.get_full_name|default:p.user.username }}</div>
+                                    <div style="font-size: 11px; color: var(--text-muted);">@{{ p.user.username }}</div>
+                                </td>
+                                <td>
+                                    <span class="badge" style="background: rgba(37, 99, 235, 0.1); color: var(--primary); border: 1px solid rgba(37, 99, 235, 0.2); font-weight: 600;">
+                                        {{ p.get_perfil_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if p.ativo %}
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle">Ativo</span>
+                                    {% else %}
+                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle">Inativo</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center py-5 text-muted">Nenhum usuário encontrado.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: DADOS DA LOJA (EMITENTE) -->
+        <div class="tab-pane fade" id="issuer" role="tabpanel">
+            <div class="card" style="border-top-left-radius: 0;">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title m-0">Informações do Emitente</h5>
+                    <span class="badge bg-light text-muted border">Somente Visualização</span>
+                </div>
+                <div class="card-body">
+                    <div class="row g-4">
+                        <div class="col-md-3 text-center">
+                            <div style="width: 150px; height: 150px; border: 2px dashed var(--border-color); border-radius: 10px; margin: 0 auto; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                                {% if empresa.logo %}
+                                <img src="{{ empresa.logo.url }}" alt="Logo" style="max-width: 100%; max-height: 100%;">
+                                {% else %}
+                                <i class="bi bi-image text-muted" style="font-size: 48px; opacity: 0.2;"></i>
+                                {% endif %}
+                            </div>
+                            <small class="text-muted d-block mt-2">Logomarca da Empresa</small>
+                        </div>
+                        <div class="col-md-9">
+                            <div class="row g-3">
+                                <div class="col-md-8">
+                                    <label class="form-label-custom">Razão Social / Nome Fantasia</label>
+                                    <input type="text" class="form-control-custom bg-light" value="{{ empresa.nome }}" readonly>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label-custom">CNPJ</label>
+                                    <input type="text" class="form-control-custom bg-light" value="{{ empresa.cnpj|default:'---' }}" readonly>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label-custom">E-mail de Contato</label>
+                                    <input type="text" class="form-control-custom bg-light" value="{{ empresa.email|default:'---' }}" readonly>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label-custom">Telefone / WhatsApp</label>
+                                    <input type="text" class="form-control-custom bg-light" value="{{ empresa.telefone|default:'---' }}" readonly>
+                                </div>
+                                <div class="col-md-12">
+                                    <label class="form-label-custom">Endereço Completo</label>
+                                    <input type="text" class="form-control-custom bg-light" value="{{ empresa.endereco|default:'---' }}" readonly>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: CONFIGURAÇÕES DO SISTEMA -->
+        <div class="tab-pane fade" id="system" role="tabpanel">
+            <div class="card" style="border-top-left-radius: 0;">
+                <div class="card-header">
+                    <h5 class="card-title m-0">Parâmetros do Sistema</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" id="configForm">
+                        {% csrf_token %}
+                        <input type="hidden" name="update_config" value="1">
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <h6 class="mb-3 border-bottom pb-2" style="font-size: 14px; font-weight: 600;">Comunicações</h6>
+                                <div class="mb-3">
+                                    <div class="form-check form-switch custom-switch">
+                                        <input class="form-check-input" type="checkbox" name="whatsapp_notificacao" id="waSwitch" {% if config.whatsapp_notificacao %}checked{% endif %}>
+                                        <label class="form-check-label" for="waSwitch" style="font-size: 13px;">Habilitar botão de envio via WhatsApp (Orçamentos)</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="mb-3 border-bottom pb-2" style="font-size: 14px; font-weight: 600;">Ponto de Venda (PDV)</h6>
+                                <div class="mb-3">
+                                    <div class="form-check form-switch custom-switch">
+                                        <input class="form-check-input" type="checkbox" name="impressao_automatica_pdv" id="printSwitch" {% if config.impressao_automatica_pdv %}checked{% endif %}>
+                                        <label class="form-check-label" for="printSwitch" style="font-size: 13px;">Habilitar impressão automática (Nova aba) do Cupom 80mm ao finalizar venda no PDV</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12 mt-4">
+                                <button type="submit" class="btn btn-primary" style="padding: 10px 24px; font-weight: 600; font-size: 13px; border-radius: 6px;">
+                                    <i class="bi bi-save me-2"></i>SALVAR PARÂMETROS
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .nav-tabs .nav-link:hover {
+        background: #f1f5f9 !important;
+        color: var(--primary) !important;
+    }
+    .nav-tabs .nav-link.active {
+        background: #fff !important;
+        color: var(--primary) !important;
+        border-bottom: 3px solid var(--primary) !important;
+    }
+    /* Estilização Manual de Abas (Bootstrap) para match com o sistema */
+    .tab-pane .card {
+        border-top: 1px solid var(--border-color);
+    }
+</style>
+
+<script>
+    // Script simples para mudar o estilo visual das abas ao clicar
+    document.querySelectorAll('#configTabs button').forEach(button => {
+        button.addEventListener('shown.bs.tab', function () {
+            document.querySelectorAll('#configTabs button').forEach(b => {
+                b.style.background = 'transparent';
+                b.style.color = 'var(--text-muted)';
+            });
+            this.style.background = '#fff';
+            this.style.color = 'var(--text-primary)';
+        });
+    });
+
+    // Enviar formulário via AJAX para não sair da aba atual
+    const configForm = document.getElementById('configForm');
+    if (configForm) {
+        configForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            fetch(window.location.href, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.sucesso) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Sucesso',
+                        text: 'Configurações de sistema atualizadas!',
+                        timer: 3000,
+                        showConfirmButton: false
+                    });
+                } else {
+                    Swal.fire('Erro', 'Ocorreu um erro ao salvar as configurações.', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire('Erro', 'Falha na comunicação com o servidor.', 'error');
+            });
+        });
+    }
+</script>
+{% endblock %}

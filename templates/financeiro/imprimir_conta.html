@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Recibo de Conta #{{ conta.id }}</title>
+    <style>
+        @page { size: 80mm auto; margin: 0; }
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            width: 80mm;
+            margin: 0 auto;
+            padding: 10px;
+            font-size: 12px;
+            line-height: 1.3;
+            color: #000;
+        }
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        .bold { font-weight: bold; }
+        .divider { border-top: 1px dashed #000; margin: 8px 0; }
+        .header { margin-bottom: 12px; }
+        .info-row { display: flex; justify-content: space-between; margin-bottom: 3px; }
+        .footer { margin-top: 15px; border-top: 1px solid #000; padding-top: 10px; font-size: 10px; }
+        
+        @media print {
+            .no-print { display: none; }
+        }
+        
+        .btn-print-box {
+            background: #f8fafc;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            text-align: center;
+        }
+        .btn-print {
+            padding: 10px 20px;
+            cursor: pointer;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-weight: 600;
+            font-family: sans-serif;
+        }
+    </style>
+</head>
+<body onload="window.print()">
+
+    <div class="no-print btn-print-box">
+        <button class="btn-print" onclick="window.print()">IMPRIMIR RECIBO</button>
+        <button class="btn-print" style="background:#64748b; margin-left:10px;" onclick="window.close()">FECHAR</button>
+    </div>
+
+    <!-- CABEÇALHO -->
+    <div class="header text-center">
+        <div class="bold" style="font-size: 16px;">{{ conta.empresa.nome|upper }}</div>
+        <div>CNPJ: {{ conta.empresa.cnpj|default:"---" }}</div>
+        <div>{{ conta.empresa.endereco|default:"" }}</div>
+        <div>Tel: {{ conta.empresa.telefone|default:"" }}</div>
+    </div>
+
+    <div class="divider"></div>
+    <div class="text-center bold">RECIBO DE CONTA A RECEBER</div>
+    <div class="divider"></div>
+
+    <div class="info-row">
+        <span>CONTA:</span>
+        <span class="bold">#{{ conta.id }}</span>
+    </div>
+    <div class="info-row">
+        <span>Nº DOC:</span>
+        <span class="bold">{{ conta.numero_titulo|default:"---" }}</span>
+    </div>
+    <div class="info-row">
+        <span>EMISSÃO:</span>
+        <span>{{ conta.emissao|date:"d/m/Y" }}</span>
+    </div>
+    <div class="info-row">
+        <span>VENCIMENTO:</span>
+        <span class="bold">{{ conta.vencimento|date:"d/m/Y" }}</span>
+    </div>
+    {% if conta.pagamento %}
+    <div class="info-row">
+        <span>PAGAMENTO:</span>
+        <span>{{ conta.pagamento|date:"d/m/Y" }}</span>
+    </div>
+    {% endif %}
+
+    <div class="divider"></div>
+    
+    <div class="bold">CLIENTE:</div>
+    <div style="margin-bottom: 8px;">{{ conta.cliente.nome|upper }}</div>
+    
+    <div class="info-row">
+        <span>PARCELA:</span>
+        <span>{{ conta.parcela }}</span>
+    </div>
+    <div class="info-row">
+        <span>STATUS:</span>
+        <span class="bold">{{ conta.get_status_display|upper }}</span>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="info-row" style="font-size: 14px;">
+        <span class="bold">VALOR TÍTULO:</span>
+        <span class="bold">R$ {{ conta.valor|floatformat:2 }}</span>
+    </div>
+    <div class="info-row">
+        <span>VALOR PAGO:</span>
+        <span class="bold">R$ {{ conta.valor_pago|floatformat:2 }}</span>
+    </div>
+    <div class="info-row">
+        <span>DESCONTO:</span>
+        <span>R$ {{ conta.desconto|floatformat:2 }}</span>
+    </div>
+    <div class="divider"></div>
+    <div class="info-row" style="font-size: 15px;">
+        <span class="bold">SALDO DEVEDOR:</span>
+        <span class="bold">R$ {{ conta.saldo_devedor|floatformat:2 }}</span>
+    </div>
+
+    {% if conta.observacoes %}
+    <div class="divider"></div>
+    <div class="bold">OBSERVAÇÕES:</div>
+    <div style="font-size: 11px;">{{ conta.observacoes }}</div>
+    {% endif %}
+
+    <div class="divider"></div>
+    
+    <div class="text-center footer">
+        DIGI-OS — SISTEMA DE GESTÃO<br>
+        Impresso em {% now "d/m/Y H:i" %}
+    </div>
+
+    <div style="height: 50px;"></div>
+    <div class="text-center">.</div>
+
+</body>
+</html>

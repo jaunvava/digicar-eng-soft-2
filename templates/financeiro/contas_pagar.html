@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% block title %}Contas a Pagar{% endblock %}
+{% block breadcrumb %}Financeiro / Contas a Pagar{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex align-items-center justify-content-between">
+  <div>
+    <h1 class="page-title">Contas a Pagar</h1>
+  </div>
+  <a href="{% url 'financeiro:nova_conta_pagar' %}" class="btn-primary-custom">
+    <i class="bi bi-plus-lg"></i> Nova Conta
+  </a>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="stat-card warning">
+      <div class="stat-icon"><i class="bi bi-clock"></i></div>
+      <div class="stat-label">Total Pendente</div>
+      <div class="stat-value" style="font-size:20px;">R$ {{ total_pendente|floatformat:2 }}</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="stat-card danger">
+      <div class="stat-icon"><i class="bi bi-exclamation-triangle"></i></div>
+      <div class="stat-label">Total Atrasado</div>
+      <div class="stat-value" style="font-size:20px;">R$ {{ total_atrasado|floatformat:2 }}</div>
+    </div>
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-body" style="padding:14px 20px;">
+    <form method="GET" class="d-flex gap-3 flex-wrap">
+      <div style="flex:1;min-width:200px;position:relative;">
+        <i class="bi bi-search" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-muted);"></i>
+        <input type="text" name="q" value="{{ q }}" placeholder="Buscar fornecedor ou descrição..." class="form-control-custom" style="padding-left:36px;">
+      </div>
+      <select name="status" class="form-control-custom" style="width:160px;">
+        <option value="">Todos</option>
+        <option value="pendente"  {% if status == 'pendente' %}selected{% endif %}>Pendente</option>
+        <option value="atrasado"  {% if status == 'atrasado' %}selected{% endif %}>Atrasado</option>
+        <option value="pago"      {% if status == 'pago' %}selected{% endif %}>Pago</option>
+      </select>
+      <button type="submit" class="btn-primary-custom">Filtrar</button>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body p-0">
+    <table class="table-custom w-100" style="font-size: 13px;">
+      <thead>
+        <tr>
+          <th style="padding-left: 20px;">ID</th>
+          <th>Nº Título</th>
+          <th>Descriçāo</th>
+          <th>Parcela</th>
+          <th>Fornecedor</th>
+          <th>Emissāo</th>
+          <th>Saldo</th>
+          <th>Valor Pago</th>
+          <th>Vencimento</th>
+          <th>R$ Pagar</th>
+          <th>R$ Desconto</th>
+          <th class="text-end">R$ Título</th>
+          <th class="text-end" style="padding-right: 20px;">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for conta in contas %}
+        <tr>
+          <td style="padding-left: 20px;">{{ conta.id }}</td>
+          <td>{{ conta.numero_titulo|default:"—" }}</td>
+          <td title="{{ conta.descricao }}">{{ conta.descricao|truncatechars:20 }}</td>
+          <td>{{ conta.parcela }}</td>
+          <td><strong>{{ conta.fornecedor|truncatechars:20 }}</strong></td>
+          <td>{{ conta.emissao|date:"d/m/Y" }}</td>
+          <td style="color: var(--danger); font-weight: 600;">R$ {{ conta.saldo_devedor|floatformat:2 }}</td>
+          <td style="color: var(--success);">R$ {{ conta.valor_pago|floatformat:2 }}</td>
+          <td>{{ conta.vencimento|date:"d/m/Y" }}</td>
+          <td>R$ {{ conta.saldo_devedor|floatformat:2 }}</td>
+          <td>R$ {{ conta.desconto|floatformat:2 }}</td>
+          <td class="text-end" style="font-weight: 600;">R$ {{ conta.valor|floatformat:2 }}</td>
+          <td class="text-end" style="padding-right: 20px;">
+            {% if conta.status != 'pago' %}
+            <a href="{% url 'financeiro:baixar_conta_pagar' conta.id %}" class="btn btn-sm btn-outline-success">Baixar</a>
+            {% else %}
+            <span class="badge bg-success">Pago</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="12" style="text-align:center;padding:40px;color:var(--text-muted);">Nenhuma conta a pagar encontrada.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

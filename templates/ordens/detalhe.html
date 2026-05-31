@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+{% block title %}OS #{{ os.numero }}{% endblock %}
+{% block breadcrumb %}Ordens / OS #{{ os.numero }}{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex align-items-center justify-content-between">
+  <div>
+    <h1 class="page-title">OS #{{ os.numero }} — {{ os.cliente.nome }}</h1>
+    <p class="page-subtitle">{{ os.equipamento }} | {{ os.get_prioridade_display }} | Entrada: {{ os.data_entrada|date:"d/m/Y H:i" }}</p>
+  </div>
+  <div class="d-flex gap-2">
+    <!-- Alterar status -->
+    <form method="POST" action="{% url 'ordens:status' os.pk %}" class="d-flex gap-2">
+      {% csrf_token %}
+      <select name="status" class="form-control-custom" style="width:180px;">
+        {% for val, label in os.STATUS_CHOICES %}
+          <option value="{{ val }}" {% if os.status == val %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="btn-primary-custom">Atualizar</button>
+    </form>
+    <a href="{% url 'ordens:imprimir' os.pk %}" target="_blank" class="btn-primary-custom" style="padding: 6px 16px; font-size:14px; height: 38px;"><i class="bi bi-printer me-1"></i> Imprimir</a>
+    <a href="{% url 'ordens:lista' %}" class="btn-outline-custom" style="padding: 6px 16px; font-size:14px; height: 38px;">
+      <i class="bi bi-arrow-left me-1"></i> Voltar
+    </a>
+  </div>
+</div>
+
+<div class="row g-3">
+  <!-- Info principal -->
+  <div class="col-xl-8">
+    <!-- Equipamento -->
+    <div class="card mb-3">
+      <div class="card-header">
+        <h5 class="card-title"><i class="bi bi-cpu me-2"></i>Equipamento</h5>
+        <span class="badge-status badge-{{ os.status }}">{{ os.get_status_display }}</span>
+      </div>
+      <div class="card-body">
+        <div class="row g-3" style="font-size:14px;">
+          <div class="col-md-6">
+            <label style="font-size:11px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;">Equipamento</label>
+            <p style="font-weight:600;margin-top:2px;">{{ os.equipamento }}</p>
+          </div>
+          <div class="col-md-3">
+            <label style="font-size:11px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;">Marca</label>
+            <p style="margin-top:2px;">{{ os.marca|default:"—" }}</p>
+          </div>
+          <div class="col-md-3">
+            <label style="font-size:11px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;">Modelo</label>
+            <p style="margin-top:2px;">{{ os.modelo|default:"—" }}</p>
+          </div>
+          <div class="col-12">
+            <label style="font-size:11px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;">Defeito Reclamado</label>
+            <p style="margin-top:2px;padding:12px;background:#f8fafc;border-radius: 5px;">{{ os.defeito_reclamado }}</p>
+          </div>
+          {% if os.defeito_constatado %}
+          <div class="col-12">
+            <label style="font-size:11px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;">Defeito Constatado</label>
+            <p style="margin-top:2px;padding:12px;background:#f8fafc;border-radius: 5px;">{{ os.defeito_constatado }}</p>
+          </div>
+          {% endif %}
+          {% if os.solucao %}
+          <div class="col-12">
+            <label style="font-size:11px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;">Solução Aplicada</label>
+            <p style="margin-top:2px;padding:12px;background:#d1fae5;border-radius: 5px;color:#065f46;">{{ os.solucao }}</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Itens da OS -->
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-title"><i class="bi bi-list-task me-2"></i>Serviços e Peças</h5>
+      </div>
+      <div class="card-body p-0">
+        <table class="table-custom w-100">
+          <thead>
+            <tr>
+              <th>Tipo</th>
+              <th>Descrição</th>
+              <th>Qtd</th>
+              <th>Preço Unit.</th>
+              <th>Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in itens %}
+            <tr>
+              <td>
+                {% if item.tipo == 'servico' %}
+                  <span class="badge-status badge-aberta">Serviço</span>
+                {% else %}
+                  <span class="badge-status badge-pendente">Peça</span>
+                {% endif %}
+              </td>
+              <td>{{ item.descricao }}</td>
+              <td>{{ item.quantidade }}</td>
+              <td>R$ {{ item.preco_unitario|floatformat:2 }}</td>
+              <td><strong>R$ {{ item.subtotal|floatformat:2 }}</strong></td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted);">Nenhum item cadastrado.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar info -->
+  <div class="col-xl-4">
+    <!-- Cliente -->
+    <div class="card mb-3">
+      <div class="card-header"><h5 class="card-title"><i class="bi bi-person me-2"></i>Cliente</h5></div>
+      <div class="card-body" style="font-size:14px;">
+        <p style="font-weight:700;font-size:15px;margin-bottom:4px;">{{ os.cliente.nome }}</p>
+        <p style="color:var(--text-secondary);">{{ os.cliente.telefone|default:os.cliente.celular|default:"—" }}</p>
+        <p style="color:var(--text-secondary);">{{ os.cliente.email|default:"—" }}</p>
+        {% if os.cliente.cidade %}
+          <p style="color:var(--text-secondary);">{{ os.cliente.cidade }}/{{ os.cliente.estado }}</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Financeiro -->
+    <div class="card mb-3">
+      <div class="card-header"><h5 class="card-title"><i class="bi bi-cash me-2"></i>Resumo Financeiro</h5></div>
+      <div class="card-body" style="font-size:14px;">
+        <div class="d-flex justify-content-between mb-2">
+          <span style="color:var(--text-secondary);">Serviços:</span>
+          <span>R$ {{ os.valor_servicos|floatformat:2 }}</span>
+        </div>
+        <div class="d-flex justify-content-between mb-2">
+          <span style="color:var(--text-secondary);">Peças:</span>
+          <span>R$ {{ os.valor_pecas|floatformat:2 }}</span>
+        </div>
+        <div class="d-flex justify-content-between mb-2">
+          <span style="color:var(--text-secondary);">Desconto:</span>
+          <span style="color:var(--danger);">- R$ {{ os.desconto|floatformat:2 }}</span>
+        </div>
+        <div class="d-flex justify-content-between" style="font-size:18px;font-weight:700;border-top:1px solid var(--border-color);padding-top:10px;margin-top:4px;">
+          <span>Total:</span>
+          <span style="color:var(--primary);">R$ {{ os.total|floatformat:2 }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Datas -->
+    <div class="card">
+      <div class="card-header"><h5 class="card-title"><i class="bi bi-calendar3 me-2"></i>Datas</h5></div>
+      <div class="card-body" style="font-size:13px;">
+        <div class="d-flex justify-content-between mb-1">
+          <span style="color:var(--text-secondary);">Entrada:</span>
+          <span>{{ os.data_entrada|date:"d/m/Y H:i" }}</span>
+        </div>
+        <div class="d-flex justify-content-between mb-1">
+          <span style="color:var(--text-secondary);">Prevista:</span>
+          <span>{{ os.data_prevista|date:"d/m/Y"|default:"—" }}</span>
+        </div>
+        <div class="d-flex justify-content-between">
+          <span style="color:var(--text-secondary);">Conclusão:</span>
+          <span>{{ os.data_conclusao|date:"d/m/Y H:i"|default:"—" }}</span>
+        </div>
+        <div class="mt-2 pt-2" style="border-top:1px solid var(--border-color);">
+          <span style="color:var(--text-secondary);">Garantia:</span>
+          <strong> {{ os.garantia_dias }} dias</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

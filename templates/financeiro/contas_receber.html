@@ -1,0 +1,494 @@
+{% extends 'base.html' %}
+{% block title %}Contas a Receber{% endblock %}
+{% block breadcrumb %}Financeiro / Contas a Receber{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* ── badges de status ── */
+  .badge-status {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .3px;
+  }
+  .badge-pendente  { background: #fef3c7; color: #92400e; }
+  .badge-parcial   { background: rgba(6,182,212,.12); color: #0891b2; border: 1px solid rgba(6,182,212,.25); }
+  .badge-pago      { background: #d1fae5; color: #065f46; }
+  .badge-atrasado  { background: #fee2e2; color: #991b1b; }
+  .badge-cancelado { background: #f1f5f9; color: #64748b; }
+
+  /* ── linha separadora ID ── */
+  .id-col { border-right: 2px solid var(--border-color) !important; }
+
+  /* ── botões de ação inline ── */
+  .btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all .15s ease;
+    text-decoration: none;
+    padding: 0;
+    line-height: 1;
+  }
+  .btn-icon-view   { background: #e0f2fe; color: #0284c7; }
+  .btn-icon-edit   { background: #f1f5f9; color: #475569; }
+  .btn-icon-delete { background: #fee2e2; color: #dc2626; }
+  .btn-icon-view:hover   { background: #bae6fd; color: #0369a1; }
+  .btn-icon-edit:hover   { background: #e2e8f0; color: #1e293b; }
+  .btn-icon-delete:hover { background: #fecaca; color: #b91c1c; }
+
+  /* ── selects no filtro ── */
+  .filter-row select { appearance: auto !important; -webkit-appearance: auto !important; }
+
+  /* ── modal detalhes ── */
+  .modal-detalhe .info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 13px;
+  }
+  .modal-detalhe .info-row:last-child { border-bottom: none; }
+  .modal-detalhe .info-label {
+    font-weight: 600;
+    color: var(--text-secondary);
+    width: 40%;
+  }
+  .modal-detalhe .info-val { color: var(--text-primary); }
+  .modal-detalhe .valor-box {
+    background: #f8fafc;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    padding: 14px 20px;
+    display: flex;
+    justify-content: space-between;
+    margin-top: 12px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .modal-detalhe .valor-item { text-align: center; }
+  .modal-detalhe .valor-item span { display: block; font-size: 15px; font-weight: 700; }
+  .modal-detalhe .valor-item small { font-size: 10px; text-transform: uppercase;
+                                     font-weight: 600; color: var(--text-muted); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex align-items-center justify-content-between">
+  <h1 class="page-title">Contas a Receber</h1>
+</div>
+
+<!-- ══ Filtros de Pesquisa ══════════════════════════════════════════════ -->
+<div class="card mb-4">
+  <div class="card-header" style="padding:10px 20px;">
+    <h5 class="card-title" style="margin:0;font-size:14px;">
+      <i class="bi bi-funnel me-2"></i>Filtros de Pesquisa
+    </h5>
+  </div>
+  <div class="card-body" style="padding:14px 20px;">
+    <form method="GET" id="form-filtros">
+
+      <!-- linha de campos -->
+      <div class="filter-row d-flex flex-wrap gap-2 mb-3">
+        <input type="text" name="q" value="{{ q }}"
+               placeholder="Pesquisar por Cliente"
+               class="form-control-custom"
+               style="flex:1;min-width:170px;">
+
+        <input type="text" name="num_doc" value="{{ num_doc }}"
+               placeholder="Nº Documento"
+               class="form-control-custom"
+               style="width:150px;flex:0 0 auto;">
+
+        <div style="position:relative;width:150px;flex:0 0 auto;">
+          <label style="position:absolute;top:-9px;left:10px;font-size:10px;
+                        color:var(--text-muted);background:#fff;padding:0 4px;
+                        z-index:1;font-weight:500;">Status</label>
+          <select name="status" class="form-control-custom"
+                  style="appearance:auto;-webkit-appearance:auto;">
+            <option value="">Todos</option>
+            <option value="pendente"  {% if status == 'pendente'  %}selected{% endif %}>Pendente</option>
+            <option value="parcial"   {% if status == 'parcial'   %}selected{% endif %}>Parcial</option>
+            <option value="atrasado"  {% if status == 'atrasado'  %}selected{% endif %}>Atrasado</option>
+            <option value="pago"      {% if status == 'pago'      %}selected{% endif %}>Pago</option>
+            <option value="cancelado" {% if status == 'cancelado' %}selected{% endif %}>Cancelado</option>
+          </select>
+        </div>
+
+        <div style="position:relative;width:155px;flex:0 0 auto;">
+          <label style="position:absolute;top:-9px;left:10px;font-size:10px;
+                        color:var(--text-muted);background:#fff;padding:0 4px;
+                        z-index:1;font-weight:500;">Tipo de Data</label>
+          <select name="tipo_data" class="form-control-custom"
+                  style="appearance:auto;-webkit-appearance:auto;">
+            <option value="">— nenhum —</option>
+            <option value="vencimento" {% if tipo_data == 'vencimento' %}selected{% endif %}>Vencimento</option>
+            <option value="pagamento"  {% if tipo_data == 'pagamento'  %}selected{% endif %}>Pagamento</option>
+            <option value="emissao"    {% if tipo_data == 'emissao'    %}selected{% endif %}>Emissão</option>
+          </select>
+        </div>
+
+        <input type="date" name="data_ini" value="{{ data_ini }}"
+               class="form-control-custom"
+               style="width:145px;flex:0 0 auto;" title="Data inicial">
+
+        <input type="date" name="data_fim" value="{{ data_fim }}"
+               class="form-control-custom"
+               style="width:145px;flex:0 0 auto;" title="Data final">
+      </div>
+
+      <!-- linha de ações -->
+      <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <span style="font-size:13px;color:var(--primary);font-weight:500;">
+          {{ contas.paginator.count }} conta(s) encontrada(s)
+        </span>
+
+        <div class="d-flex gap-2 flex-wrap">
+          <a href="{% url 'financeiro:nova_conta_receber' %}" class="btn-action-green">
+            <i class="bi bi-plus-lg"></i> Nova Conta
+          </a>
+
+          <div class="btn-dropdown-wrap" id="printDropWrap">
+            <button type="button" class="btn-action-orange" onclick="togglePrintDrop(event)">
+              <i class="bi bi-printer"></i> Imprimir
+              <i class="bi bi-chevron-down" style="font-size:10px;margin-left:2px;"></i>
+            </button>
+            <div class="btn-dropdown-menu" id="printDropMenu" style="display:none;">
+              <button type="button" class="btn-drop-item" onclick="imprimirTabela()">
+                <i class="bi bi-file-pdf" style="color:#ef4444;"></i> Imprimir / PDF
+              </button>
+              <button type="button" class="btn-drop-item" onclick="exportarExcel()">
+                <i class="bi bi-file-earmark-excel" style="color:#16a34a;"></i> Exportar Excel
+              </button>
+            </div>
+          </div>
+
+          <a href="{% url 'financeiro:contas_receber' %}" class="btn-action-amber">
+            <i class="bi bi-x-lg"></i> Limpar
+          </a>
+          <button type="submit" class="btn-action-indigo">
+            <i class="bi bi-search"></i> Buscar
+          </button>
+        </div>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<!-- ══ Tabela ══════════════════════════════════════════════════════════ -->
+<div class="card">
+  <div class="card-body p-0">
+    <table class="table-custom w-100" style="font-size:13px;">
+      <thead>
+        <tr>
+          <th class="id-col" style="padding-left:20px;width:56px;">ID</th>
+          <th>Nº Doc</th>
+          <th>Cliente</th>
+          <th>Parcela</th>
+          <th>Emissão</th>
+          <th>Vencimento</th>
+          <th>Pagamento</th>
+          <th style="text-align:right;">R$ Título</th>
+          <th style="text-align:right;">Valor Pago</th>
+          <th style="text-align:right;">Saldo</th>
+          <th>Status</th>
+          <th style="text-align:center;padding-right:16px;width:90px;">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for conta in contas %}
+        <tr>
+          <td class="id-col" style="padding-left:20px;font-weight:600;color:var(--text-muted);">#{{ conta.id }}</td>
+          <td style="color:var(--text-muted);">{{ conta.numero_titulo|default:"—" }}</td>
+          <td><strong>{{ conta.cliente.nome|truncatechars:24 }}</strong></td>
+          <td>{{ conta.parcela }}</td>
+          <td>{{ conta.emissao|date:"d/m/Y" }}</td>
+          <td>{{ conta.vencimento|date:"d/m/Y" }}</td>
+          <td style="color:var(--text-muted);">{{ conta.pagamento|date:"d/m/Y"|default:"—" }}</td>
+          <td style="text-align:right;font-weight:600;">R$ {{ conta.valor|floatformat:2 }}</td>
+          <td style="text-align:right;color:var(--success);">R$ {{ conta.valor_pago|floatformat:2 }}</td>
+          <td style="text-align:right;color:var(--danger);font-weight:600;">R$ {{ conta.saldo_devedor|floatformat:2 }}</td>
+          <td>
+            <span class="badge-status badge-{{ conta.status }}">
+              {{ conta.get_status_display }}
+            </span>
+          </td>
+          <td style="text-align:center;padding-right:12px;white-space:nowrap;">
+
+            <!-- Visualizar → abre modal -->
+            <button class="btn-icon btn-icon-view me-1"
+                    title="Visualizar"
+                    onclick="abrirModal(this)"
+                    data-id="{{ conta.id }}"
+                    data-cliente="{{ conta.cliente.nome|escapejs }}"
+                    data-num-titulo="{{ conta.numero_titulo|escapejs }}"
+                    data-parcela="{{ conta.parcela }}"
+                    data-status="{{ conta.status }}"
+                    data-status-display="{{ conta.get_status_display }}"
+                    data-emissao="{{ conta.emissao|date:'d/m/Y' }}"
+                    data-vencimento="{{ conta.vencimento|date:'d/m/Y' }}"
+                    data-pagamento="{{ conta.pagamento|date:'d/m/Y'|default:'—' }}"
+                    data-valor="R$ {{ conta.valor|floatformat:2 }}"
+                    data-valor-pago="R$ {{ conta.valor_pago|floatformat:2 }}"
+                    data-desconto="R$ {{ conta.desconto|floatformat:2 }}"
+                    data-saldo="R$ {{ conta.saldo_devedor|floatformat:2 }}"
+                    data-obs="{{ conta.observacoes|escapejs }}"
+                    data-url-editar="{% url 'financeiro:editar_conta_receber' conta.pk %}"
+                    data-url-imprimir="{% url 'financeiro:imprimir_conta' conta.pk %}">
+              <i class="bi bi-eye"></i>
+            </button>
+
+            <!-- Editar -->
+            <a class="btn-icon btn-icon-edit me-1"
+               href="{% url 'financeiro:editar_conta_receber' conta.pk %}"
+               title="Editar">
+              <i class="bi bi-pencil"></i>
+            </a>
+
+            <!-- Excluir -->
+            <button class="btn-icon btn-icon-delete"
+                    title="Excluir"
+                    onclick="confirmarExclusao({{ conta.pk }}, '{{ conta.cliente.nome|escapejs }}')">
+              <i class="bi bi-trash"></i>
+            </button>
+
+            <!-- form oculto de exclusão -->
+            <form id="form-excluir-{{ conta.pk }}"
+                  method="POST"
+                  action="{% url 'financeiro:excluir_conta_receber' conta.pk %}"
+                  style="display:none;">
+              {% csrf_token %}
+            </form>
+
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="12" style="text-align:center;padding:40px;color:var(--text-muted);">
+            <i class="bi bi-inbox" style="font-size:28px;display:block;margin-bottom:8px;opacity:.5;"></i>
+            Nenhuma conta a receber encontrada.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Paginação -->
+  {% if contas.has_other_pages %}
+  <div class="pagination-container">
+    <div class="pagination-info">
+      Página {{ contas.number }} de {{ contas.paginator.num_pages }}
+    </div>
+    <div class="pagination-nav-compact">
+      {% if contas.has_previous %}
+        <a href="?page=1{% if q %}&q={{ q }}{% endif %}{% if status %}&status={{ status }}{% endif %}" class="page-btn-compact" title="Primeira">
+          <i class="bi bi-chevron-double-left"></i>
+        </a>
+        <a href="?page={{ contas.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if status %}&status={{ status }}{% endif %}" class="page-btn-compact" title="Anterior">
+          <i class="bi bi-chevron-left"></i>
+        </a>
+      {% else %}
+        <span class="page-btn-compact disabled"><i class="bi bi-chevron-double-left"></i></span>
+        <span class="page-btn-compact disabled"><i class="bi bi-chevron-left"></i></span>
+      {% endif %}
+
+      {% if contas.has_next %}
+        <a href="?page={{ contas.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if status %}&status={{ status }}{% endif %}" class="page-btn-compact" title="Próxima">
+          <i class="bi bi-chevron-right"></i>
+        </a>
+        <a href="?page={{ contas.paginator.num_pages }}{% if q %}&q={{ q }}{% endif %}{% if status %}&status={{ status }}{% endif %}" class="page-btn-compact" title="Última">
+          <i class="bi bi-chevron-double-right"></i>
+        </a>
+      {% else %}
+        <span class="page-btn-compact disabled"><i class="bi bi-chevron-right"></i></span>
+        <span class="page-btn-compact disabled"><i class="bi bi-chevron-double-right"></i></span>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<!-- ══ Modal Visualizar Conta ════════════════════════════════════════ -->
+<div class="modal fade" id="modalConta" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content" style="border:none;border-radius:8px;box-shadow:var(--shadow-lg);">
+
+      <div class="modal-header"
+           style="background:var(--primary);color:#fff;border-radius:8px 8px 0 0;border:none;padding:14px 20px;">
+        <h5 class="modal-title" style="font-size:15px;font-weight:600;">
+          <i class="bi bi-receipt me-2"></i>
+          Detalhes da Conta — <span id="m-id"></span>
+        </h5>
+        <button type="button" class="btn-close btn-close-white"
+                data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+
+      <div class="modal-body p-0 modal-detalhe">
+
+        <!-- cabeçalho cliente + status -->
+        <div style="padding:16px 20px;border-bottom:1px solid var(--border-color);
+                    display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <div style="font-size:11px;font-weight:600;text-transform:uppercase;
+                        color:var(--text-muted);margin-bottom:2px;">Cliente</div>
+            <div style="font-size:16px;font-weight:700;" id="m-cliente"></div>
+          </div>
+          <span class="badge-status" id="m-badge"></span>
+        </div>
+
+        <div style="padding:16px 20px;">
+
+          <!-- dados gerais -->
+          <div class="row g-0">
+            <div class="col-md-6" style="padding-right:20px;">
+              <div class="info-row"><span class="info-label">Nº Documento</span><span class="info-val" id="m-num"></span></div>
+              <div class="info-row"><span class="info-label">Parcela</span><span class="info-val" id="m-parcela"></span></div>
+              <div class="info-row"><span class="info-label">Data Emissão</span><span class="info-val" id="m-emissao"></span></div>
+            </div>
+            <div class="col-md-6">
+              <div class="info-row"><span class="info-label">Vencimento</span><span class="info-val" id="m-vencimento"></span></div>
+              <div class="info-row"><span class="info-label">Pagamento</span><span class="info-val" id="m-pagamento"></span></div>
+            </div>
+          </div>
+
+          <!-- valores -->
+          <div class="valor-box">
+            <div class="valor-item">
+              <small>R$ Título</small>
+              <span id="m-valor"></span>
+            </div>
+            <div class="valor-item">
+              <small>Valor Pago</small>
+              <span id="m-valor-pago" style="color:var(--success);"></span>
+            </div>
+            <div class="valor-item">
+              <small>Desconto</small>
+              <span id="m-desconto"></span>
+            </div>
+            <div class="valor-item">
+              <small>Saldo Devedor</small>
+              <span id="m-saldo" style="color:var(--danger);"></span>
+            </div>
+          </div>
+
+          <!-- observações -->
+          <div id="m-obs-wrap" style="margin-top:14px;display:none;">
+            <div style="font-size:11px;font-weight:600;text-transform:uppercase;
+                        color:var(--text-muted);margin-bottom:6px;">Observações</div>
+            <div id="m-obs"
+                 style="background:#f8fafc;border:1px solid var(--border-color);
+                        border-radius:var(--radius);padding:10px 14px;font-size:13px;
+                        color:var(--text-secondary);"></div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="modal-footer" style="border-top:1px solid var(--border-color);padding:12px 20px;gap:8px;">
+        <button type="button" class="btn-outline-custom" data-bs-dismiss="modal">Fechar</button>
+        <a id="m-btn-imprimir" href="#" target="_blank" class="btn-primary-custom">
+          <i class="bi bi-printer me-1"></i>Imprimir Recibo
+        </a>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+/* ── Modal Visualizar ── */
+var _modalConta = null;
+
+function abrirModal(btn) {
+  var d = btn.dataset;
+  var statusColors = {
+    pendente:  'badge-pendente',
+    parcial:   'badge-parcial',
+    pago:      'badge-pago',
+    atrasado:  'badge-atrasado',
+    cancelado: 'badge-cancelado'
+  };
+
+  document.getElementById('m-id').textContent         = '#' + d.id;
+  document.getElementById('m-cliente').textContent    = d.cliente;
+  document.getElementById('m-num').textContent        = d.numTitulo || '—';
+  document.getElementById('m-parcela').textContent    = d.parcela;
+  document.getElementById('m-emissao').textContent    = d.emissao;
+  document.getElementById('m-vencimento').textContent = d.vencimento;
+  document.getElementById('m-pagamento').textContent  = d.pagamento;
+  document.getElementById('m-valor').textContent      = d.valor;
+  document.getElementById('m-valor-pago').textContent = d.valorPago;
+  document.getElementById('m-desconto').textContent   = d.desconto;
+  document.getElementById('m-saldo').textContent      = d.saldo;
+
+  var badge = document.getElementById('m-badge');
+  badge.textContent = d.statusDisplay;
+  badge.className   = 'badge-status ' + (statusColors[d.status] || '');
+
+  var obsWrap = document.getElementById('m-obs-wrap');
+  if (d.obs && d.obs.trim()) {
+    document.getElementById('m-obs').textContent = d.obs;
+    obsWrap.style.display = 'block';
+  } else {
+    obsWrap.style.display = 'none';
+  }
+
+  /* Atualiza apenas o botão de imprimir (editar foi removido do modal) */
+  document.getElementById('m-btn-imprimir').href = d.urlImprimir;
+
+  if (!_modalConta)
+    _modalConta = new bootstrap.Modal(document.getElementById('modalConta'));
+  _modalConta.show();
+}
+
+/* ── Exclusão ── */
+function confirmarExclusao(pk, cliente) {
+  SwalCustom.fire({
+    title: 'Confirmação',
+    text: 'Excluir ' + cliente + '?',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Sim, prosseguir',
+    cancelButtonText: 'Cancelar',
+    reverseButtons: true
+  }).then(function(result) {
+    if (result.isConfirmed)
+      document.getElementById('form-excluir-' + pk).submit();
+  });
+}
+
+/* ── Dropdown Imprimir/Excel ── */
+function togglePrintDrop(e) {
+  e.stopPropagation();
+  var m = document.getElementById('printDropMenu');
+  m.style.display = (m.style.display === 'block') ? 'none' : 'block';
+}
+function fecharPrintDrop() {
+  var m = document.getElementById('printDropMenu');
+  if (m) m.style.display = 'none';
+}
+function imprimirTabela()  { fecharPrintDrop(); window.print(); }
+function exportarExcel() {
+  fecharPrintDrop();
+  var params = new URLSearchParams(new FormData(document.getElementById('form-filtros')));
+  window.location.href = '{% url "financeiro:exportar_contas_receber" %}?' + params.toString();
+}
+document.addEventListener('click', function(e) {
+  var w = document.getElementById('printDropWrap');
+  if (w && !w.contains(e.target)) fecharPrintDrop();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,264 @@
+{% extends 'base.html' %}
+{% block title %}Nova Ordem de Serviço{% endblock %}
+{% block breadcrumb %}Ordens / {{ titulo }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">{{ titulo }}</h1>
+</div>
+
+<form method="POST" action="" id="osForm">
+  {% csrf_token %}
+  <div class="row g-3">
+
+    <!-- Dados gerais -->
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header"><h5 class="card-title"><i class="bi bi-info-circle me-2"></i>Dados Gerais</h5></div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label-custom">Cliente *</label>
+              <select name="cliente" class="form-control-custom" required>
+                <option value="">Selecione o cliente...</option>
+                {% for c in clientes %}
+                  <option value="{{ c.pk }}">{{ c.nome }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label-custom">Técnico</label>
+              <select name="tecnico" class="form-control-custom">
+                <option value="">Nenhum</option>
+                {% for t in tecnicos %}
+                  <option value="{{ t.pk }}">{{ t.get_full_name|default:t.username }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label class="form-label-custom">Status</label>
+              <select name="status" class="form-control-custom">
+                {% for val, label in status_choices %}
+                  <option value="{{ val }}" {% if val == 'aberta' %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label class="form-label-custom">Prioridade</label>
+              <select name="prioridade" class="form-control-custom">
+                {% for val, label in prioridade_choices %}
+                  <option value="{{ val }}" {% if val == 'normal' %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-1">
+              <label class="form-label-custom">Garantia (dias)</label>
+              <input type="number" name="garantia_dias" value="30" min="0" class="form-control-custom">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Equipamento -->
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header"><h5 class="card-title"><i class="bi bi-cpu me-2"></i>Equipamento</h5></div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label-custom">Equipamento *</label>
+              <input type="text" name="equipamento" required class="form-control-custom" placeholder="Ex: Notebook, Impressora...">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label-custom">Marca</label>
+              <input type="text" name="marca" class="form-control-custom">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label-custom">Modelo</label>
+              <input type="text" name="modelo" class="form-control-custom">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label-custom">Nº Série</label>
+              <input type="text" name="numero_serie" class="form-control-custom">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label-custom">Data Prevista</label>
+              <input type="date" name="data_prevista" class="form-control-custom">
+            </div>
+            <div class="col-12">
+              <label class="form-label-custom">Defeito Reclamado *</label>
+              <textarea name="defeito_reclamado" rows="3" required class="form-control-custom"
+                        placeholder="O que o cliente relatou..."></textarea>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label-custom">Defeito Constatado</label>
+              <textarea name="defeito_constatado" rows="2" class="form-control-custom"></textarea>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label-custom">Solução Aplicada</label>
+              <textarea name="solucao" rows="2" class="form-control-custom"></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Itens (Serviços e Peças) -->
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="card-title"><i class="bi bi-list-task me-2"></i>Serviços e Peças</h5>
+          <button type="button" onclick="addItemOS()" class="btn-outline-custom" style="padding:5px 14px;font-size:13px;">
+            <i class="bi bi-plus me-1"></i> Adicionar Item
+          </button>
+        </div>
+        <div class="card-body p-0" id="itensOS">
+          <table class="table-custom w-100" id="itensTable">
+            <thead>
+              <tr>
+                <th>Tipo</th>
+                <th>Descrição</th>
+                <th style="width:100px;">Qtd</th>
+                <th style="width:140px;">Preço Unit.</th>
+                <th style="width:120px;">Subtotal</th>
+                <th style="width:50px;"></th>
+              </tr>
+            </thead>
+            <tbody id="itensBody">
+              <!-- Itens adicionados por JS -->
+            </tbody>
+          </table>
+        </div>
+        <div class="card-body" style="border-top:1px solid var(--border-color);background:#f8fafc;">
+          <div class="row justify-content-end">
+            <div class="col-md-4">
+              <div class="d-flex justify-content-between mb-1" style="font-size:14px;">
+                <span>Serviços:</span><span id="totalServicos">R$ 0,00</span>
+              </div>
+              <div class="d-flex justify-content-between mb-2" style="font-size:14px;">
+                <span>Peças:</span><span id="totalPecas">R$ 0,00</span>
+              </div>
+              <div class="d-flex align-items-center gap-2 mb-2">
+                <label class="form-label-custom mb-0" style="min-width:80px;">Desconto:</label>
+                <input type="text" name="desconto" id="descontoOS" value="0" data-mask="currency"
+                       class="form-control-custom" style="width:120px;text-align:right;">
+              </div>
+              <div class="d-flex justify-content-between" style="font-size:18px;font-weight:700;border-top:1px solid var(--border-color);padding-top:10px;">
+                <span>Total:</span>
+                <span id="totalOS" style="color:var(--primary);">R$ 0,00</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Observações -->
+    <div class="col-12">
+      <div class="card">
+        <div class="card-body">
+          <label class="form-label-custom">Observações</label>
+          <textarea name="observacoes" rows="2" class="form-control-custom"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 d-flex gap-3 justify-content-end">
+      <a href="{% url 'ordens:lista' %}" class="btn-outline-custom">Cancelar</a>
+      <button type="submit" class="btn-primary-custom">
+        <i class="bi bi-check-lg me-1"></i> Criar OS
+      </button>
+    </div>
+  </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let itemCount = 0;
+
+function addItemOS() {
+  const tbody = document.getElementById('itensBody');
+  const index = itemCount++;
+  const tr = document.createElement('tr');
+  tr.id = 'item_' + index;
+  tr.innerHTML = `
+    <td>
+      <select name="item_tipo" class="form-control-custom" style="padding:7px 10px;" onchange="recalcOS()">
+        <option value="servico">Serviço</option>
+        <option value="peca">Peça</option>
+      </select>
+    </td>
+    <td>
+      <input type="text" name="item_descricao" class="form-control-custom" placeholder="Descrição do item...">
+    </td>
+    <td>
+      <input type="number" name="item_quantidade" value="1" min="0.01" step="0.01"
+             data-mask="quantity" class="form-control-custom item-qty" style="text-align:right;">
+    </td>
+    <td>
+      <input type="text" name="item_preco" value="0" data-mask="currency"
+             class="form-control-custom item-preco" style="text-align:right;">
+    </td>
+    <td>
+      <span class="item-sub" style="font-weight:600;">R$ 0,00</span>
+    </td>
+    <td>
+      <button type="button" onclick="removeItemOS('item_${index}')"
+              style="border:none;background:transparent;color:#ef4444;cursor:pointer;font-size:16px;">
+        <i class="bi bi-x-circle"></i>
+      </button>
+    </td>`;
+  tbody.appendChild(tr);
+  // Inicializa máscaras nos campos recém inseridos
+  initFieldMasks(tr);
+  // Vincula recalc aos hidden inputs gerados pela máscara
+  tr.querySelectorAll('input[type="hidden"]').forEach(function(h) {
+    h.addEventListener('input', function() { calcRow(h); recalcOS(); });
+  });
+  tr.querySelector('.item-qty').addEventListener('input', function() { calcRow(this); recalcOS(); });
+}
+
+function calcRow(inputOrTr) {
+  const tr   = (inputOrTr instanceof HTMLTableRowElement) ? inputOrTr : inputOrTr.closest('tr');
+  const qty  = parseFloat(tr.querySelector('.item-qty')?.value) || 0;
+  const precoEl = tr.querySelector('input[type="hidden"][name="item_preco"]') ||
+                  tr.querySelector('.item-preco');
+  const prec = parseFloat(precoEl?.value) || 0;
+  const sub  = qty * prec;
+  tr.querySelector('.item-sub').textContent = 'R$ ' + sub.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+
+function removeItemOS(id) {
+  const el = document.getElementById(id);
+  if (el) el.remove();
+  recalcOS();
+}
+
+function recalcOS() {
+  let vServicos = 0, vPecas = 0;
+  document.querySelectorAll('#itensBody tr').forEach(tr => {
+    const tipo = tr.querySelector('select[name="item_tipo"]')?.value;
+    const qty  = parseFloat(tr.querySelector('.item-qty')?.value) || 0;
+    const precoEl = tr.querySelector('input[type="hidden"][name="item_preco"]') ||
+                    tr.querySelector('.item-preco');
+    const prec = parseFloat(precoEl?.value) || 0;
+    const sub  = qty * prec;
+    if (tipo === 'servico') vServicos += sub;
+    else vPecas += sub;
+  });
+  // Desconto: hidden criado pela máscara ou campo direto
+  const descHidden = document.querySelector('input[type="hidden"][name="desconto"]');
+  const desc  = parseFloat((descHidden || document.getElementById('descontoOS'))?.value) || 0;
+  const total = Math.max(0, vServicos + vPecas - desc);
+  const fmt   = v => 'R$ ' + v.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+  document.getElementById('totalServicos').textContent = fmt(vServicos);
+  document.getElementById('totalPecas').textContent    = fmt(vPecas);
+  document.getElementById('totalOS').textContent       = fmt(total);
+}
+
+// Adicionar um item inicial
+addItemOS();
+</script>
+{% endblock %}

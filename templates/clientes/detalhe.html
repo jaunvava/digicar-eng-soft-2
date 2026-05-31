@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block title %}{{ cliente.nome }}{% endblock %}
+{% block breadcrumb %}Clientes / {{ cliente.nome }}{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex align-items-center justify-content-between">
+  <div>
+    <h1 class="page-title">{{ cliente.nome }}</h1>
+    <p class="page-subtitle">{{ cliente.get_tipo_display }} | Cadastrado em: {{ cliente.criado_em|date:"d/m/Y" }}</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{% url 'clientes:editar' cliente.pk %}" class="btn-outline-custom">
+      <i class="bi bi-pencil me-1"></i> Editar
+    </a>
+    <a href="{% url 'clientes:lista' %}" class="btn-outline-custom"><i class="bi bi-arrow-left"></i> Voltar</a>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header"><h5 class="card-title"><i class="bi bi-person me-2"></i>Dados Pessoais</h5></div>
+      <div class="card-body" style="font-size:14px;">
+        <p><strong>CPF/CNPJ:</strong> {{ cliente.cpf_cnpj|default:"—" }}</p>
+        <p><strong>E-mail:</strong> {{ cliente.email|default:"—" }}</p>
+        <p><strong>Telefone:</strong> {{ cliente.telefone|default:"—" }}</p>
+        <p><strong>Celular:</strong> {{ cliente.celular|default:"—" }}</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header"><h5 class="card-title"><i class="bi bi-geo-alt me-2"></i>Endereço</h5></div>
+      <div class="card-body" style="font-size:14px;">
+        <p>{{ cliente.endereco }} {{ cliente.numero }} {{ cliente.complemento }}</p>
+        <p>{{ cliente.bairro }} | {{ cliente.cidade }}/{{ cliente.estado }}</p>
+        <p>CEP: {{ cliente.cep|default:"—" }}</p>
+      </div>
+    </div>
+  </div>
+  {% if cliente.observacoes %}
+  <div class="col-12">
+    <div class="card">
+      <div class="card-body">
+        <label class="form-label-custom">Observações</label>
+        <p>{{ cliente.observacoes }}</p>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

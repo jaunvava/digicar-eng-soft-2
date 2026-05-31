@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title %}Novo Perfil{% endblock %}
+{% block breadcrumb %}Perfil{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">Meu Perfil</h1>
+</div>
+<div class="row g-3">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header"><h5 class="card-title"><i class="bi bi-person-circle me-2"></i>Informações</h5></div>
+      <div class="card-body" style="font-size:14px;">
+        <p><strong>Usuário:</strong> {{ request.user.username }}</p>
+        <p><strong>Nome:</strong> {{ request.user.get_full_name|default:"Não informado" }}</p>
+        <p><strong>E-mail:</strong> {{ request.user.email|default:"Não informado" }}</p>
+        {% if request.user.perfil %}
+          <p><strong>Empresa:</strong> {{ request.user.perfil.empresa.nome }}</p>
+          <p><strong>Perfil:</strong> {{ request.user.perfil.get_perfil_display }}</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

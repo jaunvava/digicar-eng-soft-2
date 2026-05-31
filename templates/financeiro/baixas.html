@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block title %}Baixas Registradas{% endblock %}
+{% block breadcrumb %}Financeiro / Baixas{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">Baixas Registradas</h1>
+</div>
+
+<div class="card">
+  <div class="card-body p-0">
+    <table class="table-custom w-100">
+      <thead>
+        <tr>
+          <th>Cliente</th>
+          <th>Conta</th>
+          <th>Valor Baixado</th>
+          <th>Data Pagto.</th>
+          <th>Forma</th>
+          <th>Registrado em</th>
+          <th class="text-end" style="padding-right:20px;">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for b in baixas %}
+        <tr>
+          <td>{{ b.conta.cliente.nome }}</td>
+          <td>{{ b.conta.descricao|truncatechars:30 }}</td>
+          <td><strong style="color:var(--success);">R$ {{ b.valor|floatformat:2 }}</strong></td>
+          <td>{{ b.data_pagamento|date:"d/m/Y" }}</td>
+          <td>{{ b.get_forma_pagamento_display }}</td>
+          <td style="font-size:12px;color:var(--text-muted);">{{ b.criado_em|date:"d/m/Y H:i" }}</td>
+          <td class="text-end" style="padding-right:20px;">
+            <a href="{% url 'financeiro:imprimir_baixa' b.pk %}" class="btn-outline-custom p-1" title="Imprimir Comprovante" target="_blank">
+              <i class="bi bi-printer" style="font-size:14px;"></i>
+            </a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-muted);">Nenhuma baixa registrada.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,383 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Ordem de Serviço #{{ os.numero|default:os.pk|stringformat:"05d" }} - {{ request.empresa.nome }}</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', Arial, sans-serif;
+      font-size: 11px;
+      color: #1e293b;
+      background: #f0f0f0;
+    }
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      margin: 20px auto;
+      background: #fff;
+      box-shadow: 0 2px 16px rgba(0,0,0,.15);
+      padding: 12mm 14mm;
+    }
+    .system-label {
+      text-align: right;
+      font-size: 9px;
+      color: #94a3b8;
+      margin-bottom: 6px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    .header-box {
+      border: 1px solid #cbd5e1;
+      border-radius: 5px;
+      padding: 10px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+    .company-name {
+      font-size: 18px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 2px;
+    }
+    .header-info {
+      font-size: 10px;
+      color: #475569;
+      line-height: 1.4;
+    }
+    .doc-title-box {
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      padding: 10px 14px;
+      border-radius: 5px;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .doc-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #1e293b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .doc-number {
+      font-size: 15px;
+      font-weight: 700;
+      color: #dc2626;
+    }
+    .info-section {
+      border: 1px solid #cbd5e1;
+      border-radius: 5px;
+      margin-bottom: 12px;
+      padding: 10px;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+    }
+    .info-group {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .info-label {
+      font-size: 9px;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+    }
+    .info-value {
+      font-size: 11px;
+      font-weight: 500;
+      color: #0f172a;
+    }
+    .equip-section, .diag-section {
+      border: 1px solid #cbd5e1;
+      border-radius: 5px;
+      margin-bottom: 12px;
+      background: #fdfdfd;
+    }
+    .section-title {
+      background: #f8fafc;
+      padding: 6px 10px;
+      font-weight: 700;
+      font-size: 10px;
+      color: #334155;
+      border-bottom: 1px solid #cbd5e1;
+      text-transform: uppercase;
+    }
+    .section-body {
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+    .text-block {
+      border: 1px solid #e2e8f0;
+      padding: 6px;
+      border-radius: 5px;
+      font-size: 10px;
+      color: #334155;
+      min-height: 40px;
+      white-space: pre-wrap;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 10px;
+      font-size: 10px;
+    }
+    th, td {
+      border: 1px solid #cbd5e1;
+      padding: 6px 8px;
+      text-align: left;
+    }
+    th {
+      background: #f8fafc;
+      font-weight: 600;
+      color: #475569;
+      text-transform: uppercase;
+      font-size: 9px;
+    }
+    .td-number { text-align: right; }
+    .td-center { text-align: center; }
+    
+    .totals-box {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 12px;
+    }
+    .totals-table {
+      width: 250px;
+    }
+    .totals-table th, .totals-table td {
+      padding: 4px 8px;
+      border: none;
+      border-bottom: 1px dotted #cbd5e1;
+    }
+    .totals-table th { background: none; text-align: right; font-size: 10px;}
+    .totals-table td { font-weight: 600; }
+    .total-row th, .total-row td {
+      font-size: 13px;
+      color: #047857;
+      border-bottom: none;
+      border-top: 1px solid #cbd5e1;
+      padding-top: 6px;
+    }
+
+    .signatures {
+      margin-top: 40px;
+      display: flex;
+      justify-content: space-around;
+      text-align: center;
+    }
+    .signature-line {
+      width: 200px;
+      border-top: 1px solid #000;
+      padding-top: 4px;
+      font-weight: 600;
+      font-size: 10px;
+    }
+
+    @media print {
+      body { background: #fff; }
+      .page { box-shadow: none; margin: 0; padding: 0; width: 100%; min-height: auto; }
+      @page { margin: 10mm; }
+    }
+  </style>
+</head>
+<body onload="window.print()">
+  <div class="page">
+    <div class="system-label">DigiCAR - Impressão de O.S.</div>
+    
+    <div class="header-box">
+      <div>
+        <div class="company-name">{{ request.empresa.nome }}</div>
+        <div class="header-info">
+          CNPJ: {{ request.empresa.cnpj }}<br>
+          {{ request.empresa.endereco }}
+        </div>
+      </div>
+      <div style="text-align:right;" class="header-info">
+        <strong>Telefone:</strong> {{ request.empresa.telefone }}<br>
+        <strong>E-mail:</strong> {{ request.empresa.email|default:'-' }}
+      </div>
+    </div>
+
+    <!-- Título -->
+    <div class="doc-title-box">
+      <div class="doc-title">Ordem de Serviço</div>
+      <div class="doc-number">O.S. Nº {{ os.numero|default:os.pk|stringformat:"05d" }}</div>
+    </div>
+
+    <!-- Cliente e Dados Iniciais -->
+    <div class="info-section">
+      <div class="info-group" style="grid-column: span 2;">
+        <span class="info-label">Cliente</span>
+        <span class="info-value">{{ os.cliente.nome }}</span>
+      </div>
+      <div class="info-group">
+        <span class="info-label">CPF/CNPJ</span>
+        <span class="info-value">{{ os.cliente.cpf_cnpj|default:"-" }}</span>
+      </div>
+      <div class="info-group">
+        <span class="info-label">Contato</span>
+        <span class="info-value">{{ os.cliente.telefone|default:os.cliente.celular|default:"-" }}</span>
+      </div>
+      <div class="info-group">
+        <span class="info-label">Endereço</span>
+        <span class="info-value" style="font-size:9px;">{{ os.cliente.endereco|default:"-" }}, {{ os.cliente.numero }} - {{ os.cliente.cidade|default:"-" }}/{{ os.cliente.estado }}</span>
+      </div>
+      <div class="info-group">
+        <span class="info-label">Técnico Responsável</span>
+        <span class="info-value">{{ os.tecnico.get_full_name|default:os.tecnico.username|default:"Não atribuído" }}</span>
+      </div>
+      <div class="info-group">
+        <span class="info-label">Data de Entrada</span>
+        <span class="info-value">{{ os.data_entrada|date:"d/m/Y H:i" }}</span>
+      </div>
+      <div class="info-group">
+        <span class="info-label">Previsão</span>
+        <span class="info-value">{{ os.data_prevista|date:"d/m/Y"|default:"-" }}</span>
+      </div>
+      <div class="info-group">
+        <span class="info-label">Status da O.S.</span>
+        <span class="info-value" style="color:#0284c7; font-weight:700;">{{ os.get_status_display }}</span>
+      </div>
+    </div>
+
+    <!-- Equipamento -->
+    <div class="equip-section">
+      <div class="section-title">Equipamento</div>
+      <div class="section-body grid-4">
+        <div class="info-group">
+          <span class="info-label">Descrição</span>
+          <span class="info-value">{{ os.equipamento }}</span>
+        </div>
+        <div class="info-group">
+          <span class="info-label">Marca</span>
+          <span class="info-value">{{ os.marca|default:"-" }}</span>
+        </div>
+        <div class="info-group">
+          <span class="info-label">Modelo</span>
+          <span class="info-value">{{ os.modelo|default:"-" }}</span>
+        </div>
+        <div class="info-group">
+          <span class="info-label">Nº Série</span>
+          <span class="info-value">{{ os.numero_serie|default:"-" }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Diagnóstico e Problema -->
+    <div class="diag-section">
+      <div class="section-title">Defeitos Adicionais / Diagnóstico</div>
+      <div class="section-body">
+        <div class="info-group">
+          <span class="info-label" style="margin-bottom:2px;">Reclamação do Cliente (Defeito Reclamado)</span>
+          <div class="text-block">{{ os.defeito_reclamado }}</div>
+        </div>
+        {% if os.defeito_constatado or os.solucao %}
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+          <div class="info-group">
+            <span class="info-label" style="margin-bottom:2px;">Defeito Constatado pelo Técnico</span>
+            <div class="text-block">{{ os.defeito_constatado|default:"-" }}</div>
+          </div>
+          <div class="info-group">
+            <span class="info-label" style="margin-bottom:2px;">Laudo / Solução Aplicada</span>
+            <div class="text-block">{{ os.solucao|default:"-" }}</div>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Peças e Serviços -->
+    <div class="section-title" style="background:transparent; border:none; padding-left:0; margin-top:10px;">Relação de Peças e Serviços</div>
+    <table>
+      <thead>
+        <tr>
+          <th width="5%" class="td-center">#</th>
+          <th width="10%">Tipo</th>
+          <th width="40%">Descrição do Item</th>
+          <th width="10%" class="td-center">Qtd</th>
+          <th width="15%" class="td-number">V. Unitário (R$)</th>
+          <th width="20%" class="td-number">Total (R$)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in itens %}
+        <tr>
+          <td class="td-center">{{ forloop.counter }}</td>
+          <td><span style="font-size:9px;">{{ item.get_tipo_display }}</span></td>
+          <td>{{ item.descricao }}</td>
+          <td class="td-center">{{ item.quantidade|floatformat:0 }}</td>
+          <td class="td-number">{{ item.preco_unitario|floatformat:2 }}</td>
+          <td class="td-number">{{ item.subtotal|floatformat:2 }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" class="td-center" style="padding:16px;">Nenhum item lançado nesta ordem de serviço.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <!-- Totais -->
+    <div class="totals-box">
+      <table class="totals-table">
+        <tr>
+          <th>Total Serviços:</th>
+          <td>R$ {{ os.valor_servicos|floatformat:2 }}</td>
+        </tr>
+        <tr>
+          <th>Total Peças:</th>
+          <td>R$ {{ os.valor_pecas|floatformat:2 }}</td>
+        </tr>
+        <tr>
+          <th>Desconto:</th>
+          <td style="color:#dc2626;">- R$ {{ os.desconto|floatformat:2 }}</td>
+        </tr>
+        <tr class="total-row">
+          <th>VALOR LÍQUIDO A PAGAR:</th>
+          <td>R$ {{ os.total|floatformat:2 }}</td>
+        </tr>
+      </table>
+    </div>
+
+    {% if os.observacoes %}
+    <!-- Observações Gerais -->
+    <div class="text-block" style="background:#fdfdfd; border-style:dashed;">
+      <span class="info-label">OBSERVAÇÕES:</span><br>
+      {{ os.observacoes }}
+    </div>
+    {% endif %}
+
+    <div style="font-size:9px; color:#64748b; text-align:center; margin-top:20px;">
+      Garantia dos serviços e peças aplicadas: {{ os.garantia_dias }} dias a partir da data de entrega ou faturamento.
+    </div>
+
+    <!-- Assinaturas -->
+    <div class="signatures">
+      <div>
+        <div class="signature-line">{{ os.tecnico.get_full_name|default:os.tecnico.username|default:"Técnico Responsável" }}</div>
+        <div style="font-size:9px; color:#64748b; margin-top:2px;">Equipe Técnica</div>
+      </div>
+      <div>
+        <div class="signature-line">{{ os.cliente.nome }}</div>
+        <div style="font-size:9px; color:#64748b; margin-top:2px;">Li e aprovo as condições acima</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

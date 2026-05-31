@@ -1,0 +1,177 @@
+{% extends 'base.html' %}
+{% load l10n %}
+{% block title %}{{ titulo }}{% endblock %}
+{% block breadcrumb %}Orçamentos / {{ titulo }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">{{ titulo }}</h1>
+</div>
+
+<form method="POST" id="orcForm">
+  {% csrf_token %}
+  <div class="row g-3">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header"><h5 class="card-title"><i class="bi bi-person me-2"></i>Dados</h5></div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-5">
+              <label class="form-label-custom">Cliente *</label>
+              <select name="cliente" required class="form-control-custom">
+                <option value="">Selecione...</option>
+                {% for c in clientes %}
+                  <option value="{{ c.pk }}">{{ c.nome }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label-custom">Validade *</label>
+              <input type="date" name="validade" required class="form-control-custom">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label-custom">Observações</label>
+              <input type="text" name="observacoes" class="form-control-custom">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Itens -->
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="card-title">Itens</h5>
+          <button type="button" onclick="addItemOrc()" class="btn-outline-custom" style="padding:5px 14px;font-size:13px;">
+            <i class="bi bi-plus me-1"></i> Adicionar Item
+          </button>
+        </div>
+        <div class="card-body p-0">
+          <table class="table-custom w-100">
+            <thead>
+              <tr><th>Produto</th><th style="width:100px;">Qtd</th><th style="width:140px;">Preço Unit.</th><th style="width:120px;">Subtotal</th><th style="width:50px;"></th></tr>
+            </thead>
+            <tbody id="itensBody"></tbody>
+          </table>
+        </div>
+        <div class="card-body" style="border-top:1px solid var(--border-color);background:#f8fafc;">
+          <div class="row justify-content-end">
+            <div class="col-md-3">
+              <div class="d-flex align-items-center gap-2 mb-2">
+                <label class="form-label-custom mb-0">Desconto:</label>
+                <input type="text" name="desconto" id="descontoOrc" value="0" data-mask="currency"
+                       class="form-control-custom" style="width:120px;text-align:right;">
+              </div>
+              <div class="d-flex justify-content-between" style="font-size:18px;font-weight:700;">
+                <span>Total:</span>
+                <span id="totalOrc" style="color:var(--primary);">R$ 0,00</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 d-flex gap-3 justify-content-end">
+      <a href="{% url 'orcamentos:lista' %}" class="btn-outline-custom">Cancelar</a>
+      <button type="submit" class="btn-primary-custom"><i class="bi bi-check-lg me-1"></i> Criar Orçamento</button>
+    </div>
+  </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const PRODS = [{% for p in produtos %}{ id: {{ p.pk }}, nome: "{{ p.nome|escapejs }}", preco: {{ p.preco_venda|unlocalize }} }{% if not forloop.last %},{% endif %}{% endfor %}];
+let orcCount = 0;
+
+function addItemOrc() {
+  const tbody = document.getElementById('itensBody');
+  const idx   = orcCount++;
+  const opts  = PRODS.map(p => `<option value="${p.id}" data-preco="${p.preco}">${p.nome}</option>`).join('');
+  const tr    = document.createElement('tr');
+  tr.id = 'orc_' + idx;
+  tr.innerHTML = `
+    <td style="padding-left: 20px;">
+      <select name="produto_id" class="form-control-custom" onchange="setPriceOrc(this)" required>
+        <option value="">Selecione...</option>${opts}
+      </select>
+    </td>
+    <td><input type="number" name="quantidade" value="1" min="1" step="1" data-mask="quantity" class="form-control-custom item-qty-orc" style="text-align:right;"></td>
+    <td><input type="text" name="preco_unitario" value="0" data-mask="currency" class="form-control-custom item-preco-orc" style="text-align:right;"></td>
+    <td><span class="item-sub-orc" style="font-weight:600; color: var(--text-primary);">R$ 0,00</span></td>
+    <td style="padding-right: 20px;" class="text-end"><button type="button" onclick="removeItemOrc('orc_${idx}')" style="border:none;background:transparent;color:#ef4444;cursor:pointer;font-size:16px;" title="Remover Item"><i class="bi bi-trash"></i></button></td>`;
+  tbody.appendChild(tr);
+  // inicializa máscaras nos campos recém inseridos
+  initFieldMasks(tr);
+  // vincula recalc aos hidden inputs gerados pela máscara
+  tr.querySelectorAll('input[type="hidden"]').forEach(function(h) {
+    h.addEventListener('input', function() { calcRowOrc(tr); recalcOrc(); });
+  });
+}
+
+function setPriceOrc(sel) {
+  const opt  = sel.options[sel.selectedIndex];
+  if (!opt || opt.value === "") return;
+  const preco = parseFloat(opt.dataset.preco) || 0;
+  const tr    = sel.closest('tr');
+  // Atualiza o hidden input do campo de preço (criado pela máscara)
+  const precoHidden = tr.querySelector('input[type="hidden"][name="preco_unitario"]');
+  const precoDisplay = tr.querySelector('.item-preco-orc');
+  if (precoHidden) {
+    precoHidden.value = preco.toFixed(2);
+    if (precoDisplay) precoDisplay.value = _numToBRL(preco);
+  } else if (precoDisplay) {
+    precoDisplay.value = preco;
+  }
+  calcRowOrc(tr);
+  recalcOrc();
+}
+
+function calcRowOrc(trOrInput) {
+  const tr   = (trOrInput instanceof HTMLTableRowElement) ? trOrInput : trOrInput.closest('tr');
+  // Lê do hidden input (máscara currency) ou do campo direto
+  const qtyEl   = tr.querySelector('.item-qty-orc');
+  const precoEl = tr.querySelector('input[type="hidden"][name="preco_unitario"]') ||
+                  tr.querySelector('.item-preco-orc');
+  const qty  = parseFloat(qtyEl?.value) || 0;
+  const prec = parseFloat(precoEl?.value) || 0;
+  const sub  = qty * prec;
+  tr.querySelector('.item-sub-orc').textContent = 'R$ ' + sub.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+}
+
+function removeItemOrc(id) { 
+    if (document.querySelectorAll('#itensBody tr').length > 1) {
+        document.getElementById(id)?.remove(); 
+        recalcOrc(); 
+    } else {
+        Swal.fire('Atenção', 'O orçamento deve ter pelo menos um item.', 'warning');
+    }
+}
+
+function recalcOrc() {
+  let sub = 0;
+  document.querySelectorAll('#itensBody tr').forEach(tr => {
+    const qty      = parseFloat(tr.querySelector('.item-qty-orc')?.value) || 0;
+    // Tenta o hidden da máscara primeiro, depois o campo direto
+    const precoEl  = tr.querySelector('input[type="hidden"][name="preco_unitario"]') ||
+                     tr.querySelector('.item-preco-orc');
+    const prec     = parseFloat(precoEl?.value) || 0;
+    sub += qty * prec;
+  });
+  // Desconto: lê do hidden criado pela máscara ou do campo direto
+  const descontoHidden = document.querySelector('input[type="hidden"][name="desconto"]');
+  const descontoEl     = descontoHidden || document.getElementById('descontoOrc');
+  const desc   = parseFloat(descontoEl?.value || 0) || 0;
+  const total  = Math.max(0, sub - desc);
+  
+  document.getElementById('totalOrc').textContent = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+// Inicializa com um item
+document.addEventListener('DOMContentLoaded', function() {
+    addItemOrc();
+});
+</script>
+{% endblock %}

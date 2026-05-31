@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Comprovante #{{ baixa.id }}</title>
+    <style>
+        /* Thermal Printer 80mm Style */
+        @page { size: 80mm auto; margin: 0; }
+        @media print {
+            .no-print { display: none; }
+            body { margin: 0; padding: 5mm; }
+        }
+        body { 
+            font-family: 'Courier New', Courier, monospace; 
+            font-size: 12px; 
+            line-height: 1.4; 
+            width: 72mm; /* Typical printable width for 80mm paper */
+            margin: 0 auto;
+            color: #000;
+        }
+        .header { text-align: center; margin-bottom: 5mm; border-bottom: 1px dashed #000; padding-bottom: 2mm; }
+        .brand { font-size: 16px; font-weight: bold; text-transform: uppercase; }
+        .doc-title { font-size: 14px; margin-top: 2px; font-weight: bold; }
+        
+        .divider { border-top: 1px dashed #000; margin: 3mm 0; }
+        
+        .row { margin-bottom: 2mm; }
+        .label { font-weight: bold; display: block; }
+        .value { display: block; word-break: break-all; }
+        
+        .amount-section { text-align: center; margin: 5mm 0; border: 1px solid #000; padding: 3mm; }
+        .amount-label { font-size: 11px; margin-bottom: 2px; }
+        .amount-value { font-size: 20px; font-weight: 800; }
+        
+        .footer { text-align: center; font-size: 10px; margin-top: 5mm; border-top: 1px dashed #000; padding-top: 2mm; }
+        .signature { margin-top: 10mm; text-align: center; }
+        .sig-line { border-top: 1px solid #000; padding-top: 1mm; margin-top: 5mm; font-size: 10px; }
+
+        .no-print { text-align: center; padding: 20px; }
+        .btn-print {
+            background: #000; color: #fff; border: none; padding: 8px 16px;
+            border-radius: 4px; cursor: pointer; font-weight: 600; margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="no-print">
+        <button onclick="window.print()" class="btn-print">Imprimir (80mm)</button>
+        <button onclick="window.close()" class="btn-print" style="background:#555;">Fechar</button>
+    </div>
+
+    <div class="header">
+        <div class="brand">{% if request.empresa %}{{ request.empresa.nome }}{% else %}DigiCAR{% endif %}</div>
+        <div class="doc-title">COMPROVANTE DE PAGAMENTO</div>
+        <div style="font-size: 11px;">Nº REGISTRO: #{{ baixa.id }}</div>
+    </div>
+
+    <div class="row">
+        <span class="label">CLIENTE:</span>
+        <span class="value">{{ baixa.conta.cliente.nome }}</span>
+    </div>
+
+    <div class="row">
+        <span class="label">REFERENTE A:</span>
+        <span class="value">{{ baixa.conta.descricao }}</span>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="row">
+        <span class="label">DATA PAGTO:</span>
+        <span class="value">{{ baixa.data_pagamento|date:"d/m/Y" }}</span>
+    </div>
+
+    <div class="row">
+        <span class="label">FORMA PAGTO:</span>
+        <span class="value">{{ baixa.get_forma_pagamento_display }}</span>
+    </div>
+
+    {% if baixa.observacoes %}
+    <div class="divider"></div>
+    <div class="row">
+        <span class="label">OBSERVAÇÕES:</span>
+        <span class="value">{{ baixa.observacoes }}</span>
+    </div>
+    {% endif %}
+
+    <div class="amount-section">
+        <div class="amount-label">VALOR RECEBIDO</div>
+        <div class="amount-value">R$ {{ baixa.valor|floatformat:2 }}</div>
+    </div>
+
+    <div class="signature">
+        <div class="sig-line">ASSINATURA RESPONSÁVEL</div>
+    </div>
+
+    <div class="footer">
+        Gerado em {{ baixa.criado_em|date:"d/m/Y H:i" }}<br>
+        pelo sistema DigiCAR<br>
+        Obrigado pela preferência!
+    </div>
+
+    <div style="height: 10mm;"></div> <!-- White space for tear-off -->
+</body>
+</html>

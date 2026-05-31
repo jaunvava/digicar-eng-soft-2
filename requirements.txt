@@ -1,0 +1,12 @@
+Django>=4.2.0,<5.1.0
+Pillow>=10.0.0
+django-cors-headers>=4.0.0
+whitenoise>=6.5.0
+asgiref>=3.7.0
+sqlparse>=0.4.4
+tzdata>=2023.3
+gunicorn>=21.2.0
+mysqlclient>=2.2.0
+openpyxl>=3.1.0
+djangorestframework>=3.14.0
+drf-yasg>=1.21.7

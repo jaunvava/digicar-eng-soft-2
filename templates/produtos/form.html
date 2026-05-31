@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% block title %}{{ titulo }}{% endblock %}
+{% block breadcrumb %}Produtos / {{ titulo }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">{{ titulo }}</h1>
+</div>
+
+<form method="POST">
+  {% csrf_token %}
+  <div class="row g-3">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="card-title m-0"><i class="bi bi-box-seam me-2"></i>Dados do Produto</h5>
+          <div class="form-check form-switch m-0 d-flex align-items-center">
+            <input class="form-check-input mb-1 me-2" type="checkbox" role="switch" name="ativo" id="ativoSwitch" {% if not produto or produto.ativo %}checked{% endif %} style="cursor:pointer; width:38px; height:20px;">
+            <label class="form-check-label" for="ativoSwitch" id="ativoLabel" style="font-weight:600; font-size:13px; color:var(--text-primary); cursor:pointer;">Ativo</label>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-2">
+              <label class="form-label-custom">Tipo *</label>
+              <select name="tipo" class="form-control-custom">
+                <option value="produto" {% if produto.tipo == 'produto' %}selected{% endif %}>Produto</option>
+                <option value="servico" {% if produto.tipo == 'servico' %}selected{% endif %}>Serviço</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label class="form-label-custom">Código de Barras</label>
+              <input type="text" name="codigo" value="{{ produto.codigo|default:'' }}" 
+                     class="form-control-custom" placeholder="Ex: 7891234567890"
+                     maxlength="13" inputmode="numeric" pattern="[0-9]*"
+                     oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+            </div>
+            <div class="col-md-8">
+              <label class="form-label-custom">Nome *</label>
+              <input type="text" name="nome" value="{{ produto.nome|default:'' }}" required class="form-control-custom">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label-custom">Unidade</label>
+              <select name="unidade" class="form-control-custom">
+                <option value="UN" {% if produto.unidade == "UN" %}selected{% endif %}>UN</option>
+                <option value="PC" {% if produto.unidade == "PC" %}selected{% endif %}>PC</option>
+                <option value="KG" {% if produto.unidade == "KG" %}selected{% endif %}>KG</option>
+                <option value="LT" {% if produto.unidade == "LT" %}selected{% endif %}>LT</option>
+                <option value="MT" {% if produto.unidade == "MT" %}selected{% endif %}>MT</option>
+                <option value="M2" {% if produto.unidade == "M2" %}selected{% endif %}>M2</option>
+                <option value="CX" {% if produto.unidade == "CX" %}selected{% endif %}>CX</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label class="form-label-custom">Preço de Custo</label>
+              <input type="text" name="preco_custo" value="{{ produto.preco_custo|default:'0' }}" data-mask="currency" class="form-control-custom" placeholder="0,00">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label-custom">Preço de Venda *</label>
+              <input type="text" name="preco_venda" value="{{ produto.preco_venda|default:'0' }}" data-mask="currency" class="form-control-custom" placeholder="0,00" required>
+            </div>
+            <div class="col-md-2">
+              <label class="form-label-custom">Estoque Atual</label>
+              <input type="number" name="estoque_atual" value="{{ produto.estoque_atual|default:'0' }}" min="0" step="0.001" data-mask="quantity" class="form-control-custom">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label-custom">Estoque Mínimo</label>
+              <input type="number" name="estoque_minimo" value="{{ produto.estoque_minimo|default:'0' }}" min="0" step="0.001" data-mask="quantity" class="form-control-custom">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 d-flex gap-3 justify-content-end">
+      <a href="{% url 'produtos:lista' %}" class="btn-outline-custom">Cancelar</a>
+      <button type="submit" class="btn-primary-custom">
+        <i class="bi bi-check-lg me-1"></i> Salvar
+      </button>
+    </div>
+  </div>
+</form>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    var switchEl = document.getElementById('ativoSwitch');
+    var labelEl = document.getElementById('ativoLabel');
+    function updateLabel() {
+      if(switchEl.checked) {
+        labelEl.textContent = 'Ativo';
+        labelEl.style.color = 'var(--text-primary)';
+      } else {
+        labelEl.textContent = 'Inativo';
+        labelEl.style.color = 'var(--text-muted)';
+      }
+    }
+    switchEl.addEventListener('change', updateLabel);
+    updateLabel();
+  });
+</script>
+{% endblock %}

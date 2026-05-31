@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block title %}Nova Conta a Pagar{% endblock %}
+{% block breadcrumb %}Financeiro / Nova Conta a Pagar{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">Nova Conta a Pagar</h1>
+</div>
+
+<div class="row g-3">
+  <div class="col-md-7">
+    <div class="card">
+      <div class="card-body">
+        <form method="POST">
+          {% csrf_token %}
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label-custom">Fornecedor *</label>
+              <input type="text" name="fornecedor" required class="form-control-custom">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label-custom">Categoria</label>
+              <input type="text" name="categoria" class="form-control-custom" placeholder="Ex: Aluguel, Energia...">
+            </div>
+            <div class="col-12">
+              <label class="form-label-custom">Descrição *</label>
+              <input type="text" name="descricao" required class="form-control-custom">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label-custom">Valor *</label>
+              <input type="text" name="valor" data-mask="currency" required class="form-control-custom" placeholder="0,00">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label-custom">Vencimento *</label>
+              <input type="date" name="vencimento" required class="form-control-custom">
+            </div>
+            <div class="col-12">
+              <label class="form-label-custom">Observações</label>
+              <textarea name="observacoes" rows="2" class="form-control-custom"></textarea>
+            </div>
+          </div>
+          <div class="d-flex gap-3 mt-3">
+            <a href="{% url 'financeiro:contas_pagar' %}" class="btn-outline-custom">Cancelar</a>
+            <button type="submit" class="btn-primary-custom"><i class="bi bi-check-lg me-1"></i> Salvar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

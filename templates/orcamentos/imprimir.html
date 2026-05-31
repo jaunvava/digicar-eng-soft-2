@@ -1,0 +1,308 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Orçamento #{{ orcamento.numero|default:orcamento.pk }} - {{ request.empresa.nome }}</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', Arial, sans-serif;
+      font-size: 12px;
+      color: #1a1a1a;
+      background: #f0f0f0;
+    }
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      margin: 20px auto;
+      background: #fff;
+      box-shadow: 0 2px 16px rgba(0,0,0,.15);
+      padding: 14mm 14mm 12mm;
+    }
+    .system-label {
+      text-align: right;
+      font-size: 9px;
+      color: #999;
+      margin-bottom: 6px;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+    }
+    .header-box {
+      border: 1px solid #d0d0d0;
+      border-radius: 5px;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 14px;
+    }
+    .company-name {
+      font-size: 20px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 4px;
+    }
+    .header-info {
+      font-size: 11px;
+      color: #333;
+      line-height: 1.5;
+    }
+    .doc-title-box {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      padding: 12px 16px;
+      border-radius: 5px;
+      margin-bottom: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .doc-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #1e293b;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .doc-number {
+      font-size: 16px;
+      font-weight: 600;
+      color: #ef4444;
+    }
+    .info-section {
+      border: 1px solid #e2e8f0;
+      border-radius: 5px;
+      margin-bottom: 14px;
+      padding: 12px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .info-group {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .info-label {
+      font-size: 10px;
+      font-weight: 600;
+      color: #64748b;
+      text-transform: uppercase;
+    }
+    .info-value {
+      font-size: 12px;
+      font-weight: 500;
+      color: #0f172a;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 14px;
+    }
+    th, td {
+      border: 1px solid #cbd5e1;
+      padding: 8px 10px;
+      text-align: left;
+    }
+    th {
+      background: #f1f5f9;
+      font-weight: 600;
+      color: #334155;
+      font-size: 11px;
+      text-transform: uppercase;
+    }
+    .td-number { text-align: right; }
+    .td-center { text-align: center; }
+    
+    .totals-box {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 14px;
+    }
+    .totals-table {
+      width: 300px;
+      border-collapse: collapse;
+    }
+    .totals-table th, .totals-table td {
+      padding: 6px 12px;
+      border: none;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .totals-table th {
+      text-align: right;
+      background: none;
+      font-weight: 600;
+      color: #64748b;
+    }
+    .totals-table td {
+      text-align: right;
+      font-weight: 600;
+      color: #0f172a;
+    }
+    .totals-table tr.total-row th,
+    .totals-table tr.total-row td {
+      font-size: 14px;
+      color: #16a34a;
+      border-bottom: none;
+      border-top: 2px solid #e2e8f0;
+      padding-top: 10px;
+    }
+    .obs-box {
+      border: 1px dashed #cbd5e1;
+      padding: 12px;
+      border-radius: 5px;
+      background: #fdfdfd;
+    }
+    .obs-title {
+      font-weight: 600;
+      font-size: 11px;
+      margin-bottom: 6px;
+      color: #64748b;
+    }
+    .signatures {
+      margin-top: 50px;
+      display: flex;
+      justify-content: space-around;
+      text-align: center;
+    }
+    .signature-line {
+      width: 250px;
+      border-top: 1px solid #000;
+      padding-top: 5px;
+      font-weight: 600;
+      font-size: 11px;
+    }
+    
+    @media print {
+      body { background: #fff; }
+      .page { box-shadow: none; margin: 0; padding: 0; width: 100%; min-height: auto; }
+      @page { margin: 15mm; }
+    }
+  </style>
+</head>
+<body onload="window.print()">
+  <div class="page">
+    <div class="system-label">DigiCAR - Impressão de Documento</div>
+    
+    <!-- Header Empresa -->
+    <div class="header-box">
+      <div>
+        <div class="company-name">{{ request.empresa.nome }}</div>
+        <div class="header-info">
+          CNPJ: {{ request.empresa.cnpj }}<br>
+          {{ request.empresa.endereco }}
+        </div>
+      </div>
+      <div style="text-align:right;" class="header-info">
+        <strong>Telefone:</strong> {{ request.empresa.telefone }}<br>
+        <strong>E-mail:</strong> {{ request.empresa.email|default:'-' }}
+      </div>
+    </div>
+
+    <!-- Título do Documento -->
+    <div class="doc-title-box">
+      <div class="doc-title">Orçamento de Venda / Serviços</div>
+      <div class="doc-number">Nº {{ orcamento.numero|default:orcamento.pk|stringformat:"05d" }}</div>
+    </div>
+
+    <!-- Informações Iniciais -->
+    <div class="info-section">
+      <div class="info-group">
+        <span class="info-label">Cliente</span>
+        <span class="info-value">{{ orcamento.cliente.nome }} ({{ orcamento.cliente.cpf_cnpj|default:"Sem CPF/CNPJ" }})</span>
+      </div>
+      <div class="info-group">
+        <span class="info-label">Contato</span>
+        <span class="info-value">Tel: {{ orcamento.cliente.telefone|default:orcamento.cliente.celular|default:"Não informado" }}</span>
+      </div>
+      <div class="info-group">
+        <span class="info-label">Data de Emissão</span>
+        <span class="info-value">{{ orcamento.criado_em|date:"d/m/Y H:i" }}</span>
+      </div>
+      <div class="info-group">
+        <span class="info-label">Validade Lançada</span>
+        <span class="info-value">{{ orcamento.validade|date:"d/m/Y" }}</span>
+      </div>
+      <div class="info-group">
+        <span class="info-label">Vendedor / Consultor</span>
+        <span class="info-value">{{ orcamento.vendedor.get_full_name|default:orcamento.vendedor.username|default:"Não informado" }}</span>
+      </div>
+      <div class="info-group">
+        <span class="info-label">Status do Orçamento</span>
+        <span class="info-value" style="text-transform:uppercase; color:#0284c7;">{{ orcamento.get_status_display }}</span>
+      </div>
+    </div>
+
+    <!-- Itens -->
+    <table>
+      <thead>
+        <tr>
+          <th width="5%" class="td-center">Item</th>
+          <th width="15%">Código</th>
+          <th width="40%">Descrição do Produto/Serviço</th>
+          <th width="10%" class="td-center">Qtd</th>
+          <th width="15%" class="td-number">V. Unitário (R$)</th>
+          <th width="15%" class="td-number">Total (R$)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in itens %}
+        <tr>
+          <td class="td-center">{{ forloop.counter }}</td>
+          <td>{{ item.produto.codigo|default:"-" }}</td>
+          <td>{{ item.produto.nome }}</td>
+          <td class="td-center">{{ item.quantidade|floatformat:0 }} {{ item.produto.unidade }}</td>
+          <td class="td-number">{{ item.preco_unitario|floatformat:2 }}</td>
+          <td class="td-number">{{ item.subtotal|floatformat:2 }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" class="td-center" style="padding:20px; color:#64748b;">Nenhum item lançado neste orçamento.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <!-- Totais -->
+    <div class="totals-box">
+      <table class="totals-table">
+        <tr>
+          <th>Subtotal:</th>
+          <td>R$ {{ orcamento.subtotal|floatformat:2 }}</td>
+        </tr>
+        <tr>
+          <th>Descontos:</th>
+          <td style="color:#ef4444;">- R$ {{ orcamento.desconto|floatformat:2 }}</td>
+        </tr>
+        <tr class="total-row">
+          <th>VALOR TOTAL:</th>
+          <td>R$ {{ orcamento.total|floatformat:2 }}</td>
+        </tr>
+      </table>
+    </div>
+
+    {% if orcamento.observacoes %}
+    <!-- Observações -->
+    <div class="obs-box">
+      <div class="obs-title">OBSERVAÇÕES GERAIS</div>
+      <div style="font-size:11px; color:#334155; white-space: pre-wrap;">{{ orcamento.observacoes }}</div>
+    </div>
+    {% endif %}
+
+    <!-- Assinaturas -->
+    <div class="signatures" style="page-break-inside: avoid;">
+      <div>
+        <div class="signature-line">{{ request.empresa.nome }}</div>
+        <div style="font-size:10px; color:#64748b; margin-top:4px;">Departamento Comercial</div>
+      </div>
+      <div>
+        <div class="signature-line">{{ orcamento.cliente.nome }}</div>
+        <div style="font-size:10px; color:#64748b; margin-top:4px;">De acordo com os valores</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

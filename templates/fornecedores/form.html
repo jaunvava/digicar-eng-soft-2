@@ -1,0 +1,184 @@
+{% extends 'base.html' %}
+{% block title %}{{ titulo }}{% endblock %}
+{% block breadcrumb %}Fornecedores / {{ titulo }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">{{ titulo }}</h1>
+</div>
+
+<form method="POST">
+  {% csrf_token %}
+  <div class="row g-3">
+    <!-- Dados Principais -->
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="card-title m-0"><i class="bi bi-truck me-2"></i>Dados do Fornecedor</h5>
+          <div class="form-check form-switch m-0 d-flex align-items-center">
+            <input class="form-check-input mb-1 me-2" type="checkbox" role="switch" name="ativo" id="ativoSwitch" {% if not fornecedor or fornecedor.ativo %}checked{% endif %} style="cursor:pointer; width:38px; height:20px;">
+            <label class="form-check-label" for="ativoSwitch" id="ativoLabel" style="font-weight:600; font-size:13px; color:var(--text-primary); cursor:pointer;">Ativo</label>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-2">
+              <label class="form-label-custom">Tipo de Pessoa *</label>
+              <select name="tipo" class="form-control-custom" id="tipoPessoa">
+                <option value="PJ" {% if fornecedor.tipo == 'PJ' %}selected{% endif %}>Pessoa Jurídica</option>
+                <option value="PF" {% if fornecedor.tipo == 'PF' %}selected{% endif %}>Pessoa Física</option>
+              </select>
+            </div>
+            <div class="col-md-7">
+              <label class="form-label-custom">Nome / Razão Social *</label>
+              <input type="text" name="nome" value="{{ fornecedor.nome|default:'' }}" required class="form-control-custom">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label-custom" id="labelCpfCnpj">CNPJ</label>
+              <input type="text" name="cpf_cnpj" id="cpf_cnpj" value="{{ fornecedor.cpf_cnpj|default:'' }}" class="form-control-custom">
+            </div>
+            
+            <!-- Contato -->
+            <div class="col-md-3">
+              <label class="form-label-custom">Telefone 1</label>
+              <input type="text" name="telefone1" value="{{ fornecedor.telefone1|default:'' }}" class="form-control-custom" data-mask="phone">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label-custom">Telefone 2</label>
+              <input type="text" name="telefone2" value="{{ fornecedor.telefone2|default:'' }}" class="form-control-custom" data-mask="phone">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label-custom">E-mail</label>
+              <input type="email" name="email" value="{{ fornecedor.email|default:'' }}" class="form-control-custom">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label-custom">Site (URL)</label>
+              <input type="url" name="site" value="{{ fornecedor.site|default:'' }}" class="form-control-custom" placeholder="https://exemplo.com.br">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Endereço -->
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="card-title m-0"><i class="bi bi-geo-alt me-2"></i>Endereço</h5>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-2">
+              <label class="form-label-custom">CEP</label>
+              <div class="input-group">
+                <input type="text" name="cep" id="cep" value="{{ fornecedor.cep|default:'' }}" class="form-control-custom" data-mask="cep">
+                <button class="btn btn-outline-secondary" type="button" onclick="buscarCep()" style="border-radius: 0 5px 5px 0; border: 1px solid #ced4da; border-left:0;">
+                  <i class="bi bi-search"></i>
+                </button>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label-custom">Logradouro / Endereço</label>
+              <input type="text" name="endereco" id="endereco" value="{{ fornecedor.endereco|default:'' }}" class="form-control-custom">
+            </div>
+            <div class="col-md-1">
+              <label class="form-label-custom">Número</label>
+              <input type="text" name="numero" value="{{ fornecedor.numero|default:'' }}" class="form-control-custom">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label-custom">Complemento</label>
+              <input type="text" name="complemento" value="{{ fornecedor.complemento|default:'' }}" class="form-control-custom">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label-custom">Bairro</label>
+              <input type="text" name="bairro" id="bairro" value="{{ fornecedor.bairro|default:'' }}" class="form-control-custom">
+            </div>
+            <div class="col-md-5">
+              <label class="form-label-custom">Cidade</label>
+              <input type="text" name="cidade" id="cidade" value="{{ fornecedor.cidade|default:'' }}" class="form-control-custom">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label-custom">Estado (UF)</label>
+              <input type="text" name="estado" id="uf" value="{{ fornecedor.estado|default:'' }}" class="form-control-custom" maxlength="2">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Observações -->
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="card-title m-0"><i class="bi bi-chat-left-text me-2"></i>Observações</h5>
+        </div>
+        <div class="card-body">
+          <textarea name="observacoes" class="form-control-custom" rows="3">{{ fornecedor.observacoes|default:'' }}</textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ações -->
+    <div class="col-12 d-flex gap-3 justify-content-end mb-4">
+      <a href="{% url 'fornecedores:lista' %}" class="btn-outline-custom">Cancelar</a>
+      <button type="submit" class="btn-primary-custom">
+        <i class="bi bi-check-lg me-1"></i> Salvar Fornecedor
+      </button>
+    </div>
+  </div>
+</form>
+
+{% block extra_js %}
+<script>
+  // Função para buscar CEP via ViaCEP
+  function buscarCep() {
+    const cep = document.getElementById('cep').value.replace(/\D/g, '');
+    if (cep.length !== 8) {
+      Swal.fire('Erro', 'CEP inválido!', 'error');
+      return;
+    }
+
+    const btn = event.currentTarget;
+    const icon = btn.querySelector('i');
+    icon.className = 'spinner-border spinner-border-sm';
+
+    fetch(`https://viacep.com.br/ws/${cep}/json/`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.erro) {
+          Swal.fire('Erro', 'CEP não encontrado!', 'error');
+        } else {
+          document.getElementById('endereco').value = data.logradouro;
+          document.getElementById('bairro').value = data.bairro;
+          document.getElementById('cidade').value = data.localidade;
+          document.getElementById('uf').value = data.uf;
+        }
+      })
+      .catch(error => Swal.fire('Erro', 'Falha ao consultar CEP!', 'error'))
+      .finally(() => icon.className = 'bi bi-search');
+  }
+
+  // Lógica de CPF/CNPJ e Switch Ativo
+  document.addEventListener('DOMContentLoaded', function() {
+    const tipoSelect = document.getElementById('tipoPessoa');
+    const labelCpfCnpj = document.getElementById('labelCpfCnpj');
+    
+    function updateLabels() {
+      labelCpfCnpj.textContent = (tipoSelect.value === 'PJ') ? 'CNPJ' : 'CPF';
+    }
+    
+    tipoSelect.addEventListener('change', updateLabels);
+    updateLabels();
+
+    const switchEl = document.getElementById('ativoSwitch');
+    const labelEl = document.getElementById('ativoLabel');
+    function updateAtivo() {
+      labelEl.textContent = switchEl.checked ? 'Ativo' : 'Inativo';
+      labelEl.style.color = switchEl.checked ? 'var(--text-primary)' : 'var(--text-muted)';
+    }
+    switchEl.addEventListener('change', updateAtivo);
+    updateAtivo();
+  });
+</script>
+{% endblock %}
+{% endblock %}

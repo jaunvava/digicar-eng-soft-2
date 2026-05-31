@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% block title %}Orçamentos{% endblock %}
+{% block breadcrumb %}Orçamentos{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex align-items-center justify-content-between">
+  <div>
+    <h1 class="page-title">Orçamentos</h1>
+    <p class="page-subtitle">{{ orcamentos.count }} orçamento(s)</p>
+  </div>
+  <a href="{% url 'orcamentos:novo' %}" class="btn-primary-custom">
+    <i class="bi bi-plus-lg"></i> Novo Orçamento
+  </a>
+</div>
+
+<div class="card mb-4">
+  <div class="card-body" style="padding:14px 20px;">
+    <form method="GET" class="d-flex gap-3 align-items-center flex-wrap">
+      <div style="flex:1;min-width:200px;position:relative;">
+        <i class="bi bi-search" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-muted);"></i>
+        <input type="text" name="q" value="{{ q }}" placeholder="Buscar por # ou cliente..." class="form-control-custom" style="padding-left:36px;">
+      </div>
+      <select name="status" class="form-control-custom" style="width:160px;">
+        <option value="">Todos</option>
+        <option value="rascunho" {% if status == 'rascunho' %}selected{% endif %}>Rascunho</option>
+        <option value="enviado"  {% if status == 'enviado' %}selected{% endif %}>Enviado</option>
+        <option value="aprovado" {% if status == 'aprovado' %}selected{% endif %}>Aprovado</option>
+        <option value="reprovado" {% if status == 'reprovado' %}selected{% endif %}>Reprovado</option>
+      </select>
+      <button type="submit" class="btn-primary-custom">Filtrar</button>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body p-0">
+    <table class="table-custom w-100">
+      <thead>
+        <tr>
+          <th>Nº</th>
+          <th>Cliente</th>
+          <th>Validade</th>
+          <th>Total</th>
+          <th>Status</th>
+          <th>Criado em</th>
+          <th style="text-align:right;">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for orc in orcamentos %}
+        <tr>
+          <td><strong style="color:var(--primary);">#{{ orc.numero }}</strong></td>
+          <td>{{ orc.cliente.nome|truncatechars:30 }}</td>
+          <td>{{ orc.validade|date:"d/m/Y" }}</td>
+          <td><strong>R$ {{ orc.total|floatformat:2 }}</strong></td>
+          <td><span class="badge-status badge-{{ orc.status }}">{{ orc.get_status_display }}</span></td>
+          <td style="font-size:12px;">{{ orc.criado_em|date:"d/m/Y" }}</td>
+          <td style="text-align:right;">
+            <div class="d-flex gap-2 justify-content-end">
+              <a href="{% url 'orcamentos:detalhe' orc.pk %}" class="btn-outline-custom" style="padding:5px 10px;font-size:12px;" title="Ver">
+                <i class="bi bi-eye"></i> Ver
+              </a>
+              <a href="{% url 'orcamentos:imprimir' orc.pk %}" target="_blank" class="btn-outline-custom" style="padding:5px 10px;font-size:12px;background:#f8fafc;" title="Imprimir">
+                <i class="bi bi-printer text-primary"></i>
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" style="text-align:center;padding:40px;color:var(--text-muted);">
+            <i class="bi bi-file-earmark-text" style="font-size:32px;display:block;margin-bottom:8px;"></i>
+            Nenhum orçamento cadastrado.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

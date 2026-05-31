@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Baixar Aplicativos{% endblock %}
+{% block breadcrumb %}Aplicativos{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">Aplicativos</h1>
+  <p class="page-subtitle">Baixe os aplicativos oficiais da plataforma DigiCAR.</p>
+</div>
+
+<div class="row g-4">
+  <div class="col-md-6 col-lg-4">
+    <div class="card h-100">
+      <div class="card-body text-center p-4">
+        <div class="mb-4" style="font-size: 48px; color: var(--primary);">
+          <i class="bi bi-windows"></i>
+        </div>
+        <h4 class="card-title mb-2">DigiCAR Local (Desktop)</h4>
+        <p class="text-muted mb-4" style="font-size: 14px;">
+          Sistema local integrado para Windows. Funciona mesmo sem internet (requer licença). Ideal para balcão e caixas.
+        </p>
+        <a href="#" class="btn btn-primary w-100" style="font-weight: 600;">
+          <i class="bi bi-download me-2"></i> Baixar para Windows
+        </a>
+      </div>
+      <div class="card-footer bg-transparent border-top text-center" style="font-size: 12px; color: var(--text-secondary);">
+        Versão atual: 1.0.0 | Tamanho: ~15MB
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-6 col-lg-4">
+    <div class="card h-100 opacity-75">
+      <div class="card-body text-center p-4">
+        <div class="mb-4" style="font-size: 48px; color: var(--secondary);">
+          <i class="bi bi-android2"></i>
+        </div>
+        <h4 class="card-title mb-2">DigiCAR Mobile (Android)</h4>
+        <p class="text-muted mb-4" style="font-size: 14px;">
+          Aplicativo móvel para emissão rápida de ordens de serviço. Em breve.
+        </p>
+        <button class="btn btn-outline-secondary w-100 disabled" style="font-weight: 600;">
+          <i class="bi bi-hourglass-split me-2"></i> Em Breve
+        </button>
+      </div>
+      <div class="card-footer bg-transparent border-top text-center" style="font-size: 12px; color: var(--text-secondary);">
+        Plataforma Mobile
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

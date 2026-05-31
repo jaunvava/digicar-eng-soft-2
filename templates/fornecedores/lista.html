@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+{% block title %}Fornecedores{% endblock %}
+{% block breadcrumb %}Fornecedores{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex align-items-center justify-content-between">
+  <div>
+    <h1 class="page-title">Fornecedores</h1>
+  </div>
+</div>
+
+<!-- Filtros de Pesquisa -->
+<div class="card mb-4">
+  <div class="card-header" style="padding:10px 20px;">
+    <h5 class="card-title" style="margin:0;font-size:14px;">
+      <i class="bi bi-funnel me-2"></i>Filtros de Pesquisa
+    </h5>
+  </div>
+  <div class="card-body" style="padding:14px 20px;">
+    <form method="GET" id="filtrosForm">
+      <div class="row g-2 mb-3">
+        <div class="col-md-6">
+          <input type="text" name="q" value="{{ q|default:'' }}"
+                 placeholder="Pesquisar por Nome, CPF/CNPJ ou E-mail"
+                 class="form-control-custom">
+        </div>
+        <div class="col-md-2">
+           <button type="submit" class="btn-action-indigo w-100">
+            <i class="bi bi-search"></i> Buscar
+          </button>
+        </div>
+        <div class="col-md-2">
+          <a href="{% url 'fornecedores:lista' %}" class="btn-action-amber w-100">
+            <i class="bi bi-x-lg"></i> Limpar
+          </a>
+        </div>
+        <div class="col-md-2">
+          <a href="{% url 'fornecedores:novo' %}" class="btn-action-green w-100">
+            <i class="bi bi-plus-lg"></i> Novo
+          </a>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Tabela -->
+<div class="card">
+  <div class="card-body p-0">
+    <table class="table-custom w-100">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nome / Razão Social</th>
+          <th>Tipo</th>
+          <th>CPF/CNPJ</th>
+          <th>Telefones</th>
+          <th>Cidade/UF</th>
+          <th>Status</th>
+          <th style="text-align:right; padding-right: 20px;">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for f in fornecedores %}
+        <tr>
+          <td style="color:var(--text-muted);font-size:11px;">#{{ f.pk }}</td>
+          <td>
+            <strong>{{ f.nome }}</strong>
+            {% if f.email %}
+              <div style="font-size:10px; color:var(--text-muted);">{{ f.email }}</div>
+            {% endif %}
+          </td>
+          <td>
+            {% if f.tipo == 'PF' %}
+              <span class="badge bg-secondary bg-opacity-10 text-secondary" style="font-size:10px;">P. Física</span>
+            {% else %}
+              <span class="badge bg-info bg-opacity-10 text-info" style="font-size:10px;">P. Jurídica</span>
+            {% endif %}
+          </td>
+          <td style="font-size:11.5px;">{{ f.cpf_cnpj|default:"-" }}</td>
+          <td style="font-size:11.5px;">
+            {{ f.telefone1 }}
+            {% if f.telefone2 %}<br>{{ f.telefone2 }}{% endif %}
+          </td>
+          <td>{{ f.cidade|default:"-" }} / {{ f.estado|default:"-" }}</td>
+          <td>
+            {% if f.ativo %}
+              <span class="badge-status badge-pago" style="font-size: 10px; background: #dcfce7; color: #166534;">Ativo</span>
+            {% else %}
+              <span class="badge-status badge-cancelado" style="font-size: 10px; background: #fee2e2; color: #991b1b;">Inativo</span>
+            {% endif %}
+          </td>
+          <td style="text-align:right; padding-right: 20px;">
+            <div class="d-flex gap-1 justify-content-end">
+              {% if f.site %}
+                <a href="{{ f.site }}" target="_blank" class="btn-outline-custom" style="padding:2px 6px;font-size:12px;" title="Ver Site">
+                  <i class="bi bi-globe"></i>
+                </a>
+              {% endif %}
+              <a href="{% url 'fornecedores:editar' f.pk %}" class="btn-outline-custom" style="padding:2px 6px;font-size:12px;" title="Editar">
+                <i class="bi bi-pencil"></i>
+              </a>
+              <button onclick="confirmDelete('{% url 'fornecedores:excluir' f.pk %}', 'Excluir {{ f.nome }}?')"
+                      class="btn btn-sm" style="background:#fee2e2;color:#b91c1c;border:none;border-radius: 4px;padding:2px 6px;" title="Excluir">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="8" style="text-align:center;padding:40px;color:var(--text-muted);">
+            <i class="bi bi-truck" style="font-size:32px;display:block;margin-bottom:8px;"></i>
+            Nenhum fornecedor encontrado.
+            <a href="{% url 'fornecedores:novo' %}">Cadastrar agora</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,320 @@
+{% extends 'base.html' %}
+{% block title %}{{ titulo }}{% endblock %}
+{% block breadcrumb %}Clientes / {{ titulo }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">{{ titulo }}</h1>
+</div>
+
+<form method="POST" action="">
+  {% csrf_token %}
+  <div class="row g-3">
+    <!-- Dados Básicos -->
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="card-title m-0"><i class="bi bi-person me-2"></i>Dados Pessoais</h5>
+          <div class="form-check form-switch m-0 d-flex align-items-center">
+            <input class="form-check-input mb-1 me-2" type="checkbox" role="switch" name="ativo" id="ativoSwitch" {% if not cliente or cliente.ativo %}checked{% endif %} style="cursor:pointer; width:38px; height:20px;">
+            <label class="form-check-label" for="ativoSwitch" id="ativoLabel" style="font-weight:600; font-size:13px; color:var(--text-primary); cursor:pointer;">Ativo</label>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-2">
+              <label class="form-label-custom">Tipo</label>
+              <select name="tipo" class="form-control-custom">
+                <option value="PF" {% if cliente.tipo == 'PF' %}selected{% endif %}>Pessoa Física</option>
+                <option value="PJ" {% if cliente.tipo == 'PJ' %}selected{% endif %}>Pessoa Jurídica</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label-custom">Nome / Razão Social *</label>
+              <input type="text" name="nome" value="{{ cliente.nome|default:'' }}" required class="form-control-custom" placeholder="Nome completo" id="nomeInput">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label-custom">CPF / CNPJ</label>
+              <div class="position-relative">
+                <input type="text" name="cpf_cnpj" value="{{ cliente.cpf_cnpj|default:'' }}" class="form-control-custom" placeholder="000.000.000-00 ou 00.000.000/0000-00" id="cpfCnpjInput" maxlength="18" autocomplete="off">
+                <span id="cnpjSpinner" style="display:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);"><i class="bi bi-arrow-repeat spin-anim" style="color:var(--primary);font-size:16px;"></i></span>
+                <span id="cnpjBadge" style="display:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:12px;font-weight:600;padding:2px 6px;border-radius: 5px;"></span>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label-custom">E-mail</label>
+              <input type="email" name="email" value="{{ cliente.email|default:'' }}" class="form-control-custom" id="emailInput">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label-custom">Telefone</label>
+              <input type="text" name="telefone" value="{{ cliente.telefone|default:'' }}" class="form-control-custom" id="telefoneInput" placeholder="(00) 0000-0000">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label-custom">Celular</label>
+              <input type="text" name="celular" value="{{ cliente.celular|default:'' }}" class="form-control-custom" id="celularInput" placeholder="(00) 00000-0000">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Endereço -->
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header"><h5 class="card-title"><i class="bi bi-geo-alt me-2"></i>Endereço</h5></div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-2">
+              <label class="form-label-custom">CEP</label>
+              <div class="position-relative">
+                <input type="text" name="cep" value="{{ cliente.cep|default:'' }}" class="form-control-custom" id="cepInput" placeholder="00000-000" maxlength="9" autocomplete="off">
+                <span id="cepSpinner" style="display:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);"><i class="bi bi-arrow-repeat spin-anim" style="color:var(--primary);font-size:16px;"></i></span>
+              </div>
+            </div>
+            <div class="col-md-5">
+              <label class="form-label-custom">Endereço</label>
+              <input type="text" name="endereco" value="{{ cliente.endereco|default:'' }}" class="form-control-custom" id="enderecoInput">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label-custom">Número</label>
+              <input type="text" name="numero" value="{{ cliente.numero|default:'' }}" class="form-control-custom" id="numeroInput">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label-custom">Complemento</label>
+              <input type="text" name="complemento" value="{{ cliente.complemento|default:'' }}" class="form-control-custom">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label-custom">Bairro</label>
+              <input type="text" name="bairro" value="{{ cliente.bairro|default:'' }}" class="form-control-custom" id="bairroInput">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label-custom">Cidade</label>
+              <input type="text" name="cidade" value="{{ cliente.cidade|default:'' }}" class="form-control-custom" id="cidadeInput">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label-custom">Estado</label>
+              <select name="estado" class="form-control-custom" id="estadoInput">
+                <option value="">--</option>
+                <option value="AC" {% if cliente.estado == "AC" %}selected{% endif %}>AC</option>
+                <option value="AL" {% if cliente.estado == "AL" %}selected{% endif %}>AL</option>
+                <option value="AP" {% if cliente.estado == "AP" %}selected{% endif %}>AP</option>
+                <option value="AM" {% if cliente.estado == "AM" %}selected{% endif %}>AM</option>
+                <option value="BA" {% if cliente.estado == "BA" %}selected{% endif %}>BA</option>
+                <option value="CE" {% if cliente.estado == "CE" %}selected{% endif %}>CE</option>
+                <option value="DF" {% if cliente.estado == "DF" %}selected{% endif %}>DF</option>
+                <option value="ES" {% if cliente.estado == "ES" %}selected{% endif %}>ES</option>
+                <option value="GO" {% if cliente.estado == "GO" %}selected{% endif %}>GO</option>
+                <option value="MA" {% if cliente.estado == "MA" %}selected{% endif %}>MA</option>
+                <option value="MT" {% if cliente.estado == "MT" %}selected{% endif %}>MT</option>
+                <option value="MS" {% if cliente.estado == "MS" %}selected{% endif %}>MS</option>
+                <option value="MG" {% if cliente.estado == "MG" %}selected{% endif %}>MG</option>
+                <option value="PA" {% if cliente.estado == "PA" %}selected{% endif %}>PA</option>
+                <option value="PB" {% if cliente.estado == "PB" %}selected{% endif %}>PB</option>
+                <option value="PR" {% if cliente.estado == "PR" %}selected{% endif %}>PR</option>
+                <option value="PE" {% if cliente.estado == "PE" %}selected{% endif %}>PE</option>
+                <option value="PI" {% if cliente.estado == "PI" %}selected{% endif %}>PI</option>
+                <option value="RJ" {% if cliente.estado == "RJ" %}selected{% endif %}>RJ</option>
+                <option value="RN" {% if cliente.estado == "RN" %}selected{% endif %}>RN</option>
+                <option value="RS" {% if cliente.estado == "RS" %}selected{% endif %}>RS</option>
+                <option value="RO" {% if cliente.estado == "RO" %}selected{% endif %}>RO</option>
+                <option value="RR" {% if cliente.estado == "RR" %}selected{% endif %}>RR</option>
+                <option value="SC" {% if cliente.estado == "SC" %}selected{% endif %}>SC</option>
+                <option value="SP" {% if cliente.estado == "SP" %}selected{% endif %}>SP</option>
+                <option value="SE" {% if cliente.estado == "SE" %}selected{% endif %}>SE</option>
+                <option value="TO" {% if cliente.estado == "TO" %}selected{% endif %}>TO</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Observações -->
+    <div class="col-12">
+      <div class="card">
+        <div class="card-body">
+          <label class="form-label-custom">Observações</label>
+          <textarea name="observacoes" rows="3" class="form-control-custom">{{ cliente.observacoes|default:'' }}</textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Botões -->
+    <div class="col-12 d-flex gap-3 justify-content-end">
+      <a href="{% url 'clientes:lista' %}" class="btn-outline-custom">Cancelar</a>
+      <button type="submit" class="btn-primary-custom">
+        <i class="bi bi-check-lg me-1"></i> Salvar Cliente
+      </button>
+    </div>
+  </div>
+</form>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    var switchEl = document.getElementById('ativoSwitch');
+    var labelEl = document.getElementById('ativoLabel');
+    function updateLabel() {
+      if(switchEl.checked) {
+        labelEl.textContent = 'Ativo';
+        labelEl.style.color = 'var(--text-primary)';
+      } else {
+        labelEl.textContent = 'Inativo';
+        labelEl.style.color = 'var(--text-muted)';
+      }
+    }
+    switchEl.addEventListener('change', updateLabel);
+    updateLabel();
+  });
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<style>
+  @keyframes rotate360 { to { transform: rotate(360deg); } }
+  .spin-anim { animation: rotate360 0.8s linear infinite; display: inline-block; }
+</style>
+<script>
+  // ─── Máscaras ────────────────────────────────────────────────────────────────
+  function maskCPF(v) {
+    return v.replace(/\D/g, '').slice(0, 11)
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+  }
+  function maskCNPJ(v) {
+    return v.replace(/\D/g, '').slice(0, 14)
+      .replace(/(\d{2})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d)/, '$1/$2')
+      .replace(/(\d{4})(\d{1,2})$/, '$1-$2');
+  }
+  function maskCEP(v) {
+    return v.replace(/\D/g, '').slice(0, 8)
+      .replace(/(\d{5})(\d{1,3})$/, '$1-$2');
+  }
+  function maskPhone(v) {
+    const d = v.replace(/\D/g, '').slice(0, 11);
+    if (d.length <= 10) return d.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3').replace(/-$/, '');
+    return d.replace(/(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3').replace(/-$/, '');
+  }
+
+  // ─── CPF / CNPJ ──────────────────────────────────────────────────────────────
+  var cpfCnpjEl  = document.getElementById('cpfCnpjInput');
+  var cnpjSpin   = document.getElementById('cnpjSpinner');
+  var cnpjBadge  = document.getElementById('cnpjBadge');
+  var cnpjTimer  = null;
+
+  cpfCnpjEl.addEventListener('input', function () {
+    var digits = this.value.replace(/\D/g, '');
+    this.value = digits.length <= 11 ? maskCPF(this.value) : maskCNPJ(this.value);
+    cnpjBadge.style.display = 'none';
+    clearTimeout(cnpjTimer);
+    if (digits.length === 14) {
+      cnpjTimer = setTimeout(function () { buscarCNPJ(digits); }, 700);
+    }
+  });
+
+  function buscarCNPJ(cnpj) {
+    cnpjSpin.style.display  = 'inline';
+    cnpjBadge.style.display = 'none';
+    fetch('https://brasilapi.com.br/api/cnpj/v1/' + cnpj)
+      .then(function (r) {
+        if (!r.ok) throw new Error('not found');
+        return r.json();
+      })
+      .then(function (d) {
+        // Nome / Razão Social
+        var nome = d.nome_fantasia || d.razao_social || '';
+        if (nome) document.getElementById('nomeInput').value = nome;
+
+        // Email
+        if (d.email) document.getElementById('emailInput').value = d.email.toLowerCase();
+
+        // Telefone
+        var fone = (d.ddd_telefone_1 || '').replace(/\D/g, '');
+        if (fone) document.getElementById('telefoneInput').value = maskPhone(fone);
+
+        // Endereço via dados do CNPJ
+        if (d.cep) {
+          var cepClean = d.cep.replace(/\D/g, '');
+          document.getElementById('cepInput').value = maskCEP(cepClean);
+          var logradouro = [d.descricao_tipo_de_logradouro, d.logradouro].filter(Boolean).join(' ').trim();
+          document.getElementById('enderecoInput').value = logradouro;
+          document.getElementById('bairroInput').value   = d.bairro    || '';
+          document.getElementById('cidadeInput').value   = d.municipio || '';
+          document.getElementById('estadoInput').value   = d.uf        || '';
+        }
+
+        // Badge verde
+        cnpjBadge.style.display    = 'inline';
+        cnpjBadge.style.color      = '#10b981';
+        cnpjBadge.style.background = 'rgba(16,185,129,0.1)';
+        cnpjBadge.textContent      = '✓ Encontrado';
+      })
+      .catch(function () {
+        cnpjBadge.style.display    = 'inline';
+        cnpjBadge.style.color      = '#ef4444';
+        cnpjBadge.style.background = 'rgba(239,68,68,0.1)';
+        cnpjBadge.textContent      = '✗ Não encontrado';
+      })
+      .finally(function () {
+        cnpjSpin.style.display = 'none';
+      });
+  }
+
+  // ─── CEP ─────────────────────────────────────────────────────────────────────
+  var cepEl     = document.getElementById('cepInput');
+  var cepSpin   = document.getElementById('cepSpinner');
+  var cepTimer  = null;
+
+  cepEl.addEventListener('input', function () {
+    this.value = maskCEP(this.value);
+    var digits = this.value.replace(/\D/g, '');
+    clearTimeout(cepTimer);
+    if (digits.length === 8) {
+      cepTimer = setTimeout(function () { buscarCEP(digits); }, 700);
+    }
+  });
+
+  function buscarCEP(cep) {
+    cepSpin.style.display = 'inline';
+    fetch('https://viacep.com.br/ws/' + cep + '/json/')
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d.erro) {
+          document.getElementById('enderecoInput').value = d.logradouro || '';
+          document.getElementById('bairroInput').value   = d.bairro     || '';
+          document.getElementById('cidadeInput').value   = d.localidade || '';
+          document.getElementById('estadoInput').value   = d.uf         || '';
+          document.getElementById('numeroInput').focus();
+        }
+      })
+      .catch(function () {})
+      .finally(function () { cepSpin.style.display = 'none'; });
+  }
+
+  // ─── Telefone / Celular ───────────────────────────────────────────────────────
+  document.getElementById('telefoneInput').addEventListener('input', function () {
+    this.value = maskPhone(this.value);
+  });
+  document.getElementById('celularInput').addEventListener('input', function () {
+    this.value = maskPhone(this.value);
+  });
+
+  // ─── Aplica máscara ao carregar (modo editar) ─────────────────────────────────
+  (function () {
+    var cv = cpfCnpjEl.value.replace(/\D/g, '');
+    if (cv.length === 11) cpfCnpjEl.value = maskCPF(cv);
+    else if (cv.length === 14) cpfCnpjEl.value = maskCNPJ(cv);
+
+    var cc = cepEl.value.replace(/\D/g, '');
+    if (cc.length === 8) cepEl.value = maskCEP(cc);
+
+    var tf = document.getElementById('telefoneInput').value.replace(/\D/g, '');
+    if (tf.length >= 10) document.getElementById('telefoneInput').value = maskPhone(tf);
+
+    var cel = document.getElementById('celularInput').value.replace(/\D/g, '');
+    if (cel.length >= 10) document.getElementById('celularInput').value = maskPhone(cel);
+  })();
+</script>
+{% endblock %}

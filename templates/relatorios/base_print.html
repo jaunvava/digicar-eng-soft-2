@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Relatório{% endblock %}</title>
+    <style>
+        body { font-family: 'Courier New', Courier, monospace; font-size: 11px; color: #000; background: #fff; margin: 0; padding: 20px; }
+        .print-header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; position: relative; }
+        .print-header h1 { font-size: 18px; margin: 0; text-transform: uppercase; }
+        .info-top { display: flex; justify-content: space-between; font-size: 10px; margin-top: 5px; }
+        .info-left { text-align: left; }
+        .info-right { text-align: right; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { border-bottom: 1px solid #000; text-align: left; padding: 5px; font-weight: bold; text-transform: uppercase; }
+        td { padding: 5px; border-bottom: 1px dotted #ccc; }
+        .text-end { text-align: right; }
+        .text-center { text-align: center; }
+        
+        .footer { margin-top: 30px; border-top: 1px solid #000; padding-top: 10px; font-size: 9px; text-align: center; }
+        
+        @media print {
+            .no-print { display: none; }
+            body { padding: 0; }
+        }
+    </style>
+</head>
+<body onload="window.print()">
+    <div class="print-header">
+        <h1>{% block report_title %}RELATÓRIO ANALÍTICO{% endblock %}</h1>
+        <div class="info-top">
+            <div class="info-left">
+                Empresa: {{ empresa.nome|default:"DigiCAR" }}<br>
+                Usuário: {{ request.user.username }}<br>
+                Data/Hora: {{ now|date:"d/m/Y H:i" }}
+            </div>
+            <div class="info-right">
+                Versão: 1.0.2.74<br>
+                Página: 1/1
+            </div>
+        </div>
+    </div>
+
+    {% block content %}{% endblock %}
+
+    <div class="footer">
+        Gerado por DigiCAR - Sistema de Gestão Empresarial
+    </div>
+</body>
+</html>

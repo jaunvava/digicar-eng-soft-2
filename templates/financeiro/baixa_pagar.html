@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% block title %}Baixar Conta a Pagar{% endblock %}
+{% block breadcrumb %}Financeiro / Baixar Conta a Pagar{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">Registrar Baixa a Pagar</h1>
+  <p class="page-subtitle">{{ conta.fornecedor }} — {{ conta.descricao }}</p>
+</div>
+
+<div class="row g-3">
+  <div class="col-md-6">
+    <div class="card mb-3">
+      <div class="card-header"><h5 class="card-title">Informações da Conta</h5></div>
+      <div class="card-body" style="font-size:14px;">
+        <p><strong>Valor Total:</strong> R$ {{ conta.valor|floatformat:2 }}</p>
+        <p><strong>Valor Pago:</strong> <span style="color:var(--success);">R$ {{ conta.valor_pago|floatformat:2 }}</span></p>
+        <p><strong>Saldo a Pagar:</strong> <span style="color:var(--danger);font-weight:700;">R$ {{ conta.saldo_devedor|floatformat:2 }}</span></p>
+        <p><strong>Vencimento:</strong> {{ conta.vencimento|date:"d/m/Y" }}</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h5 class="card-title">Registrar Pagamento</h5></div>
+      <div class="card-body">
+        <form method="POST">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label-custom">Valor da Baixa *</label>
+            <input type="text" name="valor" value="{{ conta.saldo_devedor }}" data-mask="currency" required class="form-control-custom" placeholder="0,00">
+          </div>
+          <div class="mb-3">
+            <label class="form-label-custom">Data do Pagamento *</label>
+            <input type="date" name="data_pagamento" required class="form-control-custom"
+                   value="{% now 'Y-m-d' %}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label-custom">Forma de Pagamento *</label>
+            <select name="forma_pagamento" required class="form-control-custom">
+              <option value="dinheiro">💵 Dinheiro</option>
+              <option value="pix">💠 PIX</option>
+              <option value="cartao_debito">💳 Cartão de Débito</option>
+              <option value="cartao_credito">💳 Cartão de Crédito</option>
+              <option value="transferencia">🏦 Transferência</option>
+              <option value="boleto">📄 Boleto</option>
+              <option value="cheque">📝 Cheque</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label-custom">Observações</label>
+            <textarea name="observacoes" rows="2" class="form-control-custom"></textarea>
+          </div>
+          <div class="d-flex gap-3">
+            <a href="{% url 'financeiro:contas_pagar' %}" class="btn-outline-custom">Cancelar</a>
+            <button type="submit" class="btn-primary-custom">
+              <i class="bi bi-check2 me-1"></i> Registrar Baixa
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% block title %}Ordens de Serviço{% endblock %}
+{% block breadcrumb %}Ordens de Serviço{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex align-items-center justify-content-between">
+  <div>
+    <h1 class="page-title">Ordens de Serviço</h1>
+    <p class="page-subtitle">{{ ordens.count }} OS(s) encontrada(s)</p>
+  </div>
+  <a href="{% url 'ordens:nova' %}" class="btn-primary-custom">
+    <i class="bi bi-plus-lg"></i> Nova OS
+  </a>
+</div>
+
+<!-- Filtros -->
+<div class="card mb-4">
+  <div class="card-body" style="padding:14px 20px;">
+    <form method="GET" class="d-flex gap-3 align-items-center flex-wrap">
+      <div style="flex:1;min-width:200px;position:relative;">
+        <i class="bi bi-search" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-muted);"></i>
+        <input type="text" name="q" value="{{ q }}" placeholder="Buscar por #, cliente ou equipamento..." class="form-control-custom" style="padding-left:36px;">
+      </div>
+      <select name="status" class="form-control-custom" style="width:180px;">
+        <option value="">Todos os status</option>
+        {% for val, label in status_choices %}
+          <option value="{{ val }}" {% if status == val %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="btn-primary-custom">Filtrar</button>
+      {% if q or status %}<a href="{% url 'ordens:lista' %}" class="btn-outline-custom">Limpar</a>{% endif %}
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body p-0">
+    <table class="table-custom w-100">
+      <thead>
+        <tr>
+          <th>OS #</th>
+          <th>Cliente</th>
+          <th>Equipamento</th>
+          <th>Técnico</th>
+          <th>Prioridade</th>
+          <th>Data Entrada</th>
+          <th>Total</th>
+          <th>Status</th>
+          <th style="text-align:right;">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for os in ordens %}
+        <tr>
+          <td><strong style="color:var(--primary);">#{{ os.numero }}</strong></td>
+          <td>{{ os.cliente.nome|truncatechars:22 }}</td>
+          <td>
+            {{ os.equipamento|truncatechars:20 }}
+            {% if os.marca %}<br><small style="color:var(--text-muted);">{{ os.marca }} {{ os.modelo }}</small>{% endif %}
+          </td>
+          <td>{{ os.tecnico.get_full_name|default:os.tecnico.username|default:"-" }}</td>
+          <td>
+            {% if os.prioridade == 'urgente' %}
+              <span class="badge-status badge-atrasado">Urgente</span>
+            {% elif os.prioridade == 'alta' %}
+              <span class="badge-status badge-pendente" style="background:#fce7f3;color:#9d174d;">Alta</span>
+            {% else %}
+              <span style="font-size:12px;color:var(--text-muted);">{{ os.get_prioridade_display }}</span>
+            {% endif %}
+          </td>
+          <td style="font-size:13px;">{{ os.data_entrada|date:"d/m/Y H:i" }}</td>
+          <td><strong>R$ {{ os.total|floatformat:2 }}</strong></td>
+          <td><span class="badge-status badge-{{ os.status }}">{{ os.get_status_display }}</span></td>
+          <td style="text-align:right;">
+            <div class="d-flex gap-2 justify-content-end">
+              <a href="{% url 'ordens:detalhe' os.pk %}" class="btn-outline-custom" style="padding:5px 10px;font-size:12px;" title="Ver detalhes">
+                <i class="bi bi-eye"></i>
+              </a>
+              <a href="{% url 'ordens:imprimir' os.pk %}" target="_blank" class="btn-outline-custom" style="padding:5px 10px;font-size:12px;background:#f8fafc;" title="Imprimir">
+                <i class="bi bi-printer text-primary"></i>
+              </a>
+              <button onclick="confirmDelete('{% url 'ordens:excluir' os.pk %}', 'Excluir OS #{{ os.numero }}?')"
+                      class="btn btn-sm" style="background:#fee2e2;color:#b91c1c;border:none;border-radius: 5px;padding:5px 10px;">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="9" style="text-align:center;padding:40px;color:var(--text-muted);">
+            <i class="bi bi-tools" style="font-size:32px;display:block;margin-bottom:8px;"></i>
+            Nenhuma OS encontrada.
+            <a href="{% url 'ordens:nova' %}">Criar primeira OS</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

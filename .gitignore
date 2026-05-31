@@ -1,0 +1,60 @@
+# ── Python ───────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+.Python
+
+# ── Ambientes virtuais ────────────────────────────────
+venv/
+.venv/
+env/
+ENV/
+.env
+scripts/
+
+# ── Django ───────────────────────────────────────────
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+
+# ── Arquivos de configuração sensíveis ───────────────
+.env
+.env.*
+!.env.example
+secrets.py
+
+# ── Pytest / cobertura ────────────────────────────────
+.pytest_cache/
+.coverage
+htmlcov/
+*.cover
+coverage.xml
+
+# ── Distribuição / build ──────────────────────────────
+dist/
+build/
+*.egg-info/
+*.egg
+.eggs/
+MANIFEST
+
+# ── IDEs ─────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ── Migrações (opcional — recomenda-se versionar) ─────
+# */migrations/
+
+# ── Node (caso use npm para assets) ──────────────────
+node_modules/
+npm-debug.log*

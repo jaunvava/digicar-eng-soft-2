@@ -1,0 +1,53 @@
+{% extends 'relatorios/base_print.html' %}
+{% block title %}Relatório Financeiro{% endblock %}
+{% block report_title %}RELATÓRIO FINANCEIRO E INADIMPLÊNCIA - ANALÍTICO{% endblock %}
+
+{% block content %}
+<h3 style="margin-top: 20px; font-size: 14px; border-bottom: 2px solid #000; display: inline-block;">RANKING: CLIENTES COM MAIOR DÉBITO</h3>
+<table>
+    <thead>
+        <tr>
+            <th>CLIENTE</th>
+            <th class="text-center">TÍTULOS EM ABERTO</th>
+            <th class="text-end">TOTAL DEVIDO (R$)</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for d in devedores %}
+        <tr>
+            <td><strong>{{ d.cliente__nome }}</strong></td>
+            <td class="text-center">{{ d.count }}</td>
+            <td class="text-end">R$ {{ d.total_devido|floatformat:2 }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="3" class="text-center p-5 text-muted">Nenhum cliente inadimplente no momento.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<h3 style="margin-top: 30px; font-size: 14px; border-bottom: 2px solid #000; display: inline-block;">DETALHAMENTO: PARCELAS VENCIDAS E NÃO PAGAS</h3>
+<table>
+    <thead>
+        <tr>
+            <th style="width: 100px;">VENCIMENTO</th>
+            <th>CLIENTE</th>
+            <th class="text-end" style="width: 120px;">VALOR ORIGINAL (R$)</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for a in atrasados %}
+        <tr>
+            <td>{{ a.vencimento|date:"d/m/Y" }}</td>
+            <td><strong>{{ a.cliente.nome }}</strong></td>
+            <td class="text-end">R$ {{ a.valor|floatformat:2 }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="3" class="text-center p-5 text-muted">Não existem parcelas em atraso no sistema.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
