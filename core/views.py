@@ -13,7 +13,11 @@ from core.models import Empresa, PerfilUsuario
 
 def login_view(request):
     if request.user.is_authenticated:
-        return redirect('core:dashboard')
+        if getattr(request, 'empresa', None):
+            return redirect('core:dashboard')
+        logout(request)
+        messages.warning(request, 'Seu usuário está autenticado, mas não está vinculado a uma empresa. Faça login novamente.')
+        return render(request, 'core/login.html')
 
     if request.method == 'POST':
         codigo_empresa = request.POST.get('codigo_empresa', '').strip().upper()
@@ -61,6 +65,8 @@ def logout_view(request):
 def dashboard(request):
     empresa = request.empresa
     if not empresa:
+        logout(request)
+        messages.error(request, 'Não foi possível identificar a empresa do usuário. Faça login novamente.')
         return redirect('core:login')
 
     from clientes.models import Cliente
