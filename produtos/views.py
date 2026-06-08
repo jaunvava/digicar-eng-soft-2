@@ -3,7 +3,6 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
 from django.utils import timezone
-from django.core.paginator import Paginator
 from .models import Produto
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
@@ -27,24 +26,12 @@ def lista(request):
     if tipo:
         produtos = produtos.filter(tipo=tipo)
 
-    total_registros = produtos.count()
-
-    per_page = request.GET.get('per_page', '20')
-    if per_page not in ['20', '50', '100']:
-        per_page = '20'
-
-    paginator = Paginator(produtos, int(per_page))
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-
     context = {
-        'produtos': page_obj,
-        'page_obj': page_obj,
+        'produtos': produtos,
         'q': q,
         'tipo': tipo,
         'situacao': situacao,
-        'total': total_registros,
-        'per_page': per_page,
+        'total': produtos.count(),
     }
     return render(request, 'produtos/lista.html', context)
     

@@ -35,7 +35,7 @@
 
 <div class="card">
   <div class="card-body p-0">
-    <table class="table-custom w-100">
+    <table class="table-custom datatable w-100">
       <thead>
         <tr>
           <th>OS #</th>
@@ -46,7 +46,7 @@
           <th>Data Entrada</th>
           <th>Total</th>
           <th>Status</th>
-          <th style="text-align:right;">Ações</th>
+          <th class="no-sort" style="text-align:right;">Ações</th>
         </tr>
       </thead>
       <tbody>
@@ -58,7 +58,7 @@
             {{ os.equipamento|truncatechars:20 }}
             {% if os.marca %}<br><small style="color:var(--text-muted);">{{ os.marca }} {{ os.modelo }}</small>{% endif %}
           </td>
-          <td>{{ os.tecnico.get_full_name|default:os.tecnico.username|default:"-" }}</td>
+          <td>{% if os.tecnico %}{{ os.tecnico.get_full_name|default:os.tecnico.username }}{% else %}-{% endif %}</td>
           <td>
             {% if os.prioridade == 'urgente' %}
               <span class="badge-status badge-atrasado">Urgente</span>

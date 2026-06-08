@@ -4,7 +4,6 @@ from django.contrib import messages
 from django.db.models import Q
 from django.utils import timezone
 from django.http import HttpResponse
-from django.core.paginator import Paginator
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
@@ -39,25 +38,13 @@ def lista(request):
     if q_cpf:
         clientes = clientes.filter(cpf_cnpj__icontains=q_cpf)
 
-    total_registros = clientes.count()
-
-    per_page = request.GET.get('per_page', '20')
-    if per_page not in ['20', '50', '100']:
-        per_page = '20'
-
-    paginator = Paginator(clientes, int(per_page))
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-
     context = {
-        'clientes': page_obj,
-        'page_obj': page_obj,
-        'total':    total_registros,
+        'clientes': clientes,
+        'total':    clientes.count(),
         'q_nome':   q_nome,
         'q_id':     q_id,
         'q_cpf':    q_cpf,
         'situacao': situacao,
-        'per_page': per_page,
     }
     return render(request, 'clientes/lista.html', context)
 

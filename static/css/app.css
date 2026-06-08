@@ -856,6 +856,93 @@ body {
 }
 
 /* =====================
+   DATATABLE (componente padrão de tabelas)
+   ===================== */
+.dataTables_wrapper {
+  padding: 14px 20px;
+}
+
+.dataTables_wrapper .dataTables_length,
+.dataTables_wrapper .dataTables_filter,
+.dataTables_wrapper .dataTables_info,
+.dataTables_wrapper .dataTables_paginate {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.dataTables_wrapper .dataTables_length select,
+.dataTables_wrapper .dataTables_filter input {
+  border: 0;
+  border-bottom: 1px solid #cbd5e1;
+  background: transparent;
+  padding: 2px 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-left: 6px;
+}
+
+.dataTables_wrapper .dataTables_length select:focus,
+.dataTables_wrapper .dataTables_filter input:focus {
+  outline: none;
+  border-bottom-color: var(--primary);
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+  border: none !important;
+  background: transparent !important;
+  color: var(--text-muted) !important;
+  padding: 4px 10px !important;
+  margin-left: 2px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover:not(.disabled) {
+  background: #f1f5f9 !important;
+  color: var(--primary) !important;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.current,
+.dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+  background: var(--primary) !important;
+  color: #fff !important;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.disabled,
+.dataTables_wrapper .dataTables_paginate .paginate_button.disabled:hover {
+  opacity: 0.3;
+  color: var(--text-muted) !important;
+  cursor: default;
+}
+
+table.dataTable thead th {
+  position: relative;
+  cursor: pointer;
+}
+
+table.dataTable thead th.sorting:after,
+table.dataTable thead th.sorting_asc:after,
+table.dataTable thead th.sorting_desc:after {
+  font-size: 8px;
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+table.dataTable thead th.sorting:after { content: "\25B2\25BC"; opacity: 0.25; letter-spacing: -1px; }
+table.dataTable thead th.sorting_asc:after { content: "\25B2"; opacity: 0.7; }
+table.dataTable thead th.sorting_desc:after { content: "\25BC"; opacity: 0.7; }
+
+table.dataTable thead th.no-sort {
+  cursor: default;
+}
+table.dataTable thead th.no-sort:after {
+  content: none;
+}
+
+/* =====================
    BADGES / STATUS
    ===================== */
 .badge-status {
