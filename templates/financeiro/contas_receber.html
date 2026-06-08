@@ -148,7 +148,7 @@
       <!-- linha de ações -->
       <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
         <span style="font-size:13px;color:var(--primary);font-weight:500;">
-          {{ contas.paginator.count }} conta(s) encontrada(s)
+          {{ contas.count }} conta(s) encontrada(s)
         </span>
 
         <div class="d-flex gap-2 flex-wrap">
@@ -187,7 +187,7 @@
 <!-- ══ Tabela ══════════════════════════════════════════════════════════ -->
 <div class="card">
   <div class="card-body p-0">
-    <table class="table-custom w-100" style="font-size:13px;">
+    <table class="table-custom w-100" style="font-size:13px;" data-datatable>
       <thead>
         <tr>
           <th class="id-col" style="padding-left:20px;width:56px;">ID</th>
@@ -201,7 +201,7 @@
           <th style="text-align:right;">Valor Pago</th>
           <th style="text-align:right;">Saldo</th>
           <th>Status</th>
-          <th style="text-align:center;padding-right:16px;width:90px;">Ações</th>
+          <th data-dt-no-sort style="text-align:center;padding-right:16px;width:90px;">Ações</th>
         </tr>
       </thead>
       <tbody>
@@ -283,39 +283,6 @@
     </table>
   </div>
 
-  <!-- Paginação -->
-  {% if contas.has_other_pages %}
-  <div class="pagination-container">
-    <div class="pagination-info">
-      Página {{ contas.number }} de {{ contas.paginator.num_pages }}
-    </div>
-    <div class="pagination-nav-compact">
-      {% if contas.has_previous %}
-        <a href="?page=1{% if q %}&q={{ q }}{% endif %}{% if status %}&status={{ status }}{% endif %}" class="page-btn-compact" title="Primeira">
-          <i class="bi bi-chevron-double-left"></i>
-        </a>
-        <a href="?page={{ contas.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if status %}&status={{ status }}{% endif %}" class="page-btn-compact" title="Anterior">
-          <i class="bi bi-chevron-left"></i>
-        </a>
-      {% else %}
-        <span class="page-btn-compact disabled"><i class="bi bi-chevron-double-left"></i></span>
-        <span class="page-btn-compact disabled"><i class="bi bi-chevron-left"></i></span>
-      {% endif %}
-
-      {% if contas.has_next %}
-        <a href="?page={{ contas.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if status %}&status={{ status }}{% endif %}" class="page-btn-compact" title="Próxima">
-          <i class="bi bi-chevron-right"></i>
-        </a>
-        <a href="?page={{ contas.paginator.num_pages }}{% if q %}&q={{ q }}{% endif %}{% if status %}&status={{ status }}{% endif %}" class="page-btn-compact" title="Última">
-          <i class="bi bi-chevron-double-right"></i>
-        </a>
-      {% else %}
-        <span class="page-btn-compact disabled"><i class="bi bi-chevron-right"></i></span>
-        <span class="page-btn-compact disabled"><i class="bi bi-chevron-double-right"></i></span>
-      {% endif %}
-    </div>
-  </div>
-  {% endif %}
 </div>
 
 <!-- ══ Modal Visualizar Conta ════════════════════════════════════════ -->
