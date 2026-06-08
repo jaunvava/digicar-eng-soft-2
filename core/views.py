@@ -1,13 +1,19 @@
-﻿from django.shortcuts import render, redirect
+﻿from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.db.models import Sum, Count, F
+from django.http import HttpResponse
 from datetime import timedelta, date
 import json
 
-from core.models import Empresa, PerfilUsuario
+from core.models import Empresa, PerfilUsuario, BannerDashboard
+
+
+def banner_imagem(request, pk):
+    banner = get_object_or_404(BannerDashboard, pk=pk)
+    return HttpResponse(bytes(banner.imagem), content_type=banner.imagem_tipo)
 
 
 
@@ -91,7 +97,6 @@ def dashboard(request):
     ).order_by('-valor')[:10]
 
     # Banners
-    from core.models import BannerDashboard
     banners = BannerDashboard.objects.filter(ativo=True)
 
     context = {

@@ -43,7 +43,9 @@ class PerfilUsuario(models.Model):
 
 
 class BannerDashboard(models.Model):
-    imagem = models.ImageField('Imagem', upload_to='banners/', help_text='Tamanho recomendado para a imagem: 1200x320 pixels (ou proporção equivalente).')
+    imagem = models.BinaryField('Imagem', help_text='Tamanho recomendado para a imagem: 1200x320 pixels (ou proporção equivalente).')
+    imagem_tipo = models.CharField('Tipo do Arquivo', max_length=100, default='image/jpeg')
+    imagem_nome = models.CharField('Nome do Arquivo', max_length=255, blank=True)
     link = models.URLField('Link de Redirecionamento', blank=True, null=True)
     ativo = models.BooleanField('Ativo', default=True)
     ordem = models.PositiveIntegerField('Ordem de Exibição', default=0)
