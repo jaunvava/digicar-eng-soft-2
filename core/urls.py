@@ -11,4 +11,5 @@ urlpatterns = [
     path('configuracoes/', views.configuracoes_view, name='configuracoes'),
     path('notificacoes/',  views.notificacoes_json,  name='notificacoes'),
     path('aplicativos/',   views.aplicativos_view,   name='aplicativos'),
+    path('banners/<int:pk>/imagem/', views.banner_imagem, name='banner_imagem'),
 ]
