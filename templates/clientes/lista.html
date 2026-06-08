@@ -91,7 +91,7 @@
 <!-- Tabela -->
 <div class="card">
   <div class="card-body p-0">
-    <table class="table-custom w-100">
+    <table class="table-custom w-100" data-datatable>
       <thead>
         <tr>
           <th>ID</th>
@@ -101,7 +101,7 @@
           <th>Telefone</th>
           <th>Cidade</th>
           <th>Status</th>
-          <th style="text-align:right; padding-right: 20px;">Ações</th>
+          <th data-dt-no-sort style="text-align:right; padding-right: 20px;">Ações</th>
         </tr>
       </thead>
       <tbody>
@@ -153,48 +153,6 @@
         {% endfor %}
       </tbody>
     </table>
-
-    <!-- BARRA DE PAGINAÇÃO ESTILIZADA -->
-    <div class="pagination-container">
-      <div class="items-per-page-wrap">
-        <span>Itens por página:</span>
-        <select class="items-per-page-select" onchange="window.location.href='?q_nome={{ q_nome }}&q_id={{ q_id }}&q_cpf={{ q_cpf }}&situacao={{ situacao }}&per_page=' + this.value;">
-          <option value="20" {% if per_page == '20' %}selected{% endif %}>20</option>
-          <option value="50" {% if per_page == '50' %}selected{% endif %}>50</option>
-          <option value="100" {% if per_page == '100' %}selected{% endif %}>100</option>
-        </select>
-      </div>
-
-      <div class="pagination-info">
-        {{ page_obj.start_index }}-{{ page_obj.end_index }} de {{ total }}
-      </div>
-
-      <div class="pagination-nav-compact">
-        {% if page_obj.has_previous %}
-          <a href="?q_nome={{ q_nome }}&q_id={{ q_id }}&q_cpf={{ q_cpf }}&situacao={{ situacao }}&per_page={{ per_page }}&page=1" class="page-btn-compact" title="Primeira">
-            <i class="bi bi-chevron-double-left"></i>
-          </a>
-          <a href="?q_nome={{ q_nome }}&q_id={{ q_id }}&q_cpf={{ q_cpf }}&situacao={{ situacao }}&per_page={{ per_page }}&page={{ page_obj.previous_page_number }}" class="page-btn-compact">
-            <i class="bi bi-chevron-left"></i>
-          </a>
-        {% else %}
-          <span class="page-btn-compact disabled"><i class="bi bi-chevron-double-left"></i></span>
-          <span class="page-btn-compact disabled"><i class="bi bi-chevron-left"></i></span>
-        {% endif %}
-
-        {% if page_obj.has_next %}
-          <a href="?q_nome={{ q_nome }}&q_id={{ q_id }}&q_cpf={{ q_cpf }}&situacao={{ situacao }}&per_page={{ per_page }}&page={{ page_obj.next_page_number }}" class="page-btn-compact">
-            <i class="bi bi-chevron-right"></i>
-          </a>
-          <a href="?q_nome={{ q_nome }}&q_id={{ q_id }}&q_cpf={{ q_cpf }}&situacao={{ situacao }}&per_page={{ per_page }}&page={{ page_obj.paginator.num_pages }}" class="page-btn-compact" title="Última">
-            <i class="bi bi-chevron-double-right"></i>
-          </a>
-        {% else %}
-          <span class="page-btn-compact disabled"><i class="bi bi-chevron-right"></i></span>
-          <span class="page-btn-compact disabled"><i class="bi bi-chevron-double-right"></i></span>
-        {% endif %}
-      </div>
-    </div>
   </div>
 </div>
 {% endblock %}
