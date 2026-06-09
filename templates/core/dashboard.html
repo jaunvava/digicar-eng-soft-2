@@ -100,12 +100,6 @@
               <td><span class="badge-status badge-{{ os.status }}">{{ os.get_status_display }}</span></td>
               <td>R$ {{ os.total|floatformat:2 }}</td>
             </tr>
-            {% empty %}
-            <tr>
-              <td colspan="5" style="text-align:center;color:var(--text-muted);padding:24px;">
-                <i class="bi bi-inbox me-2"></i>Nenhuma OS cadastrada
-              </td>
-            </tr>
             {% endfor %}
           </tbody>
         </table>
@@ -138,12 +132,6 @@
               <td style="color:var(--danger);font-weight:600;">R$ {{ conta.valor|floatformat:2 }}</td>
               <td>
                 <span class="badge-status badge-atrasado">{{ conta.vencimento|date:"d/m/Y" }}</span>
-              </td>
-            </tr>
-            {% empty %}
-            <tr>
-              <td colspan="3" style="text-align:center;color:var(--text-muted);padding:24px;">
-                <i class="bi bi-check-circle text-success me-2"></i>Sem inadimplências
               </td>
             </tr>
             {% endfor %}

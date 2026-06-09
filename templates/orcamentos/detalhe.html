@@ -44,8 +44,6 @@
               <td>R$ {{ item.preco_unitario|floatformat:2 }}</td>
               <td><strong>R$ {{ item.subtotal|floatformat:2 }}</strong></td>
             </tr>
-            {% empty %}
-            <tr><td colspan="4" style="text-align:center;padding:24px;color:var(--text-muted);">Sem itens.</td></tr>
             {% endfor %}
           </tbody>
         </table>

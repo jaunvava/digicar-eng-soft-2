@@ -41,10 +41,6 @@
                             <td class="text-center">{{ d.count }}</td>
                             <td class="text-end"><strong style="color: var(--danger);">R$ {{ d.total_devido|floatformat:2 }}</strong></td>
                         </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="3" class="text-center p-4 text-muted">Nenhum cliente inadimplente.</td>
-                        </tr>
                         {% endfor %}
                     </tbody>
                 </table>
@@ -73,10 +69,6 @@
                             <td><span class="badge bg-danger bg-opacity-10 text-danger">{{ a.vencimento|date:"d/m/Y" }}</span></td>
                             <td style="font-size: 13px;">{{ a.cliente.nome|truncatechars:20 }}</td>
                             <td class="text-end"><strong>R$ {{ a.valor|floatformat:2 }}</strong></td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="3" class="text-center p-4 text-muted">Não há parcelas vencidas no momento.</td>
                         </tr>
                         {% endfor %}
                     </tbody>

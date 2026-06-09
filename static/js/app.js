@@ -1,7 +1,29 @@
-/* =====================================================
-   DigiCAR - App JS
-   Sidebar toggle, submenu, global interactions
-   ===================================================== */
+// Configuração global do SweetAlert2 — preenchida após DOMContentLoaded
+var SwalCustom = null;
+var Toast = null;
+
+document.addEventListener("DOMContentLoaded", function () {
+  if (typeof Swal !== "undefined") {
+    SwalCustom = Swal.mixin({
+      customClass: {
+        confirmButton: "btn btn-primary px-4 py-2",
+        cancelButton: "btn btn-secondary px-4 py-2 me-3",
+      },
+      buttonsStyling: false,
+    });
+    Toast = Swal.mixin({
+      toast: true,
+      position: "top-end",
+      showConfirmButton: false,
+      timer: 3000,
+      timerProgressBar: true,
+      didOpen: function (toast) {
+        toast.onmouseenter = Swal.stopTimer;
+        toast.onmouseleave = Swal.resumeTimer;
+      },
+    });
+  }
+});
 
 document.addEventListener("DOMContentLoaded", function () {
   // ── Sobrescrever alertas nativos do navegador com SweetAlert2 ─────────
@@ -418,7 +440,10 @@ function initDataTable(table, options) {
   // Colunas marcadas com data-dt-no-sort (ex: Ações) não ordenam nem entram na busca
   var columnDefs = [];
   $table.find("thead th").each(function (index) {
-    if (this.hasAttribute("data-dt-no-sort") || this.classList.contains("no-sort")) {
+    if (
+      this.hasAttribute("data-dt-no-sort") ||
+      this.classList.contains("no-sort")
+    ) {
       columnDefs.push({ targets: index, orderable: false, searchable: false });
     }
   });
@@ -431,7 +456,27 @@ function initDataTable(table, options) {
     true,
     {
       language: {
-        url: "https://cdn.datatables.net/plug-ins/1.13.8/i18n/pt-BR.json",
+        decimal: ",",
+        thousands: ".",
+        emptyTable: "Nenhum dado disponível na tabela",
+        info: "Mostrando _START_ até _END_ de _TOTAL_ registros",
+        infoEmpty: "Mostrando 0 até 0 de 0 registros",
+        infoFiltered: "(filtrado de _MAX_ registros no total)",
+        lengthMenu: "Exibir _MENU_ registros",
+        loadingRecords: "Carregando...",
+        processing: "Processando...",
+        search: "Pesquisar:",
+        zeroRecords: "Nenhum registro encontrado",
+        paginate: {
+          first: "Primeiro",
+          last: "Último",
+          next: "Próximo",
+          previous: "Anterior",
+        },
+        aria: {
+          sortAscending: ": ordenar coluna de forma crescente",
+          sortDescending: ": ordenar coluna de forma decrescente",
+        },
       },
       pageLength: simple ? -1 : 20,
       lengthMenu: [

@@ -100,8 +100,6 @@
               <td>R$ {{ item.preco_unitario|floatformat:2 }}</td>
               <td><strong>R$ {{ item.subtotal|floatformat:2 }}</strong></td>
             </tr>
-            {% empty %}
-            <tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted);">Nenhum item cadastrado.</td></tr>
             {% endfor %}
           </tbody>
         </table>
