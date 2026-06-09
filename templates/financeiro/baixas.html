@@ -9,7 +9,7 @@
 
 <div class="card">
   <div class="card-body p-0">
-    <table class="table-custom w-100">
+    <table class="table-custom w-100" data-datatable>
       <thead>
         <tr>
           <th>Cliente</th>
@@ -18,7 +18,7 @@
           <th>Data Pagto.</th>
           <th>Forma</th>
           <th>Registrado em</th>
-          <th class="text-end" style="padding-right:20px;">Ações</th>
+          <th data-dt-no-sort class="text-end" style="padding-right:20px;">Ações</th>
         </tr>
       </thead>
       <tbody>
@@ -36,8 +36,6 @@
             </a>
           </td>
         </tr>
-        {% empty %}
-        <tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-muted);">Nenhuma baixa registrada.</td></tr>
         {% endfor %}
       </tbody>
     </table>

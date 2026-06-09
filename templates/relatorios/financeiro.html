@@ -26,7 +26,7 @@
                 <h5 class="card-title m-0"><i class="bi bi-person-exclamation me-2"></i>Clientes que mais devem</h5>
             </div>
             <div class="card-body p-0">
-                <table class="table-custom w-100">
+                <table class="table-custom w-100" data-datatable data-dt-simple>
                     <thead>
                         <tr>
                             <th>Cliente</th>
@@ -40,10 +40,6 @@
                             <td><strong>{{ d.cliente__nome }}</strong></td>
                             <td class="text-center">{{ d.count }}</td>
                             <td class="text-end"><strong style="color: var(--danger);">R$ {{ d.total_devido|floatformat:2 }}</strong></td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="3" class="text-center p-4 text-muted">Nenhum cliente inadimplente.</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -59,7 +55,7 @@
                 <h5 class="card-title m-0"><i class="bi bi-clock-history me-2"></i>Parcelas em Atraso</h5>
             </div>
             <div class="card-body p-0">
-                <table class="table-custom w-100">
+                <table class="table-custom w-100" data-datatable data-dt-simple>
                     <thead>
                         <tr>
                             <th>Vencimento</th>
@@ -73,10 +69,6 @@
                             <td><span class="badge bg-danger bg-opacity-10 text-danger">{{ a.vencimento|date:"d/m/Y" }}</span></td>
                             <td style="font-size: 13px;">{{ a.cliente.nome|truncatechars:20 }}</td>
                             <td class="text-end"><strong>R$ {{ a.valor|floatformat:2 }}</strong></td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="3" class="text-center p-4 text-muted">Não há parcelas vencidas no momento.</td>
                         </tr>
                         {% endfor %}
                     </tbody>

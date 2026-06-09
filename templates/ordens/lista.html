@@ -35,7 +35,7 @@
 
 <div class="card">
   <div class="card-body p-0">
-    <table class="table-custom w-100 datatable">
+    <table class="table-custom w-100" data-datatable>
       <thead>
         <tr>
           <th>OS #</th>
@@ -46,7 +46,7 @@
           <th>Data Entrada</th>
           <th>Total</th>
           <th>Status</th>
-          <th style="text-align:right;">Ações</th>
+          <th data-dt-no-sort style="text-align:right;">Ações</th>
         </tr>
       </thead>
       <tbody>
@@ -84,14 +84,6 @@
                 <i class="bi bi-trash"></i>
               </button>
             </div>
-          </td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="9" style="text-align:center;padding:40px;color:var(--text-muted);">
-            <i class="bi bi-tools" style="font-size:32px;display:block;margin-bottom:8px;"></i>
-            Nenhuma OS encontrada.
-            <a href="{% url 'ordens:nova' %}">Criar primeira OS</a>
           </td>
         </tr>
         {% endfor %}

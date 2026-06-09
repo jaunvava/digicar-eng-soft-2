@@ -9,7 +9,7 @@
 
 <div class="card">
   <div class="card-body p-0">
-    <table class="table-custom w-100">
+    <table class="table-custom w-100" data-datatable>
       <thead>
         <tr>
           <th style="padding-left: 20px;">Fornecedor</th>
@@ -30,8 +30,6 @@
           <td>{{ b.get_forma_pagamento_display }}</td>
           <td style="font-size:12px;color:var(--text-muted);">{{ b.criado_em|date:"d/m/Y H:i" }}</td>
         </tr>
-        {% empty %}
-        <tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-muted);">Nenhuma baixa registrada para contas a pagar.</td></tr>
         {% endfor %}
       </tbody>
     </table>

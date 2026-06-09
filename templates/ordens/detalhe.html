@@ -75,7 +75,7 @@
         <h5 class="card-title"><i class="bi bi-list-task me-2"></i>Serviços e Peças</h5>
       </div>
       <div class="card-body p-0">
-        <table class="table-custom w-100">
+        <table class="table-custom w-100" data-datatable data-dt-simple>
           <thead>
             <tr>
               <th>Tipo</th>
@@ -100,8 +100,6 @@
               <td>R$ {{ item.preco_unitario|floatformat:2 }}</td>
               <td><strong>R$ {{ item.subtotal|floatformat:2 }}</strong></td>
             </tr>
-            {% empty %}
-            <tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted);">Nenhum item cadastrado.</td></tr>
             {% endfor %}
           </tbody>
         </table>

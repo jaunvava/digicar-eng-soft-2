@@ -1,7 +1,29 @@
-/* =====================================================
-   DigiCAR - App JS
-   Sidebar toggle, submenu, global interactions
-   ===================================================== */
+// Configuração global do SweetAlert2 — preenchida após DOMContentLoaded
+var SwalCustom = null;
+var Toast = null;
+
+document.addEventListener("DOMContentLoaded", function () {
+  if (typeof Swal !== "undefined") {
+    SwalCustom = Swal.mixin({
+      customClass: {
+        confirmButton: "btn btn-primary px-4 py-2",
+        cancelButton: "btn btn-secondary px-4 py-2 me-3",
+      },
+      buttonsStyling: false,
+    });
+    Toast = Swal.mixin({
+      toast: true,
+      position: "top-end",
+      showConfirmButton: false,
+      timer: 3000,
+      timerProgressBar: true,
+      didOpen: function (toast) {
+        toast.onmouseenter = Swal.stopTimer;
+        toast.onmouseleave = Swal.resumeTimer;
+      },
+    });
+  }
+});
 
 document.addEventListener("DOMContentLoaded", function () {
   // ── Sobrescrever alertas nativos do navegador com SweetAlert2 ─────────
@@ -461,6 +483,91 @@ function confirmDelete(
     }
   });
 })();
+
+// ══════════════════════════════════════════════════════
+//  COMPONENTE DE TABELA (DataTables) — paginação, ordenação e busca
+//  Uso: <table data-datatable> ... </table>
+//  Para desativar ordenação/busca de uma coluna (ex: "Ações"):
+//  <th data-dt-no-sort>Ações</th>
+// ══════════════════════════════════════════════════════
+function initDataTable(table, options) {
+  options = options || {};
+  if (typeof $ === "undefined" || !$.fn || !$.fn.DataTable) return null;
+
+  var $table = $(table);
+  if (!$table.length || $.fn.DataTable.isDataTable($table)) {
+    return $table.DataTable();
+  }
+
+  // Colunas marcadas com data-dt-no-sort (ex: Ações) não ordenam nem entram na busca
+  var columnDefs = [];
+  $table.find("thead th").each(function (index) {
+    if (
+      this.hasAttribute("data-dt-no-sort") ||
+      this.classList.contains("no-sort")
+    ) {
+      columnDefs.push({ targets: index, orderable: false, searchable: false });
+    }
+  });
+
+  // Tabelas "simples" (ex: widgets de dashboard/relatórios com poucas linhas):
+  // mantém ordenação por coluna, mas sem busca/paginação/seletor de itens
+  var simple = table.hasAttribute("data-dt-simple");
+
+  var settings = $.extend(
+    true,
+    {
+      language: {
+        decimal: ",",
+        thousands: ".",
+        emptyTable: "Nenhum dado disponível na tabela",
+        info: "Mostrando _START_ até _END_ de _TOTAL_ registros",
+        infoEmpty: "Mostrando 0 até 0 de 0 registros",
+        infoFiltered: "(filtrado de _MAX_ registros no total)",
+        lengthMenu: "Exibir _MENU_ registros",
+        loadingRecords: "Carregando...",
+        processing: "Processando...",
+        search: "Pesquisar:",
+        zeroRecords: "Nenhum registro encontrado",
+        paginate: {
+          first: "Primeiro",
+          last: "Último",
+          next: "Próximo",
+          previous: "Anterior",
+        },
+        aria: {
+          sortAscending: ": ordenar coluna de forma crescente",
+          sortDescending: ": ordenar coluna de forma decrescente",
+        },
+      },
+      pageLength: simple ? -1 : 20,
+      lengthMenu: [
+        [10, 20, 50, 100, -1],
+        [10, 20, 50, 100, "Todos"],
+      ],
+      paging: !simple,
+      searching: !simple,
+      info: !simple,
+      order: [],
+      columnDefs: columnDefs,
+      dom: simple
+        ? "rt"
+        : '<"dt-toolbar d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2"lf>' +
+          "rt" +
+          '<"dt-footer d-flex justify-content-between align-items-center flex-wrap gap-2 mt-2"ip>',
+    },
+    options,
+  );
+
+  return $table.DataTable(settings);
+}
+
+// Inicializa automaticamente todas as tabelas marcadas com data-datatable
+document.addEventListener("DOMContentLoaded", function () {
+  document.querySelectorAll("table[data-datatable]").forEach(function (table) {
+    initDataTable(table);
+  });
+});
 
 // Toggle do dropdown — manipula style.display diretamente
 function toggleNotif(e) {
