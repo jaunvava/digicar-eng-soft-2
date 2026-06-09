@@ -42,6 +42,7 @@ build/
 *.egg
 .eggs/
 MANIFEST
+.claude/
 
 # ── IDEs ─────────────────────────────────────────────
 .vscode/
