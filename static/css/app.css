@@ -775,6 +775,17 @@ body {
   color: var(--text-primary);
   vertical-align: middle;
   line-height: 1.4;
+  white-space: nowrap;
+}
+
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table-custom {
+  min-width: 100%;
 }
 
 .table-custom tbody tr:last-child td {
