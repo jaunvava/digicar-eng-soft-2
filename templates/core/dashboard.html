@@ -81,7 +81,7 @@
         </a>
       </div>
       <div class="card-body p-0">
-        <table class="table-custom w-100">
+        <table class="table-custom w-100" data-datatable data-dt-simple>
           <thead>
             <tr>
               <th>OS</th>
@@ -123,7 +123,7 @@
         </a>
       </div>
       <div class="card-body p-0">
-        <table class="table-custom w-100">
+        <table class="table-custom w-100" data-datatable data-dt-simple>
           <thead>
             <tr>
               <th>Cliente</th>
@@ -171,7 +171,7 @@
           <div class="carousel-item {% if forloop.first %}active{% endif %}" data-bs-interval="5000">
             {% if banner.link %}<a href="{{ banner.link }}" target="_blank">{% endif %}
               <div style="position: relative; height: 320px; overflow: hidden;">
-                <img src="{{ banner.imagem.url }}" class="d-block w-100 h-100" style="object-fit: cover;" alt="Banner">
+                <img src="{% url 'core:banner_imagem' banner.pk %}" class="d-block w-100 h-100" style="object-fit: cover;" alt="Banner">
               </div>
             {% if banner.link %}</a>{% endif %}
           </div>

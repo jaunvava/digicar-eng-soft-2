@@ -50,13 +50,8 @@ def contas_receber(request):
         t=Sum(F('valor') - F('valor_pago'))
     )['t'] or 0
 
-    from django.core.paginator import Paginator
-    paginator = Paginator(contas, 50)  # Mostra 50 contas por página
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-
     return render(request, 'financeiro/contas_receber.html', {
-        'contas': page_obj, 'q': q, 'num_doc': num_doc, 'status': status,
+        'contas': contas, 'q': q, 'num_doc': num_doc, 'status': status,
         'tipo_data': tipo_data, 'data_ini': data_ini, 'data_fim': data_fim,
         'total_pendente': total_pendente, 'total_atrasado': total_atrasado,
     })
