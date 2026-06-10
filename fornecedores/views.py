@@ -94,3 +94,8 @@ def excluir(request, pk):
     fornecedor.delete()
     messages.success(request, 'Fornecedor excluído com sucesso!')
     return redirect('fornecedores:lista')
+
+@login_required
+def detalhe(request, pk):
+    fornecedor = get_object_or_404(Fornecedor, pk=pk, empresa=request.empresa)
+    return render(request, 'fornecedores/detalhe.html', {'fornecedor': fornecedor})

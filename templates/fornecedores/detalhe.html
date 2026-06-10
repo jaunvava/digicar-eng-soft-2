@@ -1,0 +1,60 @@
+﻿{% extends 'base.html' %}
+{% block title %}{{ fornecedor.nome }}{% endblock %}
+{% block breadcrumb %}Fornecedores / {{ fornecedor.nome }}{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex align-items-center justify-content-between">
+  <div>
+    <h1 class="page-title">{{ fornecedor.nome }}</h1>
+    <p class="page-subtitle">
+      {{ fornecedor.get_tipo_display }} | Cadastrado em: {{ fornecedor.criado_em|date:"d/m/Y" }}
+      {% if not fornecedor.ativo %} | <span class="text-danger">Inativo</span>{% endif %}
+    </p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{% url 'fornecedores:editar' fornecedor.pk %}" class="btn-outline-custom">
+      <i class="bi bi-pencil me-1"></i> Editar
+    </a>
+    <a href="{% url 'fornecedores:lista' %}" class="btn-outline-custom"><i class="bi bi-arrow-left"></i> Voltar</a>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header"><h5 class="card-title"><i class="bi bi-person me-2"></i>Dados Cadastrais</h5></div>
+      <div class="card-body" style="font-size:14px;">
+        <p><strong>CPF/CNPJ:</strong> {{ fornecedor.cpf_cnpj|default:"—" }}</p>
+        <p><strong>E-mail:</strong> {{ fornecedor.email|default:"—" }}</p>
+        <p><strong>Telefone 1:</strong> {{ fornecedor.telefone1|default:"—" }}</p>
+        <p><strong>Telefone 2:</strong> {{ fornecedor.telefone2|default:"—" }}</p>
+        <p><strong>Site:</strong>
+          {% if fornecedor.site %}
+            <a href="{{ fornecedor.site }}" target="_blank" rel="noopener">{{ fornecedor.site }}</a>
+          {% else %}—{% endif %}
+        </p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header"><h5 class="card-title"><i class="bi bi-geo-alt me-2"></i>Endereço</h5></div>
+      <div class="card-body" style="font-size:14px;">
+        <p>{{ fornecedor.endereco }} {{ fornecedor.numero }} {{ fornecedor.complemento }}</p>
+        <p>{{ fornecedor.bairro }} | {{ fornecedor.cidade }}/{{ fornecedor.estado }}</p>
+        <p>CEP: {{ fornecedor.cep|default:"—" }}</p>
+      </div>
+    </div>
+  </div>
+  {% if fornecedor.observacoes %}
+  <div class="col-12">
+    <div class="card">
+      <div class="card-body">
+        <label class="form-label-custom">Observações</label>
+        <p>{{ fornecedor.observacoes }}</p>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
