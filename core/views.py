@@ -111,6 +111,52 @@ def dashboard(request):
 
 @login_required
 def perfil_view(request):
+    # Verifica se é uma requisição POST (edição)
+    if request.method == 'POST':
+        print("=== POST recebido em perfil_view ===")
+        print(f"POST data: {request.POST}")
+        
+        # Verifica se é o formulário de edição
+        if 'edit_perfil' in request.POST:
+            try:
+                # 1. Atualiza dados do User
+                user = request.user
+                user.first_name = request.POST.get('first_name', '').strip()
+                user.last_name = request.POST.get('last_name', '').strip()
+                user.email = request.POST.get('email', '').strip()
+                user.save()
+                print(f"User atualizado: {user.username}")
+                
+                # 2. Atualiza dados do Perfil
+                perfil = request.user.perfil
+                perfil.telefone = request.POST.get('telefone', '').strip()
+                perfil.celular = request.POST.get('celular', '').strip()
+                perfil.cargo = request.POST.get('cargo', '').strip()
+                
+                # Data de nascimento - tratamento especial
+                data_nascimento = request.POST.get('data_nascimento', '')
+                if data_nascimento:
+                    from datetime import datetime
+                    try:
+                        perfil.data_nascimento = datetime.strptime(data_nascimento, '%Y-%m-%d').date()
+                        print(f"Data nascimento: {perfil.data_nascimento}")
+                    except Exception as e:
+                        print(f"Erro na data: {e}")
+                
+                perfil.save()
+                print(f"Perfil atualizado com sucesso!")
+                
+                messages.success(request, 'Perfil atualizado com sucesso!')
+                return redirect('core:perfil')
+                
+            except Exception as e:
+                print(f"ERRO ao salvar: {str(e)}")
+                messages.error(request, f'Erro ao salvar: {str(e)}')
+                return redirect('core:perfil')
+        else:
+            print("WARNING: POST sem edit_perfil no payload")
+    
+    # GET request - apenas mostra o formulário
     return render(request, 'core/perfil.html')
 
 

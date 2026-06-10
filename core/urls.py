@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import include, path
 from . import views
 
 app_name = 'core'
@@ -11,4 +11,5 @@ urlpatterns = [
     path('configuracoes/', views.configuracoes_view, name='configuracoes'),
     path('notificacoes/',  views.notificacoes_json,  name='notificacoes'),
     path('aplicativos/',   views.aplicativos_view,   name='aplicativos'),
+    path('accounts/', include('django.contrib.auth.urls')),
 ]

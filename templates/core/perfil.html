@@ -1,25 +1,270 @@
 {% extends 'base.html' %}
-{% block title %}Novo Perfil{% endblock %}
-{% block breadcrumb %}Perfil{% endblock %}
+{% load static %}
+
+{% block title %}Meu Perfil{% endblock %}
 
 {% block content %}
-<div class="page-header">
-  <h1 class="page-title">Meu Perfil</h1>
-</div>
-<div class="row g-3">
-  <div class="col-md-6">
-    <div class="card">
-      <div class="card-header"><h5 class="card-title"><i class="bi bi-person-circle me-2"></i>Informações</h5></div>
-      <div class="card-body" style="font-size:14px;">
-        <p><strong>Usuário:</strong> {{ request.user.username }}</p>
-        <p><strong>Nome:</strong> {{ request.user.get_full_name|default:"Não informado" }}</p>
-        <p><strong>E-mail:</strong> {{ request.user.email|default:"Não informado" }}</p>
-        {% if request.user.perfil %}
-          <p><strong>Empresa:</strong> {{ request.user.perfil.empresa.nome }}</p>
-          <p><strong>Perfil:</strong> {{ request.user.perfil.get_perfil_display }}</p>
-        {% endif %}
-      </div>
+<div class="container-fluid px-4">
+    <!-- Cabeçalho -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="mt-4">
+                <i class="bi bi-person-circle me-2"></i>Meu Perfil
+            </h1>
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+                <li class="breadcrumb-item active">Perfil</li>
+            </ol>
+        </div>
+        <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#editPerfilModal">
+            <i class="bi bi-pencil-square me-1"></i> Editar Perfil
+        </button>
     </div>
-  </div>
+
+    <!-- Mensagens -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                <i class="bi bi-check-circle-fill me-2"></i>{{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="row">
+        <!-- Coluna da Esquerda - Card do Usuário -->
+        <div class="col-xl-4 col-md-6">
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <div class="bg-primary bg-gradient rounded-circle d-inline-flex p-3 text-white">
+                            <i class="bi bi-person-fill" style="font-size: 64px;"></i>
+                        </div>
+                    </div>
+                    <h3 class="mb-1">{{ request.user.get_full_name|default:request.user.username }}</h3>
+                    <p class="text-muted">@{{ request.user.username }}</p>
+                    <span class="badge bg-success">
+                        <i class="bi bi-check-circle-fill me-1"></i> Ativo
+                    </span>
+                    
+                    <hr class="my-3">
+                    
+                    <div class="text-start">
+                        <div class="mb-2">
+                            <small class="text-muted">Empresa</small>
+                            <p class="mb-0">
+                                <i class="bi bi-building me-2"></i>
+                                <strong>{{ request.user.perfil.empresa.nome }}</strong>
+                            </p>
+                        </div>
+                        <div class="mb-2">
+                            <small class="text-muted">Perfil de Acesso</small>
+                            <p class="mb-0">
+                                <i class="bi bi-shield-lock me-2"></i>
+                                <strong>{{ request.user.perfil.get_perfil_display }}</strong>
+                            </p>
+                        </div>
+                        <div class="mb-2">
+                            <small class="text-muted">Último Acesso</small>
+                            <p class="mb-0">
+                                <i class="bi bi-clock-history me-2"></i>
+                                <strong>{{ request.user.last_login|date:"d/m/Y H:i"|default:"Primeiro acesso" }}</strong>
+                            </p>
+                        </div>
+                        <div>
+                            <small class="text-muted">Cadastrado em</small>
+                            <p class="mb-0">
+                                <i class="bi bi-calendar-plus me-2"></i>
+                                <strong>{{ request.user.date_joined|date:"d/m/Y" }}</strong>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Coluna da Direita - Informações -->
+        <div class="col-xl-8 col-md-6">
+            <!-- Cards de Informação -->
+            <div class="row">
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="bg-info bg-gradient rounded-circle p-2 text-white me-2">
+                                    <i class="bi bi-person-badge"></i>
+                                </div>
+                                <h5 class="card-title mb-0">Dados Pessoais</h5>
+                            </div>
+                            <hr>
+                            <div class="mb-2">
+                                <small class="text-muted">Nome Completo</small>
+                                <p class="mb-0 fw-bold">
+                                    {{ request.user.get_full_name|default:"Não informado" }}
+                                </p>
+                            </div>
+                            <div class="mb-2">
+                                <small class="text-muted">E-mail</small>
+                                <p class="mb-0 fw-bold">
+                                    {{ request.user.email|default:"Não informado" }}
+                                </p>
+                            </div>
+                            <div>
+                                <small class="text-muted">Data de Nascimento</small>
+                                <p class="mb-0 fw-bold">
+                                    {{ request.user.perfil.data_nascimento|date:"d/m/Y"|default:"Não informado" }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="bg-success bg-gradient rounded-circle p-2 text-white me-2">
+                                    <i class="bi bi-telephone"></i>
+                                </div>
+                                <h5 class="card-title mb-0">Contato</h5>
+                            </div>
+                            <hr>
+                            <div class="mb-2">
+                                <small class="text-muted">Telefone Fixo</small>
+                                <p class="mb-0 fw-bold">
+                                    {{ request.user.perfil.telefone|default:"Não informado" }}
+                                </p>
+                            </div>
+                            <div class="mb-2">
+                                <small class="text-muted">Celular</small>
+                                <p class="mb-0 fw-bold">
+                                    {{ request.user.perfil.celular|default:"Não informado" }}
+                                </p>
+                            </div>
+                            <div>
+                                <small class="text-muted">Cargo/Função</small>
+                                <p class="mb-0 fw-bold">
+                                    {{ request.user.perfil.cargo|default:"Não informado" }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<!-- Modal de Edição de Perfil -->
+<div class="modal fade" id="editPerfilModal" tabindex="-1" aria-labelledby="editPerfilModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="editPerfilModalLabel">
+                    <i class="bi bi-pencil-square me-2"></i>Editar Perfil
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" id="formEditarPerfil">
+                {% csrf_token %}
+                <input type="hidden" name="edit_perfil" value="1">
+                
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nome</label>
+                            <input type="text" name="first_name" class="form-control" 
+                                   value="{{ request.user.first_name }}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Sobrenome</label>
+                            <input type="text" name="last_name" class="form-control" 
+                                   value="{{ request.user.last_name }}">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">E-mail</label>
+                        <input type="email" name="email" class="form-control" 
+                               value="{{ request.user.email }}">
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Telefone Fixo</label>
+                            <input type="text" name="telefone" class="form-control telefone-input" 
+                                   value="{{ request.user.perfil.telefone|default:'' }}"
+                                   placeholder="(00) 0000-0000">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Celular</label>
+                            <input type="text" name="celular" class="form-control celular-input" 
+                                   value="{{ request.user.perfil.celular|default:'' }}"
+                                   placeholder="(00) 00000-0000">
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Cargo/Função</label>
+                            <input type="text" name="cargo" class="form-control" 
+                                   value="{{ request.user.perfil.cargo|default:'' }}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Data de Nascimento</label>
+                            <input type="date" name="data_nascimento" class="form-control" 
+                                   value="{{ request.user.perfil.data_nascimento|date:'Y-m-d' }}">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i> Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save me-1"></i> Salvar Alterações
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    // Máscaras para telefone
+    document.addEventListener('DOMContentLoaded', function() {
+        // Máscara para Telefone Fixo (10 dígitos)
+        const telefoneInput = document.querySelector('.telefone-input');
+        if (telefoneInput) {
+            telefoneInput.addEventListener('input', function(e) {
+                let value = e.target.value.replace(/\D/g, '');
+                if (value.length <= 10) {
+                    value = value.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
+                }
+                e.target.value = value;
+            });
+        }
+        
+        // Máscara para Celular (11 dígitos)
+        const celularInput = document.querySelector('.celular-input');
+        if (celularInput) {
+            celularInput.addEventListener('input', function(e) {
+                let value = e.target.value.replace(/\D/g, '');
+                if (value.length <= 11) {
+                    value = value.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+                }
+                e.target.value = value;
+            });
+        }
+        
+        // Se houver erros no formulário, manter o modal aberto
+        {% if form_errors %}
+            var myModal = new bootstrap.Modal(document.getElementById('editPerfilModal'));
+            myModal.show();
+        {% endif %}
+    });
+</script>
+{% endblock %}
 {% endblock %}
