@@ -23,7 +23,9 @@
   <link href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css" rel="stylesheet">
   <!-- App CSS -->
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
-  {% block extra_css %}{% endblock %}
+  {% block extra_css %}
+  <link href="{% static 'dark_mode_switch/dark-mode-switch.css' %}" rel="stylesheet" type="text/css">
+  {% endblock %}
 </head>
 <body>
 
@@ -34,7 +36,7 @@
     <a class="sidebar-brand" href="{% url 'core:dashboard' %}">
       <span class="brand-text">DigiCAR</span>
     </a>
-
+  
     <!-- Navigation -->
     <nav class="sidebar-nav" id="sidebarNav">
 
@@ -175,6 +177,21 @@
 
       <!-- Actions -->
       <div class="navbar-actions ms-auto">
+        <nav class="navbar navbar-expand">
+        <a class="navbar-brand" href="{% url 'core:dashboard' %}">
+        </a>      
+        <div class="container-fluid">
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+
+          <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                {% include 'dark_mode_switch/dark_mode_switch.html' %}
+            </ul>
+          </div>
+        </div>
+      </nav>
         <a href="{% url 'core:configuracoes' %}" class="nav-action-btn" title="Configurações">
           <i class="bi bi-gear"></i>
         </a>
@@ -260,6 +277,8 @@
 <script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js" defer></script>
 <script src="{% static 'js/app.js' %}" defer></script>
 
-{% block extra_js %}{% endblock %}
+{% block extra_js %}
+<script src="{% static 'dark_mode_switch/dark-mode-switch.js' %}"></script>
+{% endblock %}
 </body>
 </html>

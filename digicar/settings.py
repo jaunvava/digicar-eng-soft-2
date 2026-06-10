@@ -30,6 +30,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'dark_mode_switch',
     # Apps do sistema
     'core',
     'clientes',
@@ -75,6 +76,13 @@ TEMPLATES = [
         },
     },
 ]
+
+DARK_THEME = {
+    'cdn': True,  # Use False se preferir servir os arquivos localmente
+    'theme_selector': True,  # Mostra o seletor de tema
+    'default': 'system',  # Tema padrão: 'light', 'dark' ou 'system'
+    'cached': True,  # Cache das preferências
+}
 
 WSGI_APPLICATION = 'digicar.wsgi.application'
 

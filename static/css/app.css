@@ -52,6 +52,47 @@
   --radius: 5px;
 }
 
+/* static/css/custom-dark-theme.css */
+
+/* Estilo do botão de alternância */
+.dark-theme-switcher {
+    padding: 8px 12px;
+    border: 1px solid var(--bs-border-color);
+    border-radius: 20px;
+    background-color: var(--bs-body-bg);
+    color: var(--bs-body-color);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+}
+
+.dark-theme-switcher:hover {
+    background-color: var(--bs-body-bg);
+    opacity: 0.9;
+}
+
+/* Ícones */
+.dark-theme-switcher .icon {
+    margin-right: 5px;
+}
+
+/* Dropdown de opções */
+.dark-theme-dropdown {
+    min-width: 150px;
+    padding: 0.5rem;
+}
+
+.dark-theme-dropdown .dropdown-item {
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.dark-theme-dropdown .dropdown-item:hover,
+.dark-theme-dropdown .dropdown-item.active {
+    background-color: var(--bs-primary-bg-subtle);
+}
+
 /* =====================
    RESET & BASE
    ===================== */
