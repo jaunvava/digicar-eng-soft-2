@@ -36,8 +36,7 @@
                  class="form-control-custom">
         </div>
         <div class="col-md-2">
-          <div style="position:relative;">
-            <label style="position:absolute;top:-9px;left:10px;font-size:10px;color:var(--text-muted);background:var(--card-bg,#1e293b);padding:0 4px;z-index:1;font-weight:500;">Situação</label>
+          <div>
             <select name="situacao" class="form-control-custom">
               <option value="ativo"    {% if situacao == 'ativo'    or not situacao %}selected{% endif %}>Apenas Ativos</option>
               <option value="inativo"  {% if situacao == 'inativo'  %}selected{% endif %}>Apenas Inativos</option>
@@ -140,14 +139,6 @@
                 <i class="bi bi-trash"></i>
               </button>
             </div>
-          </td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="8" style="text-align:center;padding:40px;color:var(--text-muted);">
-            <i class="bi bi-people" style="font-size:32px;display:block;margin-bottom:8px;"></i>
-            Nenhum cliente encontrado.
-            <a href="{% url 'clientes:novo' %}">Cadastrar agora</a>
           </td>
         </tr>
         {% endfor %}

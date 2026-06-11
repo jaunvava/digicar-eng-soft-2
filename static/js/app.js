@@ -1,7 +1,29 @@
-/* =====================================================
-   DigiCAR - App JS
-   Sidebar toggle, submenu, global interactions
-   ===================================================== */
+// Configuração global do SweetAlert2 — preenchida após DOMContentLoaded
+var SwalCustom = null;
+var Toast = null;
+
+document.addEventListener("DOMContentLoaded", function () {
+  if (typeof Swal !== "undefined") {
+    SwalCustom = Swal.mixin({
+      customClass: {
+        confirmButton: "btn btn-primary px-4 py-2",
+        cancelButton: "btn btn-secondary px-4 py-2 me-3",
+      },
+      buttonsStyling: false,
+    });
+    Toast = Swal.mixin({
+      toast: true,
+      position: "top-end",
+      showConfirmButton: false,
+      timer: 3000,
+      timerProgressBar: true,
+      didOpen: function (toast) {
+        toast.onmouseenter = Swal.stopTimer;
+        toast.onmouseleave = Swal.resumeTimer;
+      },
+    });
+  }
+});
 
 document.addEventListener("DOMContentLoaded", function () {
   // ── Sobrescrever alertas nativos do navegador com SweetAlert2 ─────────
@@ -248,9 +270,70 @@ function initFieldMasks(root) {
     .forEach(_applyQuantityMask);
 }
 
+function initResponsiveTables(root) {
+  root = root || document;
+  const tables = Array.from(root.querySelectorAll("table.table-custom")).filter(
+    (table) => !table.closest(".table-responsive") && !table.classList.contains("datatable"),
+  );
+
+  tables.forEach(function (table) {
+    const wrapper = document.createElement("div");
+    wrapper.className = "table-responsive";
+    table.parentNode.insertBefore(wrapper, table);
+    wrapper.appendChild(table);
+  });
+}
+
+function initDataTables(root) {
+  root = root || document;
+  if (typeof jQuery === "undefined" || typeof $.fn.DataTable === "undefined") return;
+
+  $(root)
+    .find("table.datatable")
+    .each(function () {
+      if ($.fn.dataTable.isDataTable(this)) return;
+
+      const $table = $(this);
+      const paging = $table.data("dtPaging");
+      const searching = $table.data("dtSearch");
+      const ordering = $table.data("dtOrdering");
+      const info = $table.data("dtInfo");
+      const lengthChange = $table.data("dtLengthChange");
+
+      $table.DataTable({
+        language: {
+          url: "https://cdn.datatables.net/plug-ins/1.13.6/i18n/pt-BR.json",
+        },
+        responsive: true,
+        scrollX: true,
+        paging: paging === false ? false : true,
+        searching: searching === false ? false : true,
+        ordering: ordering === false ? false : true,
+        info: info === false ? false : true,
+        lengthChange: lengthChange === false ? false : true,
+        pageLength: 20,
+        autoWidth: false,
+        order: [],
+        columnDefs: [{ orderable: false, targets: -1 }],
+        dom:
+          "<'row gx-2'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6 text-end'Bf>>" +
+          "<'table-responsive'tr>" +
+          "<'row gx-2'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+        buttons: [
+          { extend: "copyHtml5", text: "Copiar" },
+          { extend: "csvHtml5", text: "CSV" },
+          { extend: "excelHtml5", text: "Excel" },
+          { extend: "print", text: "Imprimir" },
+        ],
+      });
+    });
+}
+
 // Inicializa ao carregar e observa inserções dinâmicas (linhas de itens)
 document.addEventListener("DOMContentLoaded", function () {
   initFieldMasks(document);
+  initResponsiveTables(document);
+  initDataTables(document);
 
   // MutationObserver para linhas adicionadas dinamicamente (orçamentos, ordens, PDV…)
   const observer = new MutationObserver(function (mutations) {
@@ -258,6 +341,7 @@ document.addEventListener("DOMContentLoaded", function () {
       mutation.addedNodes.forEach(function (node) {
         if (node.nodeType === 1) {
           initFieldMasks(node);
+          initDataTables(node);
           // O próprio nó pode ser o input
           if (node.matches && node.matches('input[data-mask="currency"]'))
             _applyCurrencyMask(node);
@@ -418,7 +502,10 @@ function initDataTable(table, options) {
   // Colunas marcadas com data-dt-no-sort (ex: Ações) não ordenam nem entram na busca
   var columnDefs = [];
   $table.find("thead th").each(function (index) {
-    if (this.hasAttribute("data-dt-no-sort") || this.classList.contains("no-sort")) {
+    if (
+      this.hasAttribute("data-dt-no-sort") ||
+      this.classList.contains("no-sort")
+    ) {
       columnDefs.push({ targets: index, orderable: false, searchable: false });
     }
   });
@@ -431,7 +518,27 @@ function initDataTable(table, options) {
     true,
     {
       language: {
-        url: "https://cdn.datatables.net/plug-ins/1.13.8/i18n/pt-BR.json",
+        decimal: ",",
+        thousands: ".",
+        emptyTable: "Nenhum dado disponível na tabela",
+        info: "Mostrando _START_ até _END_ de _TOTAL_ registros",
+        infoEmpty: "Mostrando 0 até 0 de 0 registros",
+        infoFiltered: "(filtrado de _MAX_ registros no total)",
+        lengthMenu: "Exibir _MENU_ registros",
+        loadingRecords: "Carregando...",
+        processing: "Processando...",
+        search: "Pesquisar:",
+        zeroRecords: "Nenhum registro encontrado",
+        paginate: {
+          first: "Primeiro",
+          last: "Último",
+          next: "Próximo",
+          previous: "Anterior",
+        },
+        aria: {
+          sortAscending: ": ordenar coluna de forma crescente",
+          sortDescending: ": ordenar coluna de forma decrescente",
+        },
       },
       pageLength: simple ? -1 : 20,
       lengthMenu: [

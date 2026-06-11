@@ -86,14 +86,6 @@
             </div>
           </td>
         </tr>
-        {% empty %}
-        <tr>
-          <td colspan="9" style="text-align:center;padding:40px;color:var(--text-muted);">
-            <i class="bi bi-tools" style="font-size:32px;display:block;margin-bottom:8px;"></i>
-            Nenhuma OS encontrada.
-            <a href="{% url 'ordens:nova' %}">Criar primeira OS</a>
-          </td>
-        </tr>
         {% endfor %}
       </tbody>
     </table>
