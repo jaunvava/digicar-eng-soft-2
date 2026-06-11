@@ -65,7 +65,9 @@
         <tr>
           <td style="color:var(--text-muted);font-size:11px;">#{{ f.pk }}</td>
           <td>
-            <strong>{{ f.nome }}</strong>
+            <a href="{% url 'fornecedores:detalhe' f.pk %}" style="color:var(--primary);font-weight:600;text-decoration:none;">
+              {{ f.nome }}
+            </a>
             {% if f.email %}
               <div style="font-size:10px; color:var(--text-muted);">{{ f.email }}</div>
             {% endif %}
