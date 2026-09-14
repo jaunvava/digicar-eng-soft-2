@@ -1,9 +1,11 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.db import transaction
+from decimal import Decimal, InvalidOperation
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
 from django.utils import timezone
-from .models import Produto
+from .models import Produto, MovimentoEstoque
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 
@@ -171,7 +173,7 @@ def novo(request):
     empresa = request.empresa
     if request.method == 'POST':
         try:
-            Produto.objects.create(
+            produto = Produto.objects.create(
                 empresa=empresa,
                 ativo=(request.POST.get('ativo') in ['on', 'True', 'true', '1']),
                 tipo=request.POST.get('tipo', 'produto'),
@@ -183,6 +185,9 @@ def novo(request):
                 estoque_atual=request.POST.get('estoque_atual', 0) or 0,
                 estoque_minimo=request.POST.get('estoque_minimo', 0) or 0,
             )
+            if produto.tipo == 'produto' and produto.estoque_atual > 0:
+                MovimentoEstoque.objects.create(produto=produto, tipo='ajuste', quantidade=produto.estoque_atual,
+                    estoque_anterior=0, estoque_posterior=produto.estoque_atual, motivo='Saldo inicial', usuario=request.user)
             messages.success(request, 'Produto cadastrado com sucesso!')
             return redirect('produtos:lista')
         except Exception as e:
@@ -195,6 +200,7 @@ def editar(request, pk):
     produto = get_object_or_404(Produto, pk=pk, empresa=request.empresa)
     if request.method == 'POST':
         try:
+            estoque_anterior = produto.estoque_atual
             produto.ativo         = (request.POST.get('ativo') in ['on', 'True', 'true', '1'])
             produto.tipo          = request.POST.get('tipo', 'produto')
             produto.codigo        = request.POST.get('codigo', '')
@@ -205,6 +211,10 @@ def editar(request, pk):
             produto.estoque_atual = request.POST.get('estoque_atual', 0) or 0
             produto.estoque_minimo = request.POST.get('estoque_minimo', 0) or 0
             produto.save()
+            if produto.tipo == 'produto' and produto.estoque_atual != estoque_anterior:
+                MovimentoEstoque.objects.create(produto=produto, tipo='ajuste',
+                    quantidade=produto.estoque_atual, estoque_anterior=estoque_anterior,
+                    estoque_posterior=produto.estoque_atual, motivo='Ajuste no cadastro', usuario=request.user)
             messages.success(request, 'Produto atualizado!')
             return redirect('produtos:lista')
         except Exception as e:
@@ -218,3 +228,31 @@ def excluir(request, pk):
     produto.delete()
     messages.success(request, 'Produto excluído!')
     return redirect('produtos:lista')
+
+
+@login_required
+def estoque(request, pk):
+    produto = get_object_or_404(Produto, pk=pk, empresa=request.empresa, tipo='produto')
+    if request.method == 'POST':
+        try:
+            tipo = request.POST.get('tipo')
+            quantidade = Decimal(request.POST.get('quantidade', '0'))
+            if tipo not in dict(MovimentoEstoque.TIPO_CHOICES) or quantidade <= 0:
+                raise ValueError('Informe um tipo e uma quantidade positiva.')
+            with transaction.atomic():
+                produto = Produto.objects.select_for_update().get(pk=produto.pk)
+                anterior = produto.estoque_atual
+                posterior = (anterior + quantidade if tipo == 'entrada' else
+                             anterior - quantidade if tipo == 'saida' else quantidade)
+                if posterior < 0:
+                    raise ValueError('A saída não pode deixar o estoque negativo.')
+                produto.estoque_atual = posterior
+                produto.save(update_fields=['estoque_atual', 'atualizado_em'])
+                MovimentoEstoque.objects.create(produto=produto, tipo=tipo, quantidade=quantidade,
+                    estoque_anterior=anterior, estoque_posterior=posterior,
+                    motivo=request.POST.get('motivo', '').strip(), usuario=request.user)
+            messages.success(request, 'Movimentação registrada com sucesso!')
+            return redirect('produtos:estoque', pk=pk)
+        except (InvalidOperation, ValueError) as exc:
+            messages.error(request, f'Não foi possível registrar: {exc}')
+    return render(request, 'produtos/estoque.html', {'produto': produto, 'movimentos': produto.movimentos.select_related('usuario')[:100]})

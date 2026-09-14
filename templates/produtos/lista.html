@@ -140,6 +140,7 @@
               <a href="{% url 'produtos:editar' p.pk %}" class="btn-outline-custom" style="padding:2px 6px;font-size:12px;">
                 <i class="bi bi-pencil"></i>
               </a>
+              {% if p.tipo == 'produto' %}<a href="{% url 'produtos:estoque' p.pk %}" class="btn-outline-custom" title="Movimentar estoque" style="padding:2px 6px;font-size:12px;"><i class="bi bi-arrow-left-right"></i></a>{% endif %}
               <button onclick="confirmDelete('{% url 'produtos:excluir' p.pk %}', 'Excluir {{ p.nome }}?')"
                       class="btn btn-sm" style="background:#fee2e2;color:#b91c1c;border:none;border-radius: 4px;padding:2px 6px;">
                 <i class="bi bi-trash"></i>

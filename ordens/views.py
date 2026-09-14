@@ -2,10 +2,12 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
+from django.db import transaction
+from decimal import Decimal, InvalidOperation
 from django.utils import timezone
 from .models import OrdemServico, ItemOrdemServico
-from clientes.models import Cliente
-from produtos.models import Produto
+from clientes.models import Cliente, Veiculo
+from produtos.models import Produto, MovimentoEstoque
 from django.contrib.auth.models import User
 
 
@@ -31,73 +33,90 @@ def lista(request):
 def nova(request):
     empresa  = request.empresa
     clientes = Cliente.objects.filter(empresa=empresa, ativo=True)
+    veiculos = Veiculo.objects.filter(cliente__empresa=empresa, ativo=True).select_related('cliente')
     produtos = Produto.objects.filter(empresa=empresa, ativo=True)
     tecnicos = User.objects.filter(perfil__empresa=empresa, perfil__ativo=True)
     if request.method == 'POST':
         try:
-            from decimal import Decimal
-
             tecnico_id    = request.POST.get('tecnico') or None
             data_prevista = request.POST.get('data_prevista') or None
             desconto      = Decimal(str(request.POST.get('desconto', '0') or '0'))
             garantia      = int(request.POST.get('garantia_dias', '30') or '30')
 
-            os = OrdemServico.objects.create(
-                empresa=empresa,
-                cliente_id=request.POST.get('cliente'),
-                tecnico_id=tecnico_id,
-                status=request.POST.get('status', 'aberta'),
-                prioridade=request.POST.get('prioridade', 'normal'),
-                equipamento=request.POST.get('equipamento'),
-                marca=request.POST.get('marca', ''),
-                modelo=request.POST.get('modelo', ''),
-                numero_serie=request.POST.get('numero_serie', ''),
-                defeito_reclamado=request.POST.get('defeito_reclamado'),
-                defeito_constatado=request.POST.get('defeito_constatado', ''),
-                solucao=request.POST.get('solucao', ''),
-                data_prevista=data_prevista,
-                desconto=desconto,
-                observacoes=request.POST.get('observacoes', ''),
-                garantia_dias=garantia,
-                # zera os valores; serão recalculados abaixo
-                valor_servicos=Decimal('0'),
-                valor_pecas=Decimal('0'),
-            )
+            cliente = get_object_or_404(clientes, pk=request.POST.get('cliente'))
+            veiculo = None
+            if request.POST.get('veiculo'):
+                veiculo = get_object_or_404(Veiculo, pk=request.POST.get('veiculo'), cliente=cliente)
 
-            # Itens
-            tipos      = request.POST.getlist('item_tipo')
+            tecnico = get_object_or_404(tecnicos, pk=tecnico_id) if tecnico_id else None
+            tipos = request.POST.getlist('item_tipo')
+            produtos_ids = request.POST.getlist('item_produto')
             descricoes = request.POST.getlist('item_descricao')
-            qtds       = request.POST.getlist('item_quantidade')
-            precos     = request.POST.getlist('item_preco')
+            qtds = request.POST.getlist('item_quantidade')
+            precos = request.POST.getlist('item_preco')
 
-            v_servicos = Decimal('0')
-            v_pecas    = Decimal('0')
-
-            for tipo, desc, qty, preco in zip(tipos, descricoes, qtds, precos):
-                if not desc.strip():
-                    continue
-                qty   = Decimal(str(qty  or '1'))
-                preco = Decimal(str(preco or '0'))
-                item  = ItemOrdemServico.objects.create(
-                    ordem=os, tipo=tipo, descricao=desc,
-                    quantidade=qty, preco_unitario=preco, subtotal=qty * preco,
+            with transaction.atomic():
+                os = OrdemServico.objects.create(
+                    empresa=empresa, cliente=cliente, veiculo=veiculo, tecnico=tecnico,
+                    status=request.POST.get('status', 'aberta'),
+                    prioridade=request.POST.get('prioridade', 'normal'),
+                    equipamento=request.POST.get('equipamento'), marca=request.POST.get('marca', ''),
+                    modelo=request.POST.get('modelo', ''), numero_serie=request.POST.get('numero_serie', ''),
+                    defeito_reclamado=request.POST.get('defeito_reclamado'),
+                    defeito_constatado=request.POST.get('defeito_constatado', ''),
+                    solucao=request.POST.get('solucao', ''), data_prevista=data_prevista,
+                    desconto=desconto, observacoes=request.POST.get('observacoes', ''),
+                    garantia_dias=garantia, valor_servicos=Decimal('0'), valor_pecas=Decimal('0'),
                 )
-                if tipo == 'servico':
-                    v_servicos += item.subtotal
-                else:
-                    v_pecas += item.subtotal
 
-            os.valor_servicos = v_servicos
-            os.valor_pecas    = v_pecas
-            os.save()  # total = v_servicos + v_pecas - desconto (tudo Decimal)
+                v_servicos = Decimal('0')
+                v_pecas = Decimal('0')
+                total_itens = max(len(tipos), len(produtos_ids), len(descricoes), len(qtds), len(precos))
+                for indice in range(total_itens):
+                    tipo = tipos[indice] if indice < len(tipos) else 'servico'
+                    produto_id = produtos_ids[indice] if indice < len(produtos_ids) else ''
+                    desc = descricoes[indice].strip() if indice < len(descricoes) else ''
+                    qty = Decimal(str(qtds[indice] or '1')) if indice < len(qtds) else Decimal('1')
+                    preco = Decimal(str(precos[indice] or '0')) if indice < len(precos) else Decimal('0')
+                    if qty <= 0 or preco < 0:
+                        raise ValueError('Quantidade e preço dos itens devem ser válidos.')
+
+                    produto = None
+                    if produto_id:
+                        produto = Produto.objects.select_for_update().get(pk=produto_id, empresa=empresa, ativo=True)
+                        tipo = 'peca' if produto.tipo == 'produto' else 'servico'
+                        desc = desc or produto.nome
+                        if tipo == 'peca':
+                            if produto.estoque_atual < qty:
+                                raise ValueError(f'Estoque insuficiente para {produto.nome}. Disponível: {produto.estoque_atual}.')
+                            anterior = produto.estoque_atual
+                            produto.estoque_atual -= qty
+                            produto.save(update_fields=['estoque_atual', 'atualizado_em'])
+                            MovimentoEstoque.objects.create(
+                                produto=produto, tipo='saida', quantidade=qty,
+                                estoque_anterior=anterior, estoque_posterior=produto.estoque_atual,
+                                motivo=f'Utilização na OS #{os.numero}', usuario=request.user,
+                            )
+                    if not desc:
+                        continue
+                    item = ItemOrdemServico.objects.create(
+                        ordem=os, tipo=tipo, produto=produto, descricao=desc,
+                        quantidade=qty, preco_unitario=preco, subtotal=qty * preco,
+                    )
+                    if tipo == 'servico': v_servicos += item.subtotal
+                    else: v_pecas += item.subtotal
+
+                os.valor_servicos = v_servicos
+                os.valor_pecas = v_pecas
+                os.save()
 
             messages.success(request, f'OS #{os.numero} criada com sucesso!')
             return redirect('ordens:detalhe', pk=os.pk)
-        except Exception as e:
+        except (InvalidOperation, ValueError, Produto.DoesNotExist) as e:
             messages.error(request, f'Erro ao criar OS: {e}')
     return render(request, 'ordens/form.html', {
         'titulo': 'Nova Ordem de Serviço',
-        'clientes': clientes, 'produtos': produtos, 'tecnicos': tecnicos,
+        'clientes': clientes, 'veiculos': veiculos, 'produtos': produtos, 'tecnicos': tecnicos,
         'status_choices': OrdemServico.STATUS_CHOICES,
         'prioridade_choices': OrdemServico.PRIORIDADE_CHOICES,
     })
@@ -126,7 +145,18 @@ def editar_status(request, pk):
 @login_required
 def excluir(request, pk):
     os = get_object_or_404(OrdemServico, pk=pk, empresa=request.empresa)
-    os.delete()
+    with transaction.atomic():
+        for item in os.itens.filter(tipo='peca', produto__isnull=False).select_related('produto'):
+            produto = Produto.objects.select_for_update().get(pk=item.produto_id)
+            anterior = produto.estoque_atual
+            produto.estoque_atual += item.quantidade
+            produto.save(update_fields=['estoque_atual', 'atualizado_em'])
+            MovimentoEstoque.objects.create(
+                produto=produto, tipo='entrada', quantidade=item.quantidade,
+                estoque_anterior=anterior, estoque_posterior=produto.estoque_atual,
+                motivo=f'Estorno por exclusão da OS #{os.numero}', usuario=request.user,
+            )
+        os.delete()
     messages.success(request, 'OS excluída.')
     return redirect('ordens:lista')
 

@@ -49,3 +49,21 @@ class Produto(models.Model):
     @property
     def estoque_baixo(self):
         return self.estoque_atual <= self.estoque_minimo
+
+
+class MovimentoEstoque(models.Model):
+    TIPO_CHOICES = [('entrada', 'Entrada'), ('saida', 'Saída'), ('ajuste', 'Ajuste')]
+
+    produto = models.ForeignKey(Produto, on_delete=models.CASCADE, related_name='movimentos')
+    tipo = models.CharField('Tipo', max_length=10, choices=TIPO_CHOICES)
+    quantidade = models.DecimalField('Quantidade', max_digits=12, decimal_places=3)
+    estoque_anterior = models.DecimalField(max_digits=12, decimal_places=3)
+    estoque_posterior = models.DecimalField(max_digits=12, decimal_places=3)
+    motivo = models.CharField('Motivo', max_length=255, blank=True)
+    usuario = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True, blank=True)
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-criado_em']
+        verbose_name = 'Movimentação de estoque'
+        verbose_name_plural = 'Movimentações de estoque'

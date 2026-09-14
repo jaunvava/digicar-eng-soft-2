@@ -1,4 +1,4 @@
-# DigiCAR — Sistema de Ordens de Serviço
+# DigiCAR — Sistema de Gestão de Oficina
 
 > Sistema web multi-tenant para gestão de Ordens de Serviço, controle financeiro, vendas e muito mais.  
 > Construído com **Django 5** + **Bootstrap 5** + **SQLite**.
@@ -10,12 +10,12 @@
 | Módulo                   | Funcionalidades                                                         |
 | ------------------------ | ----------------------------------------------------------------------- |
 | 🏠 **Dashboard**         | Indicadores em tempo real, gráficos de vendas e recebimentos (Chart.js) |
-| 👥 **Clientes**          | Cadastro PF/PJ com busca de CEP automática (ViaCEP)                     |
-| 📦 **Produtos**          | Produtos e serviços com controle de estoque e categorias                |
+| 👥 **Clientes**          | Cadastro PF/PJ com veículos vinculados e histórico de serviços           |
+| 📦 **Produtos**          | Entradas, saídas, ajustes e baixa automática de peças utilizadas nas OS   |
 | 💰 **Financeiro**        | Contas a receber, contas a pagar, baixas parciais e totais              |
-| 🛒 **PDV / Vendas**      | Ponto de Venda com carrinho interativo e baixa automática de estoque    |
 | 📄 **Orçamentos**        | Emissão e acompanhamento de orçamentos com fluxo de aprovação           |
 | 🔧 **Ordens de Serviço** | OS completa com equipamento, peças, serviços, técnico e garantia        |
+| 📊 **Relatórios**        | Clientes, veículos, estoque, ordens de serviço e financeiro              |
 
 ---
 
@@ -24,6 +24,10 @@
 - **Multi-tenant** com banco único (SQLite): cada empresa tem seus dados isolados por FK.
 - **Autenticação customizada**: login com Código da Empresa + Usuário + Senha.
 - **Django MVT** com apps separados por domínio de negócio.
+- **Veículos** ficam vinculados a clientes; cada veículo possui seu histórico de OS.
+- **Estoque** mantém o saldo e o histórico de cada movimentação (entrada, saída e ajuste).
+- Peças vinculadas a uma OS geram baixa automática; a exclusão da OS gera o estorno correspondente.
+- **Permissões**: administrador gerencia tudo; gerente gerencia cadastros e operação; operador consulta e trabalha nas OS, sem excluir ou alterar cadastros protegidos.
 
 ---
 
@@ -39,7 +43,7 @@
 ```bash
 # 1. Clone o repositório
 git clone <url-do-repo>
-cd estoque
+cd av3-eng
 
 # 2. Crie e ative o ambiente virtual
 python -m venv venv
@@ -51,19 +55,16 @@ venv/Scripts/activate
 source venv/bin/activate
 
 # 3. Instale as dependências
-pip install django pillow
+pip install -r requirements.txt
 
 # 4. Execute as migrações
 python manage.py migrate
 
 # 5. Crie a empresa e usuário inicial
-python setup_inicial.py
-
-# 6. Inicie o servidor
+# 5. Inicie o servidor
 python manage.py runserver
 ```
-
-Acesse: **http://127.0.0.1:8000/login/**
+Acesse: **http://127.0.0.1:8000/**
 
 ---
 
@@ -75,19 +76,17 @@ estoque/
 ├── clientes/           # Cadastro de clientes
 ├── produtos/           # Produtos, serviços, estoque
 ├── financeiro/         # Contas a receber/pagar, baixas
-├── vendas/             # PDV e histórico de vendas
 ├── orcamentos/         # Orçamentos
 ├── ordens/             # Ordens de Serviço
 ├── templates/          # Templates HTML (Bootstrap 5)
 ├── static/             # CSS, JS, imagens
 │   ├── css/app.css
 │   └── js/app.js
-├── estoque/            # Configurações do projeto Django
+├── digicar/            # Configurações do projeto Django
 │   ├── settings.py
 │   └── urls.py
 ├── manage.py
-├── setup_inicial.py    # Script de criação da empresa/admin demo
-└── db.sqlite3          # Banco de dados (não versionado)
+└── db.sqlite3          # Banco de dados local (não versionado)
 ```
 
 ---
@@ -126,6 +125,10 @@ PerfilUsuario.objects.create(user=user, empresa=empresa, perfil='operador')
 
 Uso interno. Todos os direitos reservados.
 
-### Rotas
+## ✅ Verificação
 
-`http://localhost:8000/landing-digios/`
+```bash
+python3 manage.py check
+python3 manage.py makemigrations --check --dry-run
+python3 manage.py test
+```

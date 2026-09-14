@@ -49,4 +49,10 @@
   </div>
   {% endif %}
 </div>
+<div class="card mt-3">
+  <div class="card-header d-flex justify-content-between"><h5 class="card-title"><i class="bi bi-car-front me-2"></i>Veículos</h5><a class="btn-primary-custom" href="{% url 'clientes:novo_veiculo' %}">Novo veículo</a></div>
+  <div class="card-body">
+    {% for v in veiculos %}<p class="mb-2"><strong>{{ v.placa }}</strong> — {{ v.marca }} {{ v.modelo }}{% if v.ano %} ({{ v.ano }}){% endif %} <a href="{% url 'clientes:editar_veiculo' v.pk %}">Editar</a></p>{% empty %}<p class="text-muted mb-0">Nenhum veículo cadastrado.</p>{% endfor %}
+  </div>
+</div>
 {% endblock %}

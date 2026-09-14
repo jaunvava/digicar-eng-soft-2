@@ -1,6 +1,6 @@
 from django.db import models
 from core.models import Empresa
-from clientes.models import Cliente
+from clientes.models import Cliente, Veiculo
 from produtos.models import Produto
 from django.contrib.auth.models import User
 
@@ -24,6 +24,7 @@ class OrdemServico(models.Model):
 
     empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE, related_name='ordens_servico')
     cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name='ordens_servico')
+    veiculo = models.ForeignKey(Veiculo, on_delete=models.SET_NULL, null=True, blank=True, related_name='ordens_servico')
     tecnico = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='ordens_tecnico')
     numero = models.PositiveIntegerField('Número', blank=True, null=True)
     status = models.CharField('Status', max_length=20, choices=STATUS_CHOICES, default='aberta')
