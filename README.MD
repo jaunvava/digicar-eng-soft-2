@@ -21,7 +21,7 @@
 
 ## 🏗️ Arquitetura
 
-- **Multi-tenant** com banco único (SQLite): cada empresa tem seus dados isolados por FK.
+- **Multi-tenant**: cada empresa tem seus dados isolados por FK. SQLite, MySQL e PostgreSQL podem ser configurados simultaneamente.
 - **Autenticação customizada**: login com Código da Empresa + Usuário + Senha.
 - **Django MVT** com apps separados por domínio de negócio.
 - **Veículos** ficam vinculados a clientes; cada veículo possui seu histórico de OS.
@@ -99,6 +99,28 @@ estoque/
 - [Chart.js](https://www.chartjs.org/)
 - [ViaCEP](https://viacep.com.br/) (busca de CEP)
 - SQLite (desenvolvimento)
+
+### Bancos relacionais e arquivos
+
+O banco `default` continua configurado pelas variáveis legadas `DB_ENGINE`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST` e `DB_PORT`. É possível adicionar até três aliases relacionais, `db2`, `db3` e `db4`, usando os mesmos sufixos numerados. Por exemplo:
+
+```env
+DB_ENGINE=postgresql
+DB_NAME=digicar
+DB_HOST=postgres-principal
+DB_2_ENGINE=mysql
+DB_2_NAME=relatorios
+DB_2_HOST=mysql-relatorios
+DB_2_USER=digicar
+DB_2_PASSWORD=...
+DB_3_ENGINE=sqlite
+DB_3_NAME=/dados/legado.sqlite3
+DB_APP_ROUTES=relatorios:db2,fornecedores:db3
+```
+
+Sem `DB_APP_ROUTES`, os apps Django continuam no `default`. Cada app roteado deve manter suas relações no mesmo banco; o roteador bloqueia migrações dos apps roteados nos demais aliases. Rode `python manage.py migrate --database=db2` para aplicar as migrações no alias configurado.
+
+Uploads usam filesystem local por padrão (`FILE_STORAGE=local`). Com `FILE_STORAGE=mongo`, `MONGO_URI` e `MONGO_DATABASE` configuram o MongoDB/GridFS, e os `ImageField`/`FileField` Django passam a gravar e servir arquivos pelo GridFS.
 
 ---
 

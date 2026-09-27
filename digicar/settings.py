@@ -91,9 +91,24 @@ WSGI_APPLICATION = 'digicar.wsgi.application'
 
 DATABASES = criar_configuracao_bancos(os.environ, BASE_DIR)
 
+# DB_APP_ROUTES aceita pares app:alias separados por virgula (ex.: core:db2).
+DATABASE_APP_ROUTES = {}
+for _rota in os.environ.get('DB_APP_ROUTES', '').split(','):
+    if _rota.strip():
+        _app, _alias = _rota.strip().split(':', 1)
+        if _alias not in DATABASES:
+            raise ValueError(f"DB_APP_ROUTES referencia alias inexistente: {_alias}")
+        DATABASE_APP_ROUTES[_app.strip()] = _alias.strip()
+DATABASE_ROUTERS = ['digicar.routers.AppDatabaseRouter']
+
 FILE_STORAGE = os.environ.get('FILE_STORAGE', 'local').lower()
 MONGO_URI = os.environ.get('MONGO_URI', 'mongodb://localhost:27017')
 MONGO_DATABASE = os.environ.get('MONGO_DATABASE', 'digicar')
+if FILE_STORAGE == 'mongo':
+    STORAGES = {
+        'default': {'BACKEND': 'storage.mongo_django.MongoGridFSStorage'},
+        'staticfiles': {'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage'},
+    }
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},

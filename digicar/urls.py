@@ -5,6 +5,7 @@ from django.conf.urls.static import static
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
+from storage.views import servir_gridfs
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -40,6 +41,9 @@ urlpatterns = [
     ),
     path("redoc/", schema_view.with_ui("redoc", cache_timeout=0), name="schema-redoc"),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+if settings.FILE_STORAGE == "mongo":
+    urlpatterns.insert(0, re_path(r"^media/gridfs/(?P<identificador>[0-9a-fA-F]{24})$", servir_gridfs))
 
 # Customização do Admin
 admin.site.site_header = "Administração do DigiCAR"
