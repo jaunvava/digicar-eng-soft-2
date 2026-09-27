@@ -6,6 +6,8 @@ Multi-tenant architecture with shared SQLite database.
 from pathlib import Path
 import os
 
+from .database import criar_configuracao_bancos
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = 'django-insecure-sfu_t@!q=kx%pmn$g5i^n$90e6-($8hjes!#c@(4_guf-4)+h8'
@@ -87,37 +89,11 @@ DARK_THEME = {
 
 WSGI_APPLICATION = 'digicar.wsgi.application'
 
-# Database Configuration
-# In production (EasyPanel), set these variables in the environment panel.
-# If DB_HOST is not set, the application will use the local SQLite database.
-DB_NAME = os.environ.get('DB_NAME', 'ap2')
-DB_USER = os.environ.get('DB_USER')
-DB_PASSWORD = os.environ.get('DB_PASSWORD')
-DB_HOST = os.environ.get('DB_HOST')
-DB_PORT = os.environ.get('DB_PORT', '3306')
+DATABASES = criar_configuracao_bancos(os.environ, BASE_DIR)
 
-if DB_HOST:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.mysql',
-            'NAME': DB_NAME,
-            'USER': DB_USER,
-            'PASSWORD': DB_PASSWORD,
-            'HOST': DB_HOST,
-            'PORT': DB_PORT,
-            'OPTIONS': {
-                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-                'charset': 'utf8mb4',
-            },
-        }
-    }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
+FILE_STORAGE = os.environ.get('FILE_STORAGE', 'local').lower()
+MONGO_URI = os.environ.get('MONGO_URI', 'mongodb://localhost:27017')
+MONGO_DATABASE = os.environ.get('MONGO_DATABASE', 'digicar')
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},

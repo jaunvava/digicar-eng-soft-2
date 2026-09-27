@@ -1,10 +1,12 @@
 from io import BytesIO
 
 from bson import ObjectId
+from bson.errors import InvalidId
 from gridfs import GridFS
+from gridfs.errors import NoFile
 from pymongo import MongoClient
 
-from .interface import ArquivoStorage
+from .interfaces import ArquivoStorage
 
 
 class MongoStorageAdapter(ArquivoStorage):
@@ -12,7 +14,7 @@ class MongoStorageAdapter(ArquivoStorage):
     def __init__(
         self,
         connection_string: str,
-        database_name: str = "digicar"
+        database_name: str = "digicar",
     ):
         self.client = MongoClient(connection_string)
         self.database = self.client[database_name]
@@ -50,5 +52,5 @@ class MongoStorageAdapter(ArquivoStorage):
 
             return True
 
-        except Exception:
+        except (InvalidId, NoFile):
             return False

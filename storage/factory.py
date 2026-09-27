@@ -1,27 +1,21 @@
-import os
+from functools import lru_cache
+
+from django.conf import settings
 
 from .local_adapter import LocalStorageAdapter
 from .mongo_adapter import MongoStorageAdapter
 
 
+@lru_cache(maxsize=1)
 def criar_storage():
-
-    tipo = os.environ.get(
-        "FILE_STORAGE",
-        "local"
-    )
-
-    if( tipo == "mongo"):
-
+    tipo = settings.FILE_STORAGE
+    if tipo == "mongo":
         return MongoStorageAdapter(
-            connection_string=os.environ.get(
-                "MONGO_URI",
-                "mongodb://localhost:27017"
-            ),
-            database_name=os.environ.get(
-                "MONGO_DATABASE",
-                "digicar"
-            )
+            connection_string=settings.MONGO_URI,
+            database_name=settings.MONGO_DATABASE,
         )
 
-    return LocalStorageAdapter()
+    if tipo == "local":
+        return LocalStorageAdapter()
+
+    raise ValueError("FILE_STORAGE inválido. Use 'local' ou 'mongo'.")

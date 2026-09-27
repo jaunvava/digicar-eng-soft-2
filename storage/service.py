@@ -1,10 +1,11 @@
 from .factory import criar_storage
+from .interfaces import ArquivoStorage
 
 
 class ArquivoService:
 
-    def __init__(self):
-        self.storage = criar_storage()
+    def __init__(self, storage: ArquivoStorage | None = None):
+        self.storage = storage or criar_storage()
 
     def salvar(
         self,
