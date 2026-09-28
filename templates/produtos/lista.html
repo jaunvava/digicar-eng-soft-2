@@ -137,6 +137,13 @@
           </td>
           <td style="text-align:right; padding-right: 20px;">
             <div class="d-flex gap-1 justify-content-end">
+              {% if p.imagem %}
+              <button type="button" class="btn-outline-custom" title="Ver imagem" style="padding:2px 6px;font-size:12px;"
+                      data-bs-toggle="modal" data-bs-target="#imagemProdutoModal"
+                      data-imagem="{{ p.imagem.url }}" data-nome="{{ p.nome }}">
+                <i class="bi bi-image"></i>
+              </button>
+              {% endif %}
               <a href="{% url 'produtos:editar' p.pk %}" class="btn-outline-custom" style="padding:2px 6px;font-size:12px;">
                 <i class="bi bi-pencil"></i>
               </a>
@@ -153,12 +160,35 @@
     </table>
   </div>
 </div>
+
+<!-- Modal de visualização da imagem do produto (preenchido pelo botão da linha) -->
+<div class="modal fade" id="imagemProdutoModal" tabindex="-1" aria-labelledby="imagemProdutoModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius: 8px; border: none; box-shadow: var(--shadow-lg);">
+      <div class="modal-header">
+        <h5 class="modal-title" id="imagemProdutoModalLabel"><i class="bi bi-image me-2"></i><span></span></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+      <div class="modal-body text-center p-4">
+        <img src="" alt="" style="max-width: 100%; max-height: 60vh; object-fit: contain;">
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 
 
 {% block extra_js %}
 <script>
+  document.getElementById('imagemProdutoModal').addEventListener('show.bs.modal', function(e) {
+    var botao = e.relatedTarget;
+    var img = this.querySelector('.modal-body img');
+    img.src = botao.dataset.imagem;
+    img.alt = botao.dataset.nome;
+    this.querySelector('.modal-title span').textContent = botao.dataset.nome;
+  });
+
   function abrirImpressao() {
     var form   = document.getElementById('filtrosForm');
     var params = new URLSearchParams(new FormData(form));

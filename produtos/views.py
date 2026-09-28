@@ -5,6 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
 from django.utils import timezone
+from django import forms
 from .models import Produto, MovimentoEstoque
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
@@ -168,26 +169,44 @@ def exportar_excel(request):
     return response
 
 
+def _salvar_imagem(produto, request):
+    """Grava a imagem enviada no storage configurado e apaga a anterior."""
+    if request.POST.get('remover_imagem') and produto.imagem:
+        produto.imagem.delete(save=True)
+    arquivo = request.FILES.get('imagem')
+    if not arquivo:
+        return
+    forms.ImageField().clean(arquivo)  # valida que o arquivo é uma imagem (Pillow)
+    antiga = produto.imagem.name if produto.imagem else None
+    produto.imagem.save(arquivo.name, arquivo, save=True)
+    if antiga:
+        produto.imagem.storage.delete(antiga)
+
+
 @login_required
 def novo(request):
     empresa = request.empresa
     if request.method == 'POST':
         try:
-            produto = Produto.objects.create(
-                empresa=empresa,
-                ativo=(request.POST.get('ativo') in ['on', 'True', 'true', '1']),
-                tipo=request.POST.get('tipo', 'produto'),
-                codigo=request.POST.get('codigo', ''),
-                nome=request.POST.get('nome'),
-                unidade=request.POST.get('unidade', 'UN'),
-                preco_custo=request.POST.get('preco_custo', 0) or 0,
-                preco_venda=request.POST.get('preco_venda', 0) or 0,
-                estoque_atual=request.POST.get('estoque_atual', 0) or 0,
-                estoque_minimo=request.POST.get('estoque_minimo', 0) or 0,
-            )
-            if produto.tipo == 'produto' and produto.estoque_atual > 0:
-                MovimentoEstoque.objects.create(produto=produto, tipo='ajuste', quantidade=produto.estoque_atual,
-                    estoque_anterior=0, estoque_posterior=produto.estoque_atual, motivo='Saldo inicial', usuario=request.user)
+            with transaction.atomic():
+                produto = Produto.objects.create(
+                    empresa=empresa,
+                    ativo=(request.POST.get('ativo') in ['on', 'True', 'true', '1']),
+                    tipo=request.POST.get('tipo', 'produto'),
+                    codigo=request.POST.get('codigo', ''),
+                    nome=request.POST.get('nome'),
+                    unidade=request.POST.get('unidade', 'UN'),
+                    preco_custo=request.POST.get('preco_custo', 0) or 0,
+                    preco_venda=request.POST.get('preco_venda', 0) or 0,
+                    estoque_atual=request.POST.get('estoque_atual', 0) or 0,
+                    estoque_minimo=request.POST.get('estoque_minimo', 0) or 0,
+                )
+                produto.refresh_from_db()  # converte os valores do POST (str) em Decimal
+                if produto.tipo == 'produto' and produto.estoque_atual > 0:
+                    MovimentoEstoque.objects.create(produto=produto, tipo='ajuste', quantidade=produto.estoque_atual,
+                        estoque_anterior=0, estoque_posterior=produto.estoque_atual, motivo='Saldo inicial', usuario=request.user)
+                # Depois do create: o caminho da imagem usa o ID do produto.
+                _salvar_imagem(produto, request)
             messages.success(request, 'Produto cadastrado com sucesso!')
             return redirect('produtos:lista')
         except Exception as e:
@@ -200,21 +219,23 @@ def editar(request, pk):
     produto = get_object_or_404(Produto, pk=pk, empresa=request.empresa)
     if request.method == 'POST':
         try:
-            estoque_anterior = produto.estoque_atual
-            produto.ativo         = (request.POST.get('ativo') in ['on', 'True', 'true', '1'])
-            produto.tipo          = request.POST.get('tipo', 'produto')
-            produto.codigo        = request.POST.get('codigo', '')
-            produto.nome          = request.POST.get('nome')
-            produto.unidade       = request.POST.get('unidade', 'UN')
-            produto.preco_custo   = request.POST.get('preco_custo', 0) or 0
-            produto.preco_venda   = request.POST.get('preco_venda', 0) or 0
-            produto.estoque_atual = request.POST.get('estoque_atual', 0) or 0
-            produto.estoque_minimo = request.POST.get('estoque_minimo', 0) or 0
-            produto.save()
-            if produto.tipo == 'produto' and produto.estoque_atual != estoque_anterior:
-                MovimentoEstoque.objects.create(produto=produto, tipo='ajuste',
-                    quantidade=produto.estoque_atual, estoque_anterior=estoque_anterior,
-                    estoque_posterior=produto.estoque_atual, motivo='Ajuste no cadastro', usuario=request.user)
+            with transaction.atomic():
+                estoque_anterior = produto.estoque_atual
+                produto.ativo         = (request.POST.get('ativo') in ['on', 'True', 'true', '1'])
+                produto.tipo          = request.POST.get('tipo', 'produto')
+                produto.codigo        = request.POST.get('codigo', '')
+                produto.nome          = request.POST.get('nome')
+                produto.unidade       = request.POST.get('unidade', 'UN')
+                produto.preco_custo   = request.POST.get('preco_custo', 0) or 0
+                produto.preco_venda   = request.POST.get('preco_venda', 0) or 0
+                produto.estoque_atual = request.POST.get('estoque_atual', 0) or 0
+                produto.estoque_minimo = request.POST.get('estoque_minimo', 0) or 0
+                produto.save()
+                if produto.tipo == 'produto' and produto.estoque_atual != estoque_anterior:
+                    MovimentoEstoque.objects.create(produto=produto, tipo='ajuste',
+                        quantidade=produto.estoque_atual, estoque_anterior=estoque_anterior,
+                        estoque_posterior=produto.estoque_atual, motivo='Ajuste no cadastro', usuario=request.user)
+                _salvar_imagem(produto, request)
             messages.success(request, 'Produto atualizado!')
             return redirect('produtos:lista')
         except Exception as e:
@@ -225,6 +246,8 @@ def editar(request, pk):
 @login_required
 def excluir(request, pk):
     produto = get_object_or_404(Produto, pk=pk, empresa=request.empresa)
+    if produto.imagem:
+        produto.imagem.delete(save=False)
     produto.delete()
     messages.success(request, 'Produto excluído!')
     return redirect('produtos:lista')

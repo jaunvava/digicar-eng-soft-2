@@ -3,6 +3,11 @@ from django.core.validators import RegexValidator
 from core.models import Empresa
 
 
+def caminho_imagem_produto(instance, filename):
+    # O ID do produto vai no nome do arquivo gravado no storage (GridFS ou disco).
+    return f'produtos/{instance.pk}/{filename}'
+
+
 class Produto(models.Model):
     TIPO_CHOICES = [
         ('produto', 'Produto'),
@@ -28,6 +33,8 @@ class Produto(models.Model):
     preco_venda = models.DecimalField('Preço de Venda', max_digits=12, decimal_places=2, default=0)
     estoque_atual = models.DecimalField('Estoque Atual', max_digits=12, decimal_places=3, default=0)
     estoque_minimo = models.DecimalField('Estoque Mínimo', max_digits=12, decimal_places=3, default=0)
+    # Com FILE_STORAGE=mongo guarda o ObjectId do GridFS; a URL vem de imagem.url.
+    imagem = models.ImageField('Imagem', upload_to=caminho_imagem_produto, max_length=255, blank=True, null=True)
     ativo = models.BooleanField('Ativo', default=True)
     criado_em = models.DateTimeField(auto_now_add=True)
     atualizado_em = models.DateTimeField(auto_now=True)

@@ -7,7 +7,7 @@
   <h1 class="page-title">{{ titulo }}</h1>
 </div>
 
-<form method="POST">
+<form method="POST" enctype="multipart/form-data">
   {% csrf_token %}
   <div class="row g-3">
     <div class="col-12">
@@ -71,6 +71,37 @@
         </div>
       </div>
     </div>
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="card-title m-0"><i class="bi bi-image me-2"></i>Imagem do Produto</h5>
+        </div>
+        <div class="card-body">
+          <div class="row g-4 align-items-center">
+            <div class="col-md-3 text-center">
+              <div style="width: 180px; height: 180px; border: 2px dashed var(--border-color); border-radius: 10px; margin: 0 auto; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                {% if produto.imagem %}
+                <img id="imagemPreview" src="{{ produto.imagem.url }}" alt="{{ produto.nome }}" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                {% else %}
+                <img id="imagemPreview" alt="" style="max-width: 100%; max-height: 100%; object-fit: contain; display: none;">
+                <i id="imagemVazia" class="bi bi-image text-muted" style="font-size: 48px; opacity: 0.2;"></i>
+                {% endif %}
+              </div>
+            </div>
+            <div class="col-md-9">
+              <label class="form-label-custom">{% if produto.imagem %}Trocar imagem{% else %}Enviar imagem{% endif %}</label>
+              <input type="file" name="imagem" id="imagemInput" accept="image/*" class="form-control-custom">
+              {% if produto.imagem %}
+              <div class="form-check mt-2">
+                <input class="form-check-input" type="checkbox" name="remover_imagem" id="removerImagem">
+                <label class="form-check-label" for="removerImagem">Remover imagem atual</label>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
     <div class="col-12 d-flex gap-3 justify-content-end">
       <a href="{% url 'produtos:lista' %}" class="btn-outline-custom">Cancelar</a>
       <button type="submit" class="btn-primary-custom">
@@ -95,6 +126,18 @@
     }
     switchEl.addEventListener('change', updateLabel);
     updateLabel();
+
+    // Pré-visualização da imagem escolhida antes de salvar
+    var imagemInput = document.getElementById('imagemInput');
+    var imagemPreview = document.getElementById('imagemPreview');
+    var imagemVazia = document.getElementById('imagemVazia');
+    imagemInput.addEventListener('change', function() {
+      var arquivo = imagemInput.files[0];
+      if (!arquivo) return;
+      imagemPreview.src = URL.createObjectURL(arquivo);
+      imagemPreview.style.display = '';
+      if (imagemVazia) imagemVazia.style.display = 'none';
+    });
   });
 </script>
 {% endblock %}
