@@ -122,7 +122,37 @@ Sem `DB_APP_ROUTES`, os apps Django continuam no `default`. Cada app roteado dev
 
 Uploads usam filesystem local por padrão (`FILE_STORAGE=local`). Com `FILE_STORAGE=mongo`, `MONGO_URI` e `MONGO_DATABASE` configuram o MongoDB/GridFS, e os `ImageField`/`FileField` Django passam a gravar e servir arquivos pelo GridFS.
 
-O acesso aos adapters de arquivos é feito pelo Singleton `StorageManager.get_instance()` (`storage/manager.py`), que expõe `get_local_adapter()`, `get_mongo_adapter()` e `get_adapter_configurado()` (este último segue `FILE_STORAGE`). Detalhes em `docs/singleton-storage.md`.
+O app `storage` combina **Singleton** e **Adapter**: `StorageManager.get_instance()` (`storage/manager.py`) guarda os adapters `LocalStorageAdapter` e `MongoStorageAdapter`, que implementam a interface `ArquivoStorage`. O `ArquivoService` recebe um adapter e executa cada operação entre `conectar()` e `desconectar()`. Detalhes em [`docs/README.md`](docs/README.md).
+
+### Bancos com Docker (MySQL + MongoDB)
+
+A pasta `docker/` sobe um MySQL 8.4 (banco relacional `default`) e um MongoDB 7 (arquivos via GridFS). As portas ficam acessíveis só em `127.0.0.1`.
+
+```bash
+cp docker/.env.example docker/.env   # na primeira vez: troque as senhas
+cd docker && docker compose up -d    # sobe os bancos
+docker compose ps                    # os dois devem aparecer como "healthy"
+```
+
+O `docker/.env` guarda as credenciais dos containers e também as variáveis que o Django lê (`DB_*`, `FILE_STORAGE`, `MONGO_URI`, `MONGO_DATABASE`). No MongoDB, o script `docker/mongo-init/01-usuario-app.js` cria o usuário da aplicação, com acesso só ao banco `digicar`. A aplicação não usa o root.
+
+O Django **não carrega** o `.env` sozinho. Exporte as variáveis antes de rodar:
+
+```bash
+# Git Bash / Linux / macOS
+set -a; . docker/.env; set +a
+python manage.py migrate
+python manage.py runserver
+```
+
+```powershell
+# PowerShell
+Get-Content docker/.env | Where-Object { $_ -match '^\s*([^#][^=]*)=(.*)$' } | ForEach-Object { Set-Item "env:$($matches[1].Trim())" $matches[2] }
+python manage.py migrate
+python manage.py runserver
+```
+
+Os scripts de inicialização (criação dos usuários) só rodam com os volumes vazios. Se trocar as senhas no `.env` depois do primeiro `up`, recrie os volumes com `docker compose down -v`. **Atenção:** isso apaga os dados dos bancos.
 
 ---
 

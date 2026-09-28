@@ -1,14 +1,16 @@
 # Singleton no app `storage`
 
-Este documento compara o Singleton implementado no app `storage` com a referência em [`docs/ref`](ref/) e descreve o que precisa mudar para que o projeto siga a mesma estrutura.
+Este documento compara o Singleton do app `storage` com a referência de sala (`docs/ref/DatabaseManager.java` e `docs/ref/Main.java`) e registra o que foi alterado para o projeto seguir a mesma estrutura.
 
-> **Status:** o ajuste descrito na seção 4 já foi implementado. As seções 2 e 3 descrevem o estado **anterior** (com `storage/factory.py`), mantidas como registro da análise.
+> A pasta `docs/ref/` fica apenas na máquina local (está no `.gitignore`). Por isso os trechos da referência aparecem copiados aqui.
+>
+> Veja também: [Adapter no app `storage`](adapter-storage.md) e a [visão geral](README.md).
+
+**Status:** implementado. As seções 2 e 3 descrevem o estado **anterior** (com `storage/factory.py`) e ficam como registro da análise.
 
 ---
 
 ## 1. O Singleton na referência
-
-O Singleton da referência está em [`DatabaseManager.java`](ref/DatabaseManager.java):
 
 ```java
 public class DatabaseManager {
@@ -17,7 +19,13 @@ public class DatabaseManager {
     private final DataBaseAdapter postgresAdapter;
     private final DataBaseAdapter mongoAdapter;
 
-    private DatabaseManager() { /* cria clients e adapters */ }
+    private DatabaseManager() {
+        PostgresClient postgresClient = new PostgresClient("localhost", 5432, "usuarios_db");
+        MongoClient mongoClient = new MongoClient("localhost", 27017, "auditoria_db");
+
+        postgresAdapter = new PostgresAdapter(postgresClient);
+        mongoAdapter = new MongoAdapter(mongoClient);
+    }
 
     public static DatabaseManager getInstance() {
         if (instance == null) {
@@ -31,7 +39,7 @@ public class DatabaseManager {
 }
 ```
 
-E é usado assim em [`Main.java`](ref/Main.java):
+Uso em `Main.java`:
 
 ```java
 DatabaseManager databaseManager = DatabaseManager.getInstance();
@@ -53,34 +61,14 @@ UsuarioService auditoriaNoMongo  = new UsuarioService(databaseManager.getMongoAd
 | R8 | O gerenciador **expõe cada adapter por um getter** | `getPostgresAdapter()`, `getMongoAdapter()` |
 | R9 | O **service recebe o adapter pronto** pelo construtor (injeção de dependência) | `new UsuarioService(adapter)` |
 
-```mermaid
-classDiagram
-    class DatabaseManager {
-        -static instance
-        -postgresAdapter
-        -mongoAdapter
-        -DatabaseManager()
-        +static getInstance()
-        +getPostgresAdapter()
-        +getMongoAdapter()
-    }
-    class DataBaseAdapter {
-        <<interface>>
-    }
-    DatabaseManager o-- DataBaseAdapter : 2 adapters
-    UsuarioService --> DataBaseAdapter : recebe no construtor
-    Main --> DatabaseManager : getInstance()
-```
-
 ---
 
-## 2. Como o app `storage` está hoje
+## 2. Como o app `storage` estava antes
 
-O "Singleton" do projeto está em [`storage/factory.py`](../storage/factory.py):
+O "Singleton" ficava em `storage/factory.py` (arquivo removido):
 
 ```python
 def criar_storage():
-    """Retorna uma unica instancia por configuracao, com inicializacao sincronizada."""
     global _instancia, _configuracao
     tipo = settings.FILE_STORAGE
     configuracao = (tipo, MONGO_URI, MONGO_DATABASE, MEDIA_ROOT)
@@ -98,55 +86,42 @@ def criar_storage():
         _configuracao = configuracao
         return _instancia
 
-_lock = RLock()
-_instancia = None
-_configuracao = None
 criar_storage.cache_clear = _limpar_storage
 ```
 
-Quem chama esse código:
+Quem usava:
 
 | Arquivo | Uso |
 |---|---|
-| [`storage/service.py`](../storage/service.py) | `ArquivoService(storage=None)`: se não receber um storage, chama `criar_storage()` |
-| [`storage/mongo_django.py`](../storage/mongo_django.py) | `MongoGridFSStorage` (backend Django para `ImageField`/`FileField`) chama `criar_storage()` em cada operação |
-| [`storage/views.py`](../storage/views.py) | `servir_gridfs` chama `criar_storage().buscar(...)` |
-| [`core/tests.py`](../core/tests.py) | Testa se `criar_storage() is criar_storage()` e usa `criar_storage.cache_clear()` |
-
-A escolha entre local e Mongo vem de [`digicar/settings.py`](../digicar/settings.py) (`FILE_STORAGE`, `MONGO_URI`, `MONGO_DATABASE`, `MEDIA_ROOT`).
+| `storage/service.py` | `ArquivoService(storage=None)`: se não recebesse um storage, chamava `criar_storage()` |
+| `storage/mongo_django.py` | `MongoGridFSStorage` chamava `criar_storage()` em cada operação |
+| `storage/views.py` | `servir_gridfs` chamava `criar_storage().buscar(...)` |
+| `core/tests.py` | Testava `criar_storage() is criar_storage()` e usava `cache_clear()` |
 
 ---
 
-## 3. Comparação ponto a ponto
+## 3. Comparação com a referência (estado anterior)
 
-| # | Referência | `storage` hoje | Situação |
+| # | Referência | `storage` antes | Situação |
 |---|---|---|---|
-| R1 | Classe `DatabaseManager` | Não há classe; é a função `criar_storage()` com variáveis globais do módulo | ❌ Diverge |
+| R1 | Classe `DatabaseManager` | Não havia classe; era a função `criar_storage()` com variáveis globais | ❌ Divergia |
 | R2 | `private static instance` | `_instancia` global no módulo | ✅ Equivalente |
-| R3 | Construtor privado | Nada impede `MongoStorageAdapter(...)` ou `LocalStorageAdapter()` de serem criados livremente | ❌ Diverge |
-| R4 | `getInstance()` | `criar_storage()`: o nome sugere que **cria** algo (Factory), e não que **obtém** a instância única | ⚠️ Nome engana |
-| R5 | Criação no primeiro uso | Cria na primeira chamada | ✅ Equivalente |
-| R6 | Instância nunca muda | **Pode ser trocada**: se `FILE_STORAGE`, `MONGO_URI`, `MONGO_DATABASE` ou `MEDIA_ROOT` mudarem, a instância antiga é fechada e outra é criada. Também existe `cache_clear()` | ❌ Diverge |
-| R7 | Singleton é o gerenciador | Singleton é o **próprio adapter**, um só de cada vez | ❌ Diverge |
-| R8 | Getters para cada adapter | Não tem. Devolve só o adapter configurado | ❌ Diverge |
-| R9 | Service recebe o adapter pronto | `ArquivoService` aceita o adapter, mas se não receber busca sozinho com `criar_storage()` | ⚠️ Parcial |
-| — | Não é thread-safe | Usa `RLock` | ➕ Vai além da referência |
+| R3 | Construtor privado | Não havia gerenciador para proteger | ❌ Divergia |
+| R4 | `getInstance()` | `criar_storage()`: o nome sugere que **cria** algo (Factory), e não que **obtém** a instância | ⚠️ Nome enganava |
+| R5 | Criação no primeiro uso | Criava na primeira chamada | ✅ Equivalente |
+| R6 | Instância nunca muda | **Podia ser trocada** quando o settings mudava. Também existia `cache_clear()` | ❌ Divergia |
+| R7 | Singleton é o gerenciador | Singleton era o **próprio adapter**, um só de cada vez | ❌ Divergia |
+| R8 | Getters para cada adapter | Não tinha | ❌ Divergia |
+| R9 | Service recebe o adapter pronto | Recebia, mas buscava sozinho se não recebesse | ⚠️ Parcial |
+| — | Não é thread-safe | Usava `RLock` | ➕ Ia além da referência |
 
-### Conclusão
-
-O app `storage` consegue o **efeito** de um Singleton (uma única instância compartilhada e criada no primeiro uso), mas **não segue a estrutura** da referência. Na prática é uma **Factory com cache de instância**: escolhe o adapter a partir do settings e guarda o resultado.
-
-Os três pontos que mais afastam o projeto da referência:
-
-1. **Não existe uma classe gerenciadora com `get_instance()`** (R1, R3, R4).
-2. **A instância pode ser trocada** enquanto a aplicação roda (R6).
-3. **O objeto único é o adapter, e não um gerenciador que contém os adapters** (R7, R8).
+**Conclusão:** o app tinha o **efeito** de um Singleton, mas a estrutura era de uma **Factory com cache de instância**.
 
 ---
 
-## 4. Como ajustar para ficar de acordo com a referência
+## 4. O que foi feito
 
-### 4.1 Visão geral da mudança
+### 4.1 Estrutura final
 
 ```mermaid
 classDiagram
@@ -168,36 +143,22 @@ classDiagram
     StorageManager o-- LocalStorageAdapter
     StorageManager o-- MongoStorageAdapter
     ArquivoService --> ArquivoStorage : recebe no construtor
-    MongoGridFSStorage --> StorageManager : get_mongo_adapter()
-    servir_gridfs --> StorageManager : get_mongo_adapter()
+    MongoGridFSStorage --> ArquivoService
+    servir_gridfs --> ArquivoService
 ```
-
-Correspondência com a referência:
 
 | Referência (Java) | Projeto (Python) |
 |---|---|
-| `DatabaseManager` | `StorageManager` |
+| `DatabaseManager` | `StorageManager` ([`storage/manager.py`](../storage/manager.py)) |
 | `getInstance()` | `StorageManager.get_instance()` |
 | `getPostgresAdapter()` | `get_local_adapter()` |
 | `getMongoAdapter()` | `get_mongo_adapter()` |
-| `DataBaseAdapter` | `ArquivoStorage` ([`storage/interfaces.py`](../storage/interfaces.py)) |
-| `PostgresAdapter` / `MongoAdapter` | `LocalStorageAdapter` / `MongoStorageAdapter` |
-| `UsuarioService` | `ArquivoService` |
-| `Main` | `views.py`, `mongo_django.py` e quem mais usar o storage |
+| `UsuarioService` | `ArquivoService` ([`storage/service.py`](../storage/service.py)) |
+| `Main` | `mongo_django.py`, `views.py` e quem mais usar o storage |
 
-### 4.2 Passo 1: criar `storage/manager.py`
-
-Novo arquivo com a classe Singleton. Ele cumpre R1 a R8:
+### 4.2 `storage/manager.py`
 
 ```python
-from threading import Lock
-
-from django.conf import settings
-
-from .local_adapter import LocalStorageAdapter
-from .mongo_adapter import MongoStorageAdapter
-
-
 class StorageManager:
     """Singleton que guarda os adapters de armazenamento de arquivos."""
 
@@ -205,7 +166,7 @@ class StorageManager:
     _lock = Lock()
 
     def __new__(cls, *args, **kwargs):
-        # Equivalente ao construtor privado da referência.
+        # Equivalente ao construtor privado: a unica forma de obter o objeto e get_instance().
         raise TypeError("Use StorageManager.get_instance()")
 
     @classmethod
@@ -214,9 +175,11 @@ class StorageManager:
             with cls._lock:
                 if cls._instance is None:
                     instancia = super().__new__(cls)
-                    instancia._local_adapter = LocalStorageAdapter()
+                    mongo_client = MongoClient(settings.MONGO_URI)
+
+                    instancia._local_adapter = LocalStorageAdapter(settings.MEDIA_ROOT)
                     instancia._mongo_adapter = MongoStorageAdapter(
-                        connection_string=settings.MONGO_URI,
+                        mongo_client,
                         database_name=settings.MONGO_DATABASE,
                     )
                     cls._instance = instancia
@@ -230,162 +193,58 @@ class StorageManager:
 
     def get_adapter_configurado(self):
         """Devolve o adapter escolhido em FILE_STORAGE."""
-        if settings.FILE_STORAGE == "mongo":
-            return self._mongo_adapter
-        if settings.FILE_STORAGE == "local":
-            return self._local_adapter
-        raise ValueError("FILE_STORAGE inválido. Use 'local' ou 'mongo'.")
+        ...
 ```
 
 Como cada item foi atendido:
 
-- **Construtor privado (R3):** Python não tem `private`. Fazer `__new__` lançar erro impede `StorageManager()` de fora, e só `get_instance()` cria o objeto (com `super().__new__`).
+- **Construtor privado (R3):** Python não tem `private`. O `__new__` lança erro, então `StorageManager()` falha. Só `get_instance()` cria o objeto, chamando `super().__new__` direto.
 - **Instância estática (R2) e criação no primeiro uso (R5):** `_instance` é atributo de classe e só é preenchido na primeira chamada.
-- **Thread-safety:** o `Lock` com verificação dupla (*double-checked locking*) mantém a vantagem que o `factory.py` já tinha. A referência não trata isso, mas no Django com vários workers/threads é necessário.
+- **Thread-safety:** o `Lock` com verificação dupla (*double-checked locking*) mantém a proteção que o `factory.py` já tinha. A referência não trata isso, mas no Django com várias threads é necessário.
 - **Instância imutável (R6):** não existe método que troque ou recrie a instância.
-- **Dois adapters no gerenciador (R7, R8):** igual à referência, que cria Postgres e Mongo no construtor.
-- **`get_adapter_configurado()`:** não existe na referência. Ele existe para manter o comportamento atual do projeto, em que `FILE_STORAGE` decide qual storage é o padrão.
+- **Gerenciador com os adapters (R7, R8):** assim como o `DatabaseManager`, o manager cria os *clients* (`MongoClient`, diretório `MEDIA_ROOT`) e os injeta nos adapters. Detalhes em [adapter-storage.md](adapter-storage.md).
+- **`get_adapter_configurado()`:** não existe na referência. Existe para continuar respeitando `FILE_STORAGE`.
 
-> **Criar o `MongoStorageAdapter` mesmo com `FILE_STORAGE=local` é seguro?**
-> Sim. O `MongoClient` do `pymongo` não abre conexão no construtor, só na primeira operação. Com Mongo desligado, a aplicação sobe normalmente e só falharia se alguém realmente usasse o adapter Mongo.
+> **Criar o adapter Mongo mesmo com `FILE_STORAGE=local` é seguro?**
+> Sim. O `MongoClient` do `pymongo` não abre conexão no construtor, só na primeira operação. Com o Mongo desligado a aplicação sobe normalmente.
 
-### 4.3 Passo 2: `ArquivoService` recebe o adapter obrigatório
+### 4.3 Service recebe o adapter pronto (R9)
 
-Em [`storage/service.py`](../storage/service.py), tirar o fallback para `criar_storage()`. O service passa a receber sempre o adapter, como o `UsuarioService` da referência (R9):
-
-```python
-from .interfaces import ArquivoStorage
-
-
-class ArquivoService:
-
-    def __init__(self, storage: ArquivoStorage):
-        self.storage = storage
-    # ... métodos salvar/buscar/excluir/existe sem mudança
-```
-
-Uso, no mesmo formato do `Main.java`:
+`ArquivoService(storage)` agora exige o adapter no construtor. Uso, no mesmo formato do `Main.java`:
 
 ```python
-from storage.manager import StorageManager
-from storage.service import ArquivoService
-
 manager = StorageManager.get_instance()
 arquivos_locais = ArquivoService(manager.get_local_adapter())
 arquivos_mongo  = ArquivoService(manager.get_mongo_adapter())
 ```
 
-### 4.4 Passo 3: trocar `criar_storage()` pelo manager
+### 4.4 Quem usava `criar_storage()`
 
-Estes dois arquivos só existem para o GridFS, então pedem o adapter Mongo explicitamente.
+- `storage/mongo_django.py` e `storage/views.py` passaram a usar `ArquivoService(StorageManager.get_instance().get_mongo_adapter())`.
+- `storage/factory.py` foi **removido**. Assim sobra um único ponto de acesso, e o `cache_clear()`, que permitia trocar a instância, deixou de existir.
 
-[`storage/mongo_django.py`](../storage/mongo_django.py):
+### 4.5 Testes
 
-```python
-from .manager import StorageManager
+Em [`core/tests.py`](../core/tests.py), a classe `StorageManagerTests` verifica:
 
+- `get_instance()` sempre devolve o mesmo objeto;
+- `StorageManager()` lança `TypeError`;
+- o `MongoClient` e o adapter Mongo são criados uma única vez, com o client injetado;
+- o adapter local recebe o `MEDIA_ROOT`;
+- o service recebe o adapter do manager;
+- `get_adapter_configurado()` segue `FILE_STORAGE`.
 
-class MongoGridFSStorage(Storage):
-    def _adapter(self):
-        return StorageManager.get_instance().get_mongo_adapter()
+`StorageManager._instance = None` aparece **só nos testes**, para isolar um teste do outro. Não é uma API de reset da aplicação.
 
-    def _open(self, name, mode="rb"):
-        return ContentFile(self._adapter().buscar(name), name=name)
+### 4.6 Mudança de comportamento
 
-    def _save(self, name, content):
-        return self._adapter().salvar(name, b"".join(content.chunks()))
-
-    def delete(self, name):
-        self._adapter().excluir(name)
-
-    def exists(self, name):
-        return self._adapter().existe(name)
-    # url() sem mudança
-```
-
-[`storage/views.py`](../storage/views.py):
-
-```python
-from .manager import StorageManager
-
-
-@require_GET
-def servir_gridfs(request, identificador):
-    try:
-        conteudo = StorageManager.get_instance().get_mongo_adapter().buscar(identificador)
-    except (FileNotFoundError, ValueError):
-        raise Http404("Arquivo não encontrado")
-    ...
-```
-
-### 4.5 Passo 4: remover `storage/factory.py`
-
-Depois dos passos 2 e 3 ninguém mais usa `criar_storage()`. Apagar o arquivo evita ter **dois pontos de acesso** ao storage, o que contradiz a ideia de instância única. Também sai o `criar_storage.cache_clear`, que permitia trocar a instância (R6).
-
-Confirmar antes que não sobrou referência:
-
-```bash
-grep -rn "criar_storage\|storage.factory" --include=*.py .
-```
-
-### 4.6 Passo 5: ajustar os testes em `core/tests.py`
-
-A classe `ArquivoStorageTests` ([`core/tests.py`](../core/tests.py)) testa a factory. Ela passaria a testar o manager:
-
-```python
-from unittest.mock import patch
-
-from storage.manager import StorageManager
-from storage.service import ArquivoService
-
-
-class StorageManagerTests(SimpleTestCase):
-    def setUp(self):
-        StorageManager._instance = None   # apenas para isolar os testes
-
-    def tearDown(self):
-        StorageManager._instance = None
-
-    @patch("storage.manager.MongoStorageAdapter")
-    def test_get_instance_retorna_sempre_o_mesmo_objeto(self, _):
-        self.assertIs(StorageManager.get_instance(), StorageManager.get_instance())
-
-    def test_construtor_direto_e_bloqueado(self):
-        with self.assertRaises(TypeError):
-            StorageManager()
-
-    @override_settings(MONGO_URI="mongodb://mongo:27017", MONGO_DATABASE="arquivos")
-    @patch("storage.manager.MongoStorageAdapter")
-    def test_mongo_adapter_criado_uma_vez(self, adapter):
-        StorageManager.get_instance()
-        StorageManager.get_instance()
-
-        adapter.assert_called_once_with(
-            connection_string="mongodb://mongo:27017",
-            database_name="arquivos",
-        )
-
-    @patch("storage.manager.MongoStorageAdapter")
-    def test_service_recebe_adapter_do_manager(self, _):
-        manager = StorageManager.get_instance()
-        service = ArquivoService(manager.get_local_adapter())
-
-        self.assertIs(service.storage, manager.get_local_adapter())
-```
-
-`StorageManager._instance = None` só aparece nos testes, para que um teste não interfira no outro. **Não** é uma API pública de reset e não deve ser usado no código da aplicação.
-
-O teste `test_adapter_local_salva_busca_e_exclui` não muda, porque usa `LocalStorageAdapter` direto.
-
-### 4.7 Passo 6: atualizar o README
-
-Na seção de uploads do [`README.MD`](../README.MD), citar que o acesso ao storage é feito por `StorageManager.get_instance()` e que `FILE_STORAGE` continua escolhendo o backend padrão.
+Antes, mudar `FILE_STORAGE`, `MONGO_URI`, `MONGO_DATABASE` ou `MEDIA_ROOT` com a aplicação rodando fazia a factory recriar a instância. Agora a instância é fixa, como exige o padrão. Mudanças nessas configurações só valem depois de reiniciar a aplicação.
 
 ---
 
-## 5. Checklist de conformidade depois do ajuste
+## 5. Checklist de conformidade
 
-| # | Característica da referência | Como fica no projeto |
+| # | Característica da referência | Como ficou no projeto |
 |---|---|---|
 | R1 | Classe dedicada | `StorageManager` |
 | R2 | Instância estática | `StorageManager._instance` |
@@ -396,19 +255,3 @@ Na seção de uploads do [`README.MD`](../README.MD), citar que o acesso ao stor
 | R7 | Gerenciador contém os adapters | `_local_adapter` e `_mongo_adapter` |
 | R8 | Getters por adapter | `get_local_adapter()` e `get_mongo_adapter()` |
 | R9 | Service recebe o adapter | `ArquivoService(adapter)` obrigatório |
-
-## 6. Arquivos afetados
-
-| Arquivo | Ação |
-|---|---|
-| `storage/manager.py` | **Criar** |
-| `storage/service.py` | Alterar: adapter obrigatório no construtor |
-| `storage/mongo_django.py` | Alterar: usar `StorageManager` |
-| `storage/views.py` | Alterar: usar `StorageManager` |
-| `storage/factory.py` | **Remover** |
-| `core/tests.py` | Alterar: testes do manager no lugar dos testes da factory |
-| `README.MD` | Alterar: citar o `StorageManager` |
-
-## 7. Fora do escopo do Singleton
-
-A interface da referência ([`DataBaseAdapter.java`](ref/DataBaseAdapter.java)) tem `conectar()` e `desconectar()`, e o `UsuarioService` chama os dois em volta de cada operação. A interface [`ArquivoStorage`](../storage/interfaces.py) não tem esses métodos. Essa diferença é do padrão **Adapter**, não do Singleton, e fica para outra análise.

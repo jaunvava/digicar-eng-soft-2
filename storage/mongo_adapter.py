@@ -10,18 +10,26 @@ from .interfaces import ArquivoStorage
 
 
 class MongoStorageAdapter(ArquivoStorage):
+    """Adapta o pymongo/GridFS para a interface ArquivoStorage."""
 
     def __init__(
         self,
-        connection_string: str,
+        client: MongoClient,
         database_name: str = "digicar",
     ):
-        self.client = MongoClient(connection_string)
+        self.client = client
         self.database = self.client[database_name]
         self.fs = GridFS(self.database)
 
-    def close(self):
-        self.client.close()
+    def conectar(self) -> None:
+        # Falha logo se o MongoDB estiver indisponivel.
+        self.client.admin.command("ping")
+
+    def desconectar(self) -> None:
+        # O MongoClient e compartilhado pelo StorageManager e mantem um pool:
+        # a conexao volta ao pool sozinha e o client nao pode ser fechado aqui,
+        # pois um MongoClient fechado nao pode ser reutilizado.
+        pass
 
     def salvar(self, nome: str, conteudo: bytes) -> str:
 
@@ -40,10 +48,13 @@ class MongoStorageAdapter(ArquivoStorage):
         return arquivo.read()
 
     def excluir(self, identificador: str) -> None:
+        try:
+            arquivo_id = ObjectId(identificador)
+        except InvalidId:
+            # Mesmo contrato do adapter local: excluir o que nao existe nao falha.
+            return
 
-        self.fs.delete(
-            ObjectId(identificador)
-        )
+        self.fs.delete(arquivo_id)
 
     def existe(self, identificador: str) -> bool:
 

@@ -1,6 +1,15 @@
 from abc import ABC, abstractmethod
 
 class ArquivoStorage(ABC):
+    """Interface alvo (Target) do padrao Adapter para armazenamento de arquivos."""
+
+    @abstractmethod
+    def conectar(self) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def desconectar(self) -> None:
+        raise NotImplementedError
 
     @abstractmethod
     def salvar(self, nome: str, conteudo: bytes) -> str:

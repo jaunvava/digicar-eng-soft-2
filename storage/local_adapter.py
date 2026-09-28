@@ -1,20 +1,29 @@
 from pathlib import Path
 
-from django.conf import settings
-
 from .interfaces import ArquivoStorage
 
 
 class LocalStorageAdapter(ArquivoStorage):
+    """Adapta o sistema de arquivos (pathlib) para a interface ArquivoStorage."""
 
-    def __init__(self):
-        self.base_path = Path(settings.MEDIA_ROOT).resolve()
+    def __init__(self, base_path):
+        self.base_path = Path(base_path).resolve()
 
     def _caminho(self, identificador: str) -> Path:
         caminho = (self.base_path / identificador).resolve()
         if not caminho.is_relative_to(self.base_path):
             raise ValueError("Identificador de arquivo inválido")
         return caminho
+
+    def conectar(self) -> None:
+        self.base_path.mkdir(
+            parents=True,
+            exist_ok=True
+        )
+
+    def desconectar(self) -> None:
+        # O sistema de arquivos nao mantem conexao aberta.
+        pass
 
     def salvar(self, nome: str, conteudo: bytes) -> str:
         caminho = self._caminho(nome)

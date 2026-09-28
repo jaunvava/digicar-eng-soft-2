@@ -1,6 +1,7 @@
 from threading import Lock
 
 from django.conf import settings
+from pymongo import MongoClient
 
 from .local_adapter import LocalStorageAdapter
 from .mongo_adapter import MongoStorageAdapter
@@ -22,9 +23,11 @@ class StorageManager:
             with cls._lock:
                 if cls._instance is None:
                     instancia = super().__new__(cls)
-                    instancia._local_adapter = LocalStorageAdapter()
+                    mongo_client = MongoClient(settings.MONGO_URI)
+
+                    instancia._local_adapter = LocalStorageAdapter(settings.MEDIA_ROOT)
                     instancia._mongo_adapter = MongoStorageAdapter(
-                        connection_string=settings.MONGO_URI,
+                        mongo_client,
                         database_name=settings.MONGO_DATABASE,
                     )
                     cls._instance = instancia

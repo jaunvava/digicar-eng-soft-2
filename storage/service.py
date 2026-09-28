@@ -2,9 +2,17 @@ from .interfaces import ArquivoStorage
 
 
 class ArquivoService:
+    """Cliente do padrao Adapter: conhece apenas a interface ArquivoStorage."""
 
     def __init__(self, storage: ArquivoStorage):
         self.storage = storage
+
+    def _executar(self, operacao, *args):
+        self.storage.conectar()
+        try:
+            return operacao(*args)
+        finally:
+            self.storage.desconectar()
 
     def salvar(
         self,
@@ -12,7 +20,8 @@ class ArquivoService:
         conteudo: bytes
     ) -> str:
 
-        return self.storage.salvar(
+        return self._executar(
+            self.storage.salvar,
             nome,
             conteudo
         )
@@ -22,7 +31,8 @@ class ArquivoService:
         identificador: str
     ) -> bytes:
 
-        return self.storage.buscar(
+        return self._executar(
+            self.storage.buscar,
             identificador
         )
 
@@ -31,7 +41,8 @@ class ArquivoService:
         identificador: str
     ) -> None:
 
-        self.storage.excluir(
+        self._executar(
+            self.storage.excluir,
             identificador
         )
 
@@ -40,6 +51,7 @@ class ArquivoService:
         identificador: str
     ) -> bool:
 
-        return self.storage.existe(
+        return self._executar(
+            self.storage.existe,
             identificador
         )

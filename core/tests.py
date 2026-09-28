@@ -22,13 +22,18 @@ class PermissoesTests(TestCase):
         self.assertTrue(Cliente.objects.filter(pk=self.cliente.pk).exists())
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
+
+from bson import ObjectId
+from gridfs.errors import NoFile
 
 from django.test import SimpleTestCase, override_settings
 
 from digicar.database import criar_configuracao_bancos
+from storage.interfaces import ArquivoStorage
 from storage.local_adapter import LocalStorageAdapter
 from storage.manager import StorageManager
+from storage.mongo_adapter import MongoStorageAdapter
 from storage.service import ArquivoService
 
 
@@ -75,14 +80,21 @@ class StorageManagerTests(SimpleTestCase):
 
     @override_settings(MONGO_URI="mongodb://mongo:27017", MONGO_DATABASE="arquivos")
     @patch("storage.manager.MongoStorageAdapter")
-    def test_mongo_adapter_criado_uma_vez(self, adapter):
+    @patch("storage.manager.MongoClient")
+    def test_manager_cria_client_e_injeta_no_adapter_uma_vez(self, client, adapter):
         StorageManager.get_instance()
         StorageManager.get_instance()
 
-        adapter.assert_called_once_with(
-            connection_string="mongodb://mongo:27017",
-            database_name="arquivos",
-        )
+        client.assert_called_once_with("mongodb://mongo:27017")
+        adapter.assert_called_once_with(client.return_value, database_name="arquivos")
+
+    @patch("storage.manager.MongoStorageAdapter")
+    def test_manager_injeta_media_root_no_adapter_local(self, _):
+        with TemporaryDirectory() as diretorio:
+            with override_settings(MEDIA_ROOT=diretorio):
+                adapter = StorageManager.get_instance().get_local_adapter()
+
+                self.assertEqual(adapter.base_path, Path(diretorio).resolve())
 
     @patch("storage.manager.MongoStorageAdapter")
     def test_service_recebe_adapter_do_manager(self, _):
@@ -104,21 +116,115 @@ class StorageManagerTests(SimpleTestCase):
                 manager.get_adapter_configurado()
 
 
+class AdapterFalso(ArquivoStorage):
+    def __init__(self):
+        self.chamadas = []
+
+    def conectar(self):
+        self.chamadas.append("conectar")
+
+    def desconectar(self):
+        self.chamadas.append("desconectar")
+
+    def salvar(self, nome, conteudo):
+        self.chamadas.append("salvar")
+        return nome
+
+    def buscar(self, identificador):
+        self.chamadas.append("buscar")
+        raise FileNotFoundError(identificador)
+
+    def excluir(self, identificador):
+        self.chamadas.append("excluir")
+
+    def existe(self, identificador):
+        self.chamadas.append("existe")
+        return True
+
+
+class ArquivoServiceTests(SimpleTestCase):
+    def test_service_conecta_e_desconecta_em_volta_da_operacao(self):
+        adapter = AdapterFalso()
+
+        self.assertEqual(ArquivoService(adapter).salvar("a.txt", b"x"), "a.txt")
+        self.assertEqual(adapter.chamadas, ["conectar", "salvar", "desconectar"])
+
+    def test_service_desconecta_mesmo_com_erro(self):
+        adapter = AdapterFalso()
+
+        with self.assertRaises(FileNotFoundError):
+            ArquivoService(adapter).buscar("inexistente")
+        self.assertEqual(adapter.chamadas, ["conectar", "buscar", "desconectar"])
+
+
 class ArquivoStorageTests(SimpleTestCase):
 
     def test_adapter_local_salva_busca_e_exclui(self):
         with TemporaryDirectory() as diretorio:
-            with override_settings(MEDIA_ROOT=diretorio):
-                storage = LocalStorageAdapter()
-                identificador = storage.salvar("documentos/teste.txt", b"conteudo")
+            storage = LocalStorageAdapter(diretorio)
+            identificador = storage.salvar("documentos/teste.txt", b"conteudo")
 
-                self.assertEqual(storage.buscar(identificador), b"conteudo")
-                self.assertTrue(storage.existe(identificador))
-                storage.excluir(identificador)
-                self.assertFalse(storage.existe(identificador))
+            self.assertEqual(storage.buscar(identificador), b"conteudo")
+            self.assertTrue(storage.existe(identificador))
+            storage.excluir(identificador)
+            self.assertFalse(storage.existe(identificador))
 
     def test_adapter_local_bloqueia_caminho_fora_da_media(self):
         with TemporaryDirectory() as diretorio:
-            with override_settings(MEDIA_ROOT=diretorio):
-                with self.assertRaises(ValueError):
-                    LocalStorageAdapter().salvar("../arquivo.txt", b"conteudo")
+            with self.assertRaises(ValueError):
+                LocalStorageAdapter(diretorio).salvar("../arquivo.txt", b"conteudo")
+
+    def test_adapter_local_conectar_cria_diretorio_base(self):
+        with TemporaryDirectory() as diretorio:
+            base = Path(diretorio) / "media"
+            LocalStorageAdapter(base).conectar()
+
+            self.assertTrue(base.is_dir())
+
+
+@patch("storage.mongo_adapter.GridFS")
+class MongoStorageAdapterTests(SimpleTestCase):
+    def test_adapter_usa_client_injetado(self, gridfs):
+        client = MagicMock()
+        adapter = MongoStorageAdapter(client, database_name="arquivos")
+
+        self.assertIs(adapter.client, client)
+        client.__getitem__.assert_called_once_with("arquivos")
+        gridfs.assert_called_once_with(client.__getitem__.return_value)
+
+    def test_conectar_verifica_conexao_com_ping(self, _):
+        client = MagicMock()
+
+        MongoStorageAdapter(client).conectar()
+
+        client.admin.command.assert_called_once_with("ping")
+
+    def test_desconectar_nao_fecha_client_compartilhado(self, _):
+        client = MagicMock()
+
+        MongoStorageAdapter(client).desconectar()
+
+        client.close.assert_not_called()
+
+    def test_salvar_traduz_para_gridfs_put(self, gridfs):
+        arquivo_id = ObjectId()
+        gridfs.return_value.put.return_value = arquivo_id
+
+        identificador = MongoStorageAdapter(MagicMock()).salvar("foto.png", b"img")
+
+        self.assertEqual(identificador, str(arquivo_id))
+        self.assertEqual(gridfs.return_value.put.call_args.kwargs, {"filename": "foto.png"})
+
+    def test_buscar_traduz_erros_para_file_not_found(self, gridfs):
+        gridfs.return_value.get.side_effect = NoFile
+        adapter = MongoStorageAdapter(MagicMock())
+
+        with self.assertRaises(FileNotFoundError):
+            adapter.buscar("id-invalido")
+        with self.assertRaises(FileNotFoundError):
+            adapter.buscar(str(ObjectId()))
+
+    def test_excluir_id_invalido_nao_falha(self, gridfs):
+        MongoStorageAdapter(MagicMock()).excluir("id-invalido")
+
+        gridfs.return_value.delete.assert_not_called()
