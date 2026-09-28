@@ -27,8 +27,8 @@ from unittest.mock import patch
 from django.test import SimpleTestCase, override_settings
 
 from digicar.database import criar_configuracao_bancos
-from storage.factory import criar_storage
 from storage.local_adapter import LocalStorageAdapter
+from storage.manager import StorageManager
 from storage.service import ArquivoService
 
 
@@ -57,34 +57,54 @@ class ConfiguracaoBancoTests(SimpleTestCase):
             criar_configuracao_bancos({"DB_ENGINE": "desconhecido"}, Path("/app"))
 
 
-class ArquivoStorageTests(SimpleTestCase):
+class StorageManagerTests(SimpleTestCase):
+    def setUp(self):
+        # Apenas para isolar os testes; nao e uma API de reset da aplicacao.
+        StorageManager._instance = None
+
     def tearDown(self):
-        criar_storage.cache_clear()
+        StorageManager._instance = None
 
-    @override_settings(FILE_STORAGE="local")
-    def test_factory_reutiliza_instancia_singleton(self):
-        criar_storage.cache_clear()
+    @patch("storage.manager.MongoStorageAdapter")
+    def test_get_instance_retorna_sempre_o_mesmo_objeto(self, _):
+        self.assertIs(StorageManager.get_instance(), StorageManager.get_instance())
 
-        self.assertIs(criar_storage(), criar_storage())
-        self.assertIs(ArquivoService().storage, ArquivoService().storage)
+    def test_construtor_direto_e_bloqueado(self):
+        with self.assertRaises(TypeError):
+            StorageManager()
 
-    @override_settings(
-        FILE_STORAGE="mongo",
-        MONGO_URI="mongodb://mongo:27017",
-        MONGO_DATABASE="arquivos",
-    )
-    @patch("storage.factory.MongoStorageAdapter")
-    def test_factory_configura_mongo_e_reutiliza_adapter(self, adapter):
-        criar_storage.cache_clear()
+    @override_settings(MONGO_URI="mongodb://mongo:27017", MONGO_DATABASE="arquivos")
+    @patch("storage.manager.MongoStorageAdapter")
+    def test_mongo_adapter_criado_uma_vez(self, adapter):
+        StorageManager.get_instance()
+        StorageManager.get_instance()
 
-        primeiro = criar_storage()
-        segundo = criar_storage()
-
-        self.assertIs(primeiro, segundo)
         adapter.assert_called_once_with(
             connection_string="mongodb://mongo:27017",
             database_name="arquivos",
         )
+
+    @patch("storage.manager.MongoStorageAdapter")
+    def test_service_recebe_adapter_do_manager(self, _):
+        manager = StorageManager.get_instance()
+        service = ArquivoService(manager.get_local_adapter())
+
+        self.assertIs(service.storage, manager.get_local_adapter())
+
+    @patch("storage.manager.MongoStorageAdapter")
+    def test_adapter_configurado_segue_file_storage(self, _):
+        manager = StorageManager.get_instance()
+
+        with override_settings(FILE_STORAGE="local"):
+            self.assertIs(manager.get_adapter_configurado(), manager.get_local_adapter())
+        with override_settings(FILE_STORAGE="mongo"):
+            self.assertIs(manager.get_adapter_configurado(), manager.get_mongo_adapter())
+        with override_settings(FILE_STORAGE="outro"):
+            with self.assertRaises(ValueError):
+                manager.get_adapter_configurado()
+
+
+class ArquivoStorageTests(SimpleTestCase):
 
     def test_adapter_local_salva_busca_e_exclui(self):
         with TemporaryDirectory() as diretorio:

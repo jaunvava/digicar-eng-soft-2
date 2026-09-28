@@ -122,6 +122,8 @@ Sem `DB_APP_ROUTES`, os apps Django continuam no `default`. Cada app roteado dev
 
 Uploads usam filesystem local por padrão (`FILE_STORAGE=local`). Com `FILE_STORAGE=mongo`, `MONGO_URI` e `MONGO_DATABASE` configuram o MongoDB/GridFS, e os `ImageField`/`FileField` Django passam a gravar e servir arquivos pelo GridFS.
 
+O acesso aos adapters de arquivos é feito pelo Singleton `StorageManager.get_instance()` (`storage/manager.py`), que expõe `get_local_adapter()`, `get_mongo_adapter()` e `get_adapter_configurado()` (este último segue `FILE_STORAGE`). Detalhes em `docs/singleton-storage.md`.
+
 ---
 
 ## 📝 Adicionar nova empresa (multi-tenant)
