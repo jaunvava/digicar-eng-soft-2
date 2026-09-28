@@ -1,4 +1,4 @@
-# DigiCAR — Sistema de Ordens de Serviço
+# DigiCAR — Sistema de Gestão de Oficina
 
 > Sistema web multi-tenant para gestão de Ordens de Serviço, controle financeiro, vendas e muito mais.  
 > Construído com **Django 5** + **Bootstrap 5** + **SQLite**.
@@ -10,20 +10,24 @@
 | Módulo                   | Funcionalidades                                                         |
 | ------------------------ | ----------------------------------------------------------------------- |
 | 🏠 **Dashboard**         | Indicadores em tempo real, gráficos de vendas e recebimentos (Chart.js) |
-| 👥 **Clientes**          | Cadastro PF/PJ com busca de CEP automática (ViaCEP)                     |
-| 📦 **Produtos**          | Produtos e serviços com controle de estoque e categorias                |
+| 👥 **Clientes**          | Cadastro PF/PJ com veículos vinculados e histórico de serviços           |
+| 📦 **Produtos**          | Entradas, saídas, ajustes e baixa automática de peças utilizadas nas OS   |
 | 💰 **Financeiro**        | Contas a receber, contas a pagar, baixas parciais e totais              |
-| 🛒 **PDV / Vendas**      | Ponto de Venda com carrinho interativo e baixa automática de estoque    |
 | 📄 **Orçamentos**        | Emissão e acompanhamento de orçamentos com fluxo de aprovação           |
 | 🔧 **Ordens de Serviço** | OS completa com equipamento, peças, serviços, técnico e garantia        |
+| 📊 **Relatórios**        | Clientes, veículos, estoque, ordens de serviço e financeiro              |
 
 ---
 
 ## 🏗️ Arquitetura
 
-- **Multi-tenant** com banco único (SQLite): cada empresa tem seus dados isolados por FK.
+- **Multi-tenant**: cada empresa tem seus dados isolados por FK. SQLite, MySQL e PostgreSQL podem ser configurados simultaneamente.
 - **Autenticação customizada**: login com Código da Empresa + Usuário + Senha.
 - **Django MVT** com apps separados por domínio de negócio.
+- **Veículos** ficam vinculados a clientes; cada veículo possui seu histórico de OS.
+- **Estoque** mantém o saldo e o histórico de cada movimentação (entrada, saída e ajuste).
+- Peças vinculadas a uma OS geram baixa automática; a exclusão da OS gera o estorno correspondente.
+- **Permissões**: administrador gerencia tudo; gerente gerencia cadastros e operação; operador consulta e trabalha nas OS, sem excluir ou alterar cadastros protegidos.
 
 ---
 
@@ -39,7 +43,7 @@
 ```bash
 # 1. Clone o repositório
 git clone <url-do-repo>
-cd estoque
+cd av3-eng
 
 # 2. Crie e ative o ambiente virtual
 python -m venv venv
@@ -51,19 +55,16 @@ venv/Scripts/activate
 source venv/bin/activate
 
 # 3. Instale as dependências
-pip install django pillow
+pip install -r requirements.txt
 
 # 4. Execute as migrações
 python manage.py migrate
 
 # 5. Crie a empresa e usuário inicial
-python setup_inicial.py
-
-# 6. Inicie o servidor
+# 5. Inicie o servidor
 python manage.py runserver
 ```
-
-Acesse: **http://127.0.0.1:8000/login/**
+Acesse: **http://127.0.0.1:8000/**
 
 ---
 
@@ -75,19 +76,17 @@ estoque/
 ├── clientes/           # Cadastro de clientes
 ├── produtos/           # Produtos, serviços, estoque
 ├── financeiro/         # Contas a receber/pagar, baixas
-├── vendas/             # PDV e histórico de vendas
 ├── orcamentos/         # Orçamentos
 ├── ordens/             # Ordens de Serviço
 ├── templates/          # Templates HTML (Bootstrap 5)
 ├── static/             # CSS, JS, imagens
 │   ├── css/app.css
 │   └── js/app.js
-├── estoque/            # Configurações do projeto Django
+├── digicar/            # Configurações do projeto Django
 │   ├── settings.py
 │   └── urls.py
 ├── manage.py
-├── setup_inicial.py    # Script de criação da empresa/admin demo
-└── db.sqlite3          # Banco de dados (não versionado)
+└── db.sqlite3          # Banco de dados local (não versionado)
 ```
 
 ---
@@ -100,6 +99,60 @@ estoque/
 - [Chart.js](https://www.chartjs.org/)
 - [ViaCEP](https://viacep.com.br/) (busca de CEP)
 - SQLite (desenvolvimento)
+
+### Bancos relacionais e arquivos
+
+O banco `default` continua configurado pelas variáveis legadas `DB_ENGINE`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST` e `DB_PORT`. É possível adicionar até três aliases relacionais, `db2`, `db3` e `db4`, usando os mesmos sufixos numerados. Por exemplo:
+
+```env
+DB_ENGINE=postgresql
+DB_NAME=digicar
+DB_HOST=postgres-principal
+DB_2_ENGINE=mysql
+DB_2_NAME=relatorios
+DB_2_HOST=mysql-relatorios
+DB_2_USER=digicar
+DB_2_PASSWORD=...
+DB_3_ENGINE=sqlite
+DB_3_NAME=/dados/legado.sqlite3
+DB_APP_ROUTES=relatorios:db2,fornecedores:db3
+```
+
+Sem `DB_APP_ROUTES`, os apps Django continuam no `default`. Cada app roteado deve manter suas relações no mesmo banco; o roteador bloqueia migrações dos apps roteados nos demais aliases. Rode `python manage.py migrate --database=db2` para aplicar as migrações no alias configurado.
+
+Uploads usam filesystem local por padrão (`FILE_STORAGE=local`). Com `FILE_STORAGE=mongo`, `MONGO_URI` e `MONGO_DATABASE` configuram o MongoDB/GridFS, e os `ImageField`/`FileField` Django passam a gravar e servir arquivos pelo GridFS.
+
+O app `storage` combina **Singleton** e **Adapter**: `StorageManager.get_instance()` (`storage/manager.py`) guarda os adapters `LocalStorageAdapter` e `MongoStorageAdapter`, que implementam a interface `ArquivoStorage`. O `ArquivoService` recebe um adapter e executa cada operação entre `conectar()` e `desconectar()`. Detalhes em [`docs/README.md`](docs/README.md).
+
+### Bancos com Docker (MySQL + MongoDB)
+
+A pasta `docker/` sobe um MySQL 8.4 (banco relacional `default`) e um MongoDB 7 (arquivos via GridFS). As portas ficam acessíveis só em `127.0.0.1`.
+
+```bash
+cp docker/.env.example docker/.env   # na primeira vez: troque as senhas
+cd docker && docker compose up -d    # sobe os bancos
+docker compose ps                    # os dois devem aparecer como "healthy"
+```
+
+O `docker/.env` guarda as credenciais dos containers e também as variáveis que o Django lê (`DB_*`, `FILE_STORAGE`, `MONGO_URI`, `MONGO_DATABASE`). No MongoDB, o script `docker/mongo-init/01-usuario-app.js` cria o usuário da aplicação, com acesso só ao banco `digicar`. A aplicação não usa o root.
+
+O Django **não carrega** o `.env` sozinho. Exporte as variáveis antes de rodar:
+
+```bash
+# Git Bash / Linux / macOS
+set -a; . docker/.env; set +a
+python manage.py migrate
+python manage.py runserver
+```
+
+```powershell
+# PowerShell
+Get-Content docker/.env | Where-Object { $_ -match '^\s*([^#][^=]*)=(.*)$' } | ForEach-Object { Set-Item "env:$($matches[1].Trim())" $matches[2] }
+python manage.py migrate
+python manage.py runserver
+```
+
+Os scripts de inicialização (criação dos usuários) só rodam com os volumes vazios. Se trocar as senhas no `.env` depois do primeiro `up`, recrie os volumes com `docker compose down -v`. **Atenção:** isso apaga os dados dos bancos.
 
 ---
 
@@ -126,6 +179,10 @@ PerfilUsuario.objects.create(user=user, empresa=empresa, perfil='operador')
 
 Uso interno. Todos os direitos reservados.
 
-### Rotas
+## ✅ Verificação
 
-`http://localhost:8000/landing-digios/`
+```bash
+python3 manage.py check
+python3 manage.py makemigrations --check --dry-run
+python3 manage.py test
+```

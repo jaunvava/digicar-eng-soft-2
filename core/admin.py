@@ -2,6 +2,11 @@ from django import forms
 from django.contrib import admin
 from django.contrib.auth.models import User
 from .models import Empresa, PerfilUsuario, BannerDashboard, ConfiguracaoEmpresa
+from clientes.models import Veiculo
+from produtos.models import MovimentoEstoque
+
+admin.site.register(Veiculo)
+admin.site.register(MovimentoEstoque)
 
 
 class EmpresaAdminForm(forms.ModelForm):

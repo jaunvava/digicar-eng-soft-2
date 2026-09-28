@@ -58,6 +58,13 @@
         </a>
       </div>
 
+      <div class="nav-item-sidebar">
+        <a href="{% url 'clientes:veiculos' %}" class="nav-link-sidebar {% if request.resolver_match.url_name == 'veiculos' %}active{% endif %}">
+          <span class="nav-icon"><i class="bi bi-car-front"></i></span>
+          <span class="nav-label">Veículos</span>
+        </a>
+      </div>
+
       <!-- Fornecedores -->
       <div class="nav-item-sidebar">
         <a href="{% url 'fornecedores:lista' %}" class="nav-link-sidebar {% if 'fornecedores' in request.resolver_match.app_name %}active{% endif %}">

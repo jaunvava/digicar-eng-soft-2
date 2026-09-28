@@ -35,6 +35,13 @@
                 {% endfor %}
               </select>
             </div>
+            <div class="col-md-4">
+              <label class="form-label-custom">Veículo</label>
+              <select name="veiculo" class="form-control-custom">
+                <option value="">Sem veículo vinculado</option>
+                {% for v in veiculos %}<option value="{{ v.pk }}">{{ v.placa }} - {{ v.marca }} {{ v.modelo }} ({{ v.cliente.nome }})</option>{% endfor %}
+              </select>
+            </div>
             <div class="col-md-2">
               <label class="form-label-custom">Status</label>
               <select name="status" class="form-control-custom">
@@ -118,6 +125,7 @@
             <thead>
               <tr>
                 <th>Tipo</th>
+                <th>Produto / Serviço cadastrado</th>
                 <th>Descrição</th>
                 <th style="width:100px;">Qtd</th>
                 <th style="width:140px;">Preço Unit.</th>
@@ -191,6 +199,12 @@ function addItemOS() {
       </select>
     </td>
     <td>
+      <select name="item_produto" class="form-control-custom item-produto" style="padding:7px 10px;" onchange="selecionarProduto(this)">
+        <option value="">Item manual</option>
+        {% for p in produtos %}<option value="{{ p.pk }}" data-tipo="{{ p.tipo }}" data-nome="{{ p.nome|escapejs }}" data-preco="{{ p.preco_venda }}">{{ p.nome }}{% if p.tipo == 'produto' %} (estoque: {{ p.estoque_atual }}){% endif %}</option>{% endfor %}
+      </select>
+    </td>
+    <td>
       <input type="text" name="item_descricao" class="form-control-custom" placeholder="Descrição do item...">
     </td>
     <td>
@@ -228,6 +242,19 @@ function calcRow(inputOrTr) {
   const prec = parseFloat(precoEl?.value) || 0;
   const sub  = qty * prec;
   tr.querySelector('.item-sub').textContent = 'R$ ' + sub.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+
+function selecionarProduto(select) {
+  const tr = select.closest('tr');
+  const option = select.options[select.selectedIndex];
+  if (!option.value) return;
+  tr.querySelector('select[name="item_tipo"]').value = option.dataset.tipo === 'produto' ? 'peca' : 'servico';
+  tr.querySelector('input[name="item_descricao"]').value = option.dataset.nome;
+  const preco = tr.querySelector('input[type="hidden"][name="item_preco"]') || tr.querySelector('.item-preco');
+  preco.value = option.dataset.preco || '0';
+  preco.dispatchEvent(new Event('input', {bubbles: true}));
+  calcRow(tr);
+  recalcOS();
 }
 
 function removeItemOS(id) {

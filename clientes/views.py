@@ -7,7 +7,7 @@ from django.http import HttpResponse
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
-from .models import Cliente
+from .models import Cliente, Veiculo
 
 
 
@@ -277,4 +277,62 @@ def excluir(request, pk):
 @login_required
 def detalhe(request, pk):
     cliente = get_object_or_404(Cliente, pk=pk, empresa=request.empresa)
-    return render(request, 'clientes/detalhe.html', {'cliente': cliente})
+    return render(request, 'clientes/detalhe.html', {'cliente': cliente, 'veiculos': cliente.veiculos.filter(ativo=True)})
+
+
+@login_required
+def veiculos(request):
+    qs = Veiculo.objects.filter(cliente__empresa=request.empresa).select_related('cliente')
+    q = request.GET.get('q', '').strip()
+    if q:
+        qs = qs.filter(Q(placa__icontains=q) | Q(modelo__icontains=q) | Q(cliente__nome__icontains=q))
+    return render(request, 'clientes/veiculos.html', {'veiculos': qs, 'q': q})
+
+
+@login_required
+def novo_veiculo(request):
+    clientes = Cliente.objects.filter(empresa=request.empresa, ativo=True)
+    if request.method == 'POST':
+        try:
+            Veiculo.objects.create(
+                cliente=get_object_or_404(clientes, pk=request.POST.get('cliente')),
+                placa=request.POST.get('placa', '').strip().upper(),
+                marca=request.POST.get('marca', '').strip(), modelo=request.POST.get('modelo', '').strip(),
+                ano=request.POST.get('ano') or None, cor=request.POST.get('cor', '').strip(),
+                chassi=request.POST.get('chassi', '').strip(), observacoes=request.POST.get('observacoes', '').strip(),
+            )
+            messages.success(request, 'Veículo cadastrado com sucesso!')
+            return redirect('clientes:veiculos')
+        except Exception as exc:
+            messages.error(request, f'Erro ao cadastrar veículo: {exc}')
+    return render(request, 'clientes/veiculo_form.html', {'clientes': clientes, 'titulo': 'Novo Veículo'})
+
+
+@login_required
+def editar_veiculo(request, pk):
+    veiculo = get_object_or_404(Veiculo, pk=pk, cliente__empresa=request.empresa)
+    clientes = Cliente.objects.filter(empresa=request.empresa, ativo=True)
+    if request.method == 'POST':
+        veiculo.cliente = get_object_or_404(clientes, pk=request.POST.get('cliente'))
+        veiculo.placa = request.POST.get('placa', '').strip().upper()
+        veiculo.marca = request.POST.get('marca', '').strip(); veiculo.modelo = request.POST.get('modelo', '').strip()
+        veiculo.ano = request.POST.get('ano') or None; veiculo.cor = request.POST.get('cor', '').strip()
+        veiculo.chassi = request.POST.get('chassi', '').strip(); veiculo.observacoes = request.POST.get('observacoes', '').strip()
+        veiculo.save()
+        messages.success(request, 'Veículo atualizado!')
+        return redirect('clientes:veiculos')
+    return render(request, 'clientes/veiculo_form.html', {'clientes': clientes, 'veiculo': veiculo, 'titulo': 'Editar Veículo'})
+
+
+@login_required
+def excluir_veiculo(request, pk):
+    veiculo = get_object_or_404(Veiculo, pk=pk, cliente__empresa=request.empresa)
+    veiculo.delete()
+    messages.success(request, 'Veículo excluído!')
+    return redirect('clientes:veiculos')
+
+
+@login_required
+def detalhe_veiculo(request, pk):
+    veiculo = get_object_or_404(Veiculo, pk=pk, cliente__empresa=request.empresa)
+    return render(request, 'clientes/veiculo_detalhe.html', {'veiculo': veiculo, 'ordens': veiculo.ordens_servico.select_related('cliente')})
