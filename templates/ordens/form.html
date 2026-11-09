@@ -18,13 +18,8 @@
         <div class="card-body">
           <div class="row g-3">
             <div class="col-md-4">
-              <label class="form-label-custom">Cliente *</label>
-              <select name="cliente" class="form-control-custom" required>
-                <option value="">Selecione o cliente...</option>
-                {% for c in clientes %}
-                  <option value="{{ c.pk }}">{{ c.nome }}</option>
-                {% endfor %}
-              </select>
+              <label class="form-label-custom" for="cliente_busca">Cliente *</label>
+              {% include '_busca_cliente.html' %}
             </div>
             <div class="col-md-3">
               <label class="form-label-custom">Técnico</label>
@@ -36,10 +31,10 @@
               </select>
             </div>
             <div class="col-md-4">
-              <label class="form-label-custom">Veículo</label>
-              <select name="veiculo" class="form-control-custom">
-                <option value="">Sem veículo vinculado</option>
-                {% for v in veiculos %}<option value="{{ v.pk }}">{{ v.placa }} - {{ v.marca }} {{ v.modelo }} ({{ v.cliente.nome }})</option>{% endfor %}
+              <label class="form-label-custom" for="os_veiculo">Veículo</label>
+              <select name="veiculo" id="os_veiculo" class="form-control-custom" disabled
+                      data-url="{% url 'clientes:veiculos_json' 0 %}">
+                <option value="">Selecione o cliente primeiro</option>
               </select>
             </div>
             <div class="col-md-2">
@@ -183,6 +178,67 @@
 {% endblock %}
 
 {% block extra_js %}
+<script>
+/* ── Veículos do cliente escolhido (buscados no servidor) ── */
+(function () {
+  var select = document.getElementById('os_veiculo');
+  var busca  = document.querySelector('[data-busca-cliente]');
+  var veiculos = {};
+
+  function opcao(valor, texto) {
+    var o = document.createElement('option');
+    o.value = valor;
+    o.textContent = texto;
+    return o;
+  }
+
+  function preencherSeVazio(nome, valor) {
+    var campo = document.querySelector('[name="' + nome + '"]');
+    if (campo && !campo.value.trim() && valor) campo.value = valor;
+  }
+
+  busca.addEventListener('cliente-selecionado', function (e) {
+    select.innerHTML = '';
+    veiculos = {};
+    if (!e.detail) {
+      select.appendChild(opcao('', 'Selecione o cliente primeiro'));
+      select.disabled = true;
+      return;
+    }
+    select.appendChild(opcao('', 'Carregando veículos…'));
+    select.disabled = true;
+    fetch(select.dataset.url.replace('/0/', '/' + e.detail.id + '/'), { credentials: 'same-origin' })
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then(function (dados) {
+        select.innerHTML = '';
+        select.appendChild(opcao('', dados.resultados.length ? 'Sem veículo vinculado' : 'Cliente sem veículos cadastrados'));
+        dados.resultados.forEach(function (v) {
+          veiculos[v.id] = v;
+          select.appendChild(opcao(v.id, v.placa + ' — ' + v.descricao + (v.ano ? ' (' + v.ano + ')' : '')));
+        });
+        select.disabled = false;
+        if (dados.resultados.length === 1) {
+          select.value = dados.resultados[0].id;
+          select.dispatchEvent(new Event('change'));
+        }
+      })
+      .catch(function () {
+        select.innerHTML = '';
+        select.appendChild(opcao('', 'Não foi possível carregar os veículos'));
+      });
+  });
+
+  // Ao escolher o veículo, adianta os dados do equipamento (sem apagar o que já foi digitado).
+  select.addEventListener('change', function () {
+    var v = veiculos[select.value];
+    if (!v) return;
+    preencherSeVazio('equipamento', v.descricao);
+    preencherSeVazio('marca', v.marca);
+    preencherSeVazio('modelo', v.modelo);
+    preencherSeVazio('numero_serie', v.placa);
+  });
+})();
+</script>
 <script>
 let itemCount = 0;
 

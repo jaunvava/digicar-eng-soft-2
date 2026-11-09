@@ -6,29 +6,32 @@
 <div class="page-header d-flex align-items-center justify-content-between">
   <div>
     <h1 class="page-title">Ordens de Serviço</h1>
-    <p class="page-subtitle">{{ ordens.count }} OS(s) encontrada(s)</p>
   </div>
-  <a href="{% url 'ordens:nova' %}" class="btn-primary-custom">
-    <i class="bi bi-plus-lg"></i> Nova OS
-  </a>
 </div>
 
-<!-- Filtros -->
-<div class="card mb-4">
-  <div class="card-body" style="padding:14px 20px;">
-    <form method="GET" class="d-flex gap-3 align-items-center flex-wrap">
-      <div style="flex:1;min-width:200px;position:relative;">
-        <i class="bi bi-search" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-muted);"></i>
-        <input type="text" name="q" value="{{ q }}" placeholder="Buscar por #, cliente ou equipamento..." class="form-control-custom" style="padding-left:36px;">
+<!-- Filtros de Pesquisa -->
+<div class="card card-filtros mb-4">
+  <div class="card-header">
+    <h5 class="card-title"><i class="bi bi-funnel"></i> Filtros de Pesquisa</h5>
+  </div>
+  <div class="card-body">
+    <form method="GET" id="filtrosForm">
+      <div class="row g-2 filtros-campos">
+        <div class="col-lg-8 col-md-7">
+          <input type="text" name="q" value="{{ q|default:'' }}" placeholder="Pesquisar por nº da OS, cliente ou equipamento" class="form-control-custom">
+        </div>
+        <div class="col-lg-4 col-md-5">
+          <select name="status" class="form-control-custom">
+            <option value="">Todos os status</option>
+            {% for val, label in status_choices %}
+            <option value="{{ val }}" {% if status == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
       </div>
-      <select name="status" class="form-control-custom" style="width:180px;">
-        <option value="">Todos os status</option>
-        {% for val, label in status_choices %}
-          <option value="{{ val }}" {% if status == val %}selected{% endif %}>{{ label }}</option>
-        {% endfor %}
-      </select>
-      <button type="submit" class="btn-primary-custom">Filtrar</button>
-      {% if q or status %}<a href="{% url 'ordens:lista' %}" class="btn-outline-custom">Limpar</a>{% endif %}
+      {% url 'ordens:nova' as url_novo %}
+      {% url 'ordens:lista' as url_limpar %}
+      {% include '_filtros_acoes.html' with total=ordens.count rotulo_total="OS encontrada(s)" url_limpar=url_limpar url_novo=url_novo texto_novo="Nova OS" %}
     </form>
   </div>
 </div>
@@ -79,10 +82,10 @@
               <a href="{% url 'ordens:imprimir' os.pk %}" target="_blank" class="btn-outline-custom" style="padding:5px 10px;font-size:12px;background:#f8fafc;" title="Imprimir">
                 <i class="bi bi-printer text-primary"></i>
               </a>
-              <button onclick="confirmDelete('{% url 'ordens:excluir' os.pk %}', 'Excluir OS #{{ os.numero }}?')"
+              <form method="post" action="{% url 'ordens:excluir' os.pk %}" class="d-inline" data-confirm="Excluir OS #{{ os.numero }}?" data-confirm-perigo>{% csrf_token %}<button type="submit"
                       class="btn btn-sm" style="background:#fee2e2;color:#b91c1c;border:none;border-radius: 5px;padding:5px 10px;">
                 <i class="bi bi-trash"></i>
-              </button>
+              </button></form>
             </div>
           </td>
         </tr>

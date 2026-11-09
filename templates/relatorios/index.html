@@ -1,38 +1,90 @@
 {% extends 'base.html' %}
-{% block title %}Relatórios Gerenciais{% endblock %}
+{% block title %}Relatórios{% endblock %}
 {% block breadcrumb %}Relatórios{% endblock %}
+
+{% block extra_css %}
+<style>
+  .relatorios-grupo .card-header { padding: 10px 20px; }
+  .relatorios-grupo .card-title { margin: 0; font-size: 14px; }
+
+  .relatorio-linha {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 20px;
+    border-top: 1px solid #f1f5f9;
+    color: var(--text-primary);
+    text-decoration: none;
+  }
+  .relatorio-linha:first-child { border-top: 0; }
+  .relatorio-linha:hover { background: #f8fafc; color: var(--text-primary); }
+
+  .relatorio-linha > i {
+    font-size: 18px;
+    color: var(--text-muted);
+    width: 20px;
+    text-align: center;
+    flex: 0 0 auto;
+  }
+  .relatorio-texto { flex: 1; min-width: 0; }
+  .relatorio-titulo { margin: 0; font-size: 14px; font-weight: 600; }
+  .relatorio-descricao { margin: 2px 0 0; font-size: 12.5px; color: var(--text-secondary); }
+
+  .relatorio-numero {
+    text-align: right;
+    font-size: 13px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+  }
+  .relatorio-numero strong {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+  }
+  .relatorio-numero.alerta strong { color: var(--danger); }
+  .relatorio-numero small { display: block; font-size: 12px; color: var(--text-muted); }
+
+  .relatorio-linha .bi-chevron-right {
+    font-size: 13px;
+    color: var(--text-muted);
+    flex: 0 0 auto;
+  }
+  .relatorio-linha:hover .bi-chevron-right { color: var(--primary); }
+
+  @media (max-width: 575px) {
+    .relatorio-descricao { display: none; }
+  }
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="page-header">
-    <h1 class="page-title">Relatórios e BI</h1>
-    <p class="page-subtitle">Acompanhe a saúde financeira e operacional da sua empresa em tempo real.</p>
+  <h1 class="page-title">Relatórios</h1>
 </div>
 
-<div class="row g-4">
-    <!-- Card Financeiro -->
-    <div class="col-md-4">
-        <a href="{% url 'relatorios:financeiro' %}" class="card h-100 text-decoration-none" style="transition: transform 0.2s; border: none; box-shadow: var(--shadow);">
-            <div class="card-body d-flex align-items-center p-4">
-                <div class="rounded-circle bg-danger bg-opacity-10 p-3 me-3">
-                    <i class="bi bi-cash-stack text-danger" style="font-size: 24px;"></i>
-                </div>
-                <div>
-                    <h5 class="mb-1 text-dark">Financeiro</h5>
-                    <p class="text-muted small mb-0">{{ atrasados_count }} contas em atraso identificadas.</p>
-                </div>
-            </div>
-        </a>
-    </div>
-    <div class="col-md-3"><a href="{% url 'relatorios:operacional' 'clientes' %}" class="card h-100 text-decoration-none"><div class="card-body"><i class="bi bi-people fs-3"></i><h5>Clientes</h5><p class="text-muted small">Cadastro de clientes</p></div></a></div>
-    <div class="col-md-3"><a href="{% url 'relatorios:operacional' 'veiculos' %}" class="card h-100 text-decoration-none"><div class="card-body"><i class="bi bi-car-front fs-3"></i><h5>Veículos</h5><p class="text-muted small">Veículos e histórico</p></div></a></div>
-    <div class="col-md-3"><a href="{% url 'relatorios:operacional' 'estoque' %}" class="card h-100 text-decoration-none"><div class="card-body"><i class="bi bi-box-seam fs-3"></i><h5>Estoque</h5><p class="text-muted small">Saldo de peças</p></div></a></div>
-    <div class="col-md-3"><a href="{% url 'relatorios:operacional' 'ordens' %}" class="card h-100 text-decoration-none"><div class="card-body"><i class="bi bi-tools fs-3"></i><h5>Ordens de Serviço</h5><p class="text-muted small">Serviços realizados</p></div></a></div>
+{% regroup relatorios by grupo as grupos %}
+{% for grupo in grupos %}
+<div class="card relatorios-grupo mb-3">
+  <div class="card-header">
+    <h5 class="card-title">{{ grupo.grouper }}</h5>
+  </div>
+  <div class="card-body p-0">
+    {% for r in grupo.list %}
+    <a href="{% if r.tipo %}{% url r.url r.tipo %}{% else %}{% url r.url %}{% endif %}" class="relatorio-linha">
+      <i class="bi {{ r.icone }}"></i>
+      <div class="relatorio-texto">
+        <p class="relatorio-titulo">{{ r.titulo }}</p>
+        <p class="relatorio-descricao">{{ r.descricao }}</p>
+      </div>
+      <div class="relatorio-numero{% if r.alerta %} alerta{% endif %}">
+        <strong>{{ r.numero }}</strong> {{ r.rotulo }}
+        {% if r.detalhe %}<small>{{ r.detalhe }}</small>{% endif %}
+      </div>
+      <i class="bi bi-chevron-right"></i>
+    </a>
+    {% endfor %}
+  </div>
 </div>
-
-<style>
-    .card:hover {
-        transform: translateY(-5px);
-        box-shadow: var(--shadow-lg) !important;
-    }
-</style>
+{% endfor %}
 {% endblock %}

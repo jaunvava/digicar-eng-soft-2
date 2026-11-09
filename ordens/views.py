@@ -1,3 +1,4 @@
+from django.views.decorators.http import require_POST
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -6,7 +7,8 @@ from django.db import transaction
 from decimal import Decimal, InvalidOperation
 from django.utils import timezone
 from .models import OrdemServico, ItemOrdemServico
-from clientes.models import Cliente, Veiculo
+from clientes.consultas import cliente_da_empresa
+from clientes.models import Veiculo
 from produtos.models import Produto, MovimentoEstoque
 from django.contrib.auth.models import User
 
@@ -32,8 +34,6 @@ def lista(request):
 @login_required
 def nova(request):
     empresa  = request.empresa
-    clientes = Cliente.objects.filter(empresa=empresa, ativo=True)
-    veiculos = Veiculo.objects.filter(cliente__empresa=empresa, ativo=True).select_related('cliente')
     produtos = Produto.objects.filter(empresa=empresa, ativo=True)
     tecnicos = User.objects.filter(perfil__empresa=empresa, perfil__ativo=True)
     if request.method == 'POST':
@@ -43,7 +43,7 @@ def nova(request):
             desconto      = Decimal(str(request.POST.get('desconto', '0') or '0'))
             garantia      = int(request.POST.get('garantia_dias', '30') or '30')
 
-            cliente = get_object_or_404(clientes, pk=request.POST.get('cliente'))
+            cliente = cliente_da_empresa(empresa, request.POST.get('cliente'))
             veiculo = None
             if request.POST.get('veiculo'):
                 veiculo = get_object_or_404(Veiculo, pk=request.POST.get('veiculo'), cliente=cliente)
@@ -116,7 +116,7 @@ def nova(request):
             messages.error(request, f'Erro ao criar OS: {e}')
     return render(request, 'ordens/form.html', {
         'titulo': 'Nova Ordem de Serviço',
-        'clientes': clientes, 'veiculos': veiculos, 'produtos': produtos, 'tecnicos': tecnicos,
+        'produtos': produtos, 'tecnicos': tecnicos,
         'status_choices': OrdemServico.STATUS_CHOICES,
         'prioridade_choices': OrdemServico.PRIORIDADE_CHOICES,
     })
@@ -143,6 +143,7 @@ def editar_status(request, pk):
 
 
 @login_required
+@require_POST
 def excluir(request, pk):
     os = get_object_or_404(OrdemServico, pk=pk, empresa=request.empresa)
     with transaction.atomic():

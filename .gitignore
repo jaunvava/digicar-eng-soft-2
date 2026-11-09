@@ -27,6 +27,7 @@ staticfiles/
 .env.*
 !.env.example
 secrets.py
+docs
 
 # ── Pytest / cobertura ────────────────────────────────
 .pytest_cache/

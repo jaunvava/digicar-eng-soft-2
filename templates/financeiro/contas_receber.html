@@ -86,100 +86,52 @@
   <h1 class="page-title">Contas a Receber</h1>
 </div>
 
-<!-- ══ Filtros de Pesquisa ══════════════════════════════════════════════ -->
-<div class="card mb-4">
-  <div class="card-header" style="padding:10px 20px;">
-    <h5 class="card-title" style="margin:0;font-size:14px;">
-      <i class="bi bi-funnel me-2"></i>Filtros de Pesquisa
-    </h5>
+<!-- Filtros de Pesquisa -->
+<div class="card card-filtros mb-4">
+  <div class="card-header">
+    <h5 class="card-title"><i class="bi bi-funnel"></i> Filtros de Pesquisa</h5>
   </div>
-  <div class="card-body" style="padding:14px 20px;">
-    <form method="GET" id="form-filtros">
-
-      <!-- linha de campos -->
-      <div class="filter-row d-flex flex-wrap gap-2 mb-3">
-        <input type="text" name="q" value="{{ q }}"
-               placeholder="Pesquisar por Cliente"
-               class="form-control-custom"
-               style="flex:1;min-width:170px;">
-
-        <input type="text" name="num_doc" value="{{ num_doc }}"
-               placeholder="Nº Documento"
-               class="form-control-custom"
-               style="width:150px;flex:0 0 auto;">
-
-        <div style="position:relative;width:150px;flex:0 0 auto;">
-          <label style="position:absolute;top:-9px;left:10px;font-size:10px;
-                        color:var(--text-muted);background:#fff;padding:0 4px;
-                        z-index:1;font-weight:500;">Status</label>
-          <select name="status" class="form-control-custom"
-                  style="appearance:auto;-webkit-appearance:auto;">
-            <option value="">Todos</option>
-            <option value="pendente"  {% if status == 'pendente'  %}selected{% endif %}>Pendente</option>
-            <option value="parcial"   {% if status == 'parcial'   %}selected{% endif %}>Parcial</option>
-            <option value="atrasado"  {% if status == 'atrasado'  %}selected{% endif %}>Atrasado</option>
-            <option value="pago"      {% if status == 'pago'      %}selected{% endif %}>Pago</option>
+  <div class="card-body">
+    <form method="GET" id="filtrosForm">
+      <div class="row g-2 filtros-campos">
+        <div class="col-xl-3 col-md-6">
+          <input type="text" name="q" value="{{ q|default:'' }}" placeholder="Pesquisar por Cliente" class="form-control-custom">
+        </div>
+        <div class="col-xl-2 col-md-6">
+          <input type="text" name="num_doc" value="{{ num_doc|default:'' }}" placeholder="Nº Documento" class="form-control-custom">
+        </div>
+        <div class="col-xl-2 col-md-4">
+          <select name="status" class="form-control-custom">
+            <option value="">Todos os status</option>
+            <option value="pendente" {% if status == 'pendente' %}selected{% endif %}>Pendente</option>
+            <option value="parcial" {% if status == 'parcial' %}selected{% endif %}>Parcial</option>
+            <option value="atrasado" {% if status == 'atrasado' %}selected{% endif %}>Atrasado</option>
+            <option value="pago" {% if status == 'pago' %}selected{% endif %}>Pago</option>
             <option value="cancelado" {% if status == 'cancelado' %}selected{% endif %}>Cancelado</option>
           </select>
         </div>
-
-        <div style="position:relative;width:155px;flex:0 0 auto;">
-          <label style="position:absolute;top:-9px;left:10px;font-size:10px;
-                        color:var(--text-muted);background:#fff;padding:0 4px;
-                        z-index:1;font-weight:500;">Tipo de Data</label>
-          <select name="tipo_data" class="form-control-custom"
-                  style="appearance:auto;-webkit-appearance:auto;">
-            <option value="">— nenhum —</option>
-            <option value="vencimento" {% if tipo_data == 'vencimento' %}selected{% endif %}>Vencimento</option>
-            <option value="pagamento"  {% if tipo_data == 'pagamento'  %}selected{% endif %}>Pagamento</option>
-            <option value="emissao"    {% if tipo_data == 'emissao'    %}selected{% endif %}>Emissão</option>
+        <div class="col-xl-2 col-md-4">
+          <select name="tipo_data" class="form-control-custom">
+            <option value="">Filtrar por data…</option>
+            <option value="vencimento" {% if tipo_data == 'vencimento' %}selected{% endif %}>Data de vencimento</option>
+            <option value="pagamento" {% if tipo_data == 'pagamento' %}selected{% endif %}>Data de pagamento</option>
+            <option value="emissao" {% if tipo_data == 'emissao' %}selected{% endif %}>Data de emissão</option>
           </select>
         </div>
-
-        <input type="date" name="data_ini" value="{{ data_ini }}"
-               class="form-control-custom"
-               style="width:145px;flex:0 0 auto;" title="Data inicial">
-
-        <input type="date" name="data_fim" value="{{ data_fim }}"
-               class="form-control-custom"
-               style="width:145px;flex:0 0 auto;" title="Data final">
-      </div>
-
-      <!-- linha de ações -->
-      <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
-        <span style="font-size:13px;color:var(--primary);font-weight:500;">
-          {{ contas.count }} conta(s) encontrada(s)
-        </span>
-
-        <div class="d-flex gap-2 flex-wrap">
-          <a href="{% url 'financeiro:nova_conta_receber' %}" class="btn-action-green">
-            <i class="bi bi-plus-lg"></i> Nova Conta
-          </a>
-
-          <div class="btn-dropdown-wrap" id="printDropWrap">
-            <button type="button" class="btn-action-orange" onclick="togglePrintDrop(event)">
-              <i class="bi bi-printer"></i> Imprimir
-              <i class="bi bi-chevron-down" style="font-size:10px;margin-left:2px;"></i>
-            </button>
-            <div class="btn-dropdown-menu" id="printDropMenu" style="display:none;">
-              <button type="button" class="btn-drop-item" onclick="imprimirTabela()">
-                <i class="bi bi-file-pdf" style="color:#ef4444;"></i> Imprimir / PDF
-              </button>
-              <button type="button" class="btn-drop-item" onclick="exportarExcel()">
-                <i class="bi bi-file-earmark-excel" style="color:#16a34a;"></i> Exportar Excel
-              </button>
+        <div class="col-xl-3 col-md-4">
+          <div class="row g-2">
+            <div class="col-6">
+              <input type="date" name="data_ini" value="{{ data_ini }}" placeholder="Data inicial" class="form-control-custom">
+            </div>
+            <div class="col-6">
+              <input type="date" name="data_fim" value="{{ data_fim }}" placeholder="Data final" class="form-control-custom">
             </div>
           </div>
-
-          <a href="{% url 'financeiro:contas_receber' %}" class="btn-action-amber">
-            <i class="bi bi-x-lg"></i> Limpar
-          </a>
-          <button type="submit" class="btn-action-indigo">
-            <i class="bi bi-search"></i> Buscar
-          </button>
         </div>
       </div>
-
+      {% url 'financeiro:nova_conta_receber' as url_novo %}
+      {% url 'financeiro:contas_receber' as url_limpar %}
+      {% include '_filtros_acoes.html' with total=contas.count rotulo_total="conta(s) encontrada(s)" url_limpar=url_limpar url_novo=url_novo texto_novo="Nova Conta" imprimir="imprimirTabela" exportar="exportarExcel" %}
     </form>
   </div>
 </div>
@@ -443,7 +395,7 @@ function fecharPrintDrop() {
 function imprimirTabela()  { fecharPrintDrop(); window.print(); }
 function exportarExcel() {
   fecharPrintDrop();
-  var params = new URLSearchParams(new FormData(document.getElementById('form-filtros')));
+  var params = new URLSearchParams(new FormData(document.getElementById('filtrosForm')));
   window.location.href = '{% url "financeiro:exportar_contas_receber" %}?' + params.toString();
 }
 document.addEventListener('click', function(e) {

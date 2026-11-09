@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
 from .models import Orcamento, ItemOrcamento
-from clientes.models import Cliente
+from clientes.consultas import cliente_da_empresa
 from produtos.models import Produto
 
 
@@ -23,13 +23,12 @@ def lista(request):
 @login_required
 def novo(request):
     empresa  = request.empresa
-    clientes = Cliente.objects.filter(empresa=empresa, ativo=True)
     produtos = Produto.objects.filter(empresa=empresa, ativo=True)
     if request.method == 'POST':
         try:
             orc = Orcamento.objects.create(
                 empresa=empresa,
-                cliente_id=request.POST.get('cliente'),
+                cliente=cliente_da_empresa(empresa, request.POST.get('cliente')),
                 vendedor=request.user,
                 validade=request.POST.get('validade'),
                 desconto=request.POST.get('desconto', 0) or 0,
@@ -57,7 +56,7 @@ def novo(request):
         except Exception as e:
             messages.error(request, f'Erro: {e}')
     return render(request, 'orcamentos/form.html', {
-        'titulo': 'Novo Orçamento', 'clientes': clientes, 'produtos': produtos
+        'titulo': 'Novo Orçamento', 'produtos': produtos
     })
 
 

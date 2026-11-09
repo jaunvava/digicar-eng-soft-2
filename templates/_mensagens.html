@@ -1,0 +1,2 @@
+{# Mensagens do Django para o static/js/alertas.js (exibidas com SweetAlert2). #}
+{% if messages %}<script id="mensagens-django" type="application/json">[{% for m in messages %}{"nivel": "{{ m.tags|escapejs }}", "texto": "{{ m.message|escapejs }}"}{% if not forloop.last %}, {% endif %}{% endfor %}]</script>{% endif %}

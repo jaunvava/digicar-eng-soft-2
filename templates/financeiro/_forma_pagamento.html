@@ -1,0 +1,44 @@
+<div class="mb-3">
+  <label class="form-label-custom">Forma de Pagamento *</label>
+  <select name="forma_pagamento" id="forma_pagamento" required class="form-control-custom">
+    {% for forma in formas_pagamento %}
+    <option value="{{ forma.codigo }}" {% if dados.forma_pagamento == forma.codigo %}selected{% endif %}>{{ forma.icone }} {{ forma.nome }}</option>
+    {% endfor %}
+  </select>
+</div>
+
+{# Campos exigidos por algumas estratégias de pagamento #}
+<div class="mb-3 campo-forma" data-forma="dinheiro">
+  <label class="form-label-custom">Valor Recebido <small class="text-muted">(para calcular o troco)</small></label>
+  <input type="text" name="valor_recebido" data-mask="currency" class="form-control-custom" placeholder="0,00">
+</div>
+<div class="mb-3 campo-forma" data-forma="cartao_credito">
+  <label class="form-label-custom">Parcelas *</label>
+  <select name="parcelas" class="form-control-custom">
+    {% for n in "123456789012"|make_list %}
+    <option value="{{ forloop.counter }}" {% if dados.parcelas == forloop.counter|stringformat:"d" %}selected{% endif %}>{{ forloop.counter }}x</option>
+    {% endfor %}
+  </select>
+</div>
+<div class="mb-3 campo-forma" data-forma="cheque">
+  <label class="form-label-custom">Número do Cheque *</label>
+  <input type="text" name="numero_cheque" value="{{ dados.numero_cheque|default:'' }}" required class="form-control-custom">
+</div>
+
+<script>
+  (function () {
+    var select = document.getElementById('forma_pagamento');
+    function atualizarCampos() {
+      document.querySelectorAll('.campo-forma').forEach(function (campo) {
+        var visivel = campo.dataset.forma === select.value;
+        campo.style.display = visivel ? '' : 'none';
+        // Campos ocultos ficam desabilitados para não serem validados nem enviados.
+        campo.querySelectorAll('input, select').forEach(function (input) {
+          input.disabled = !visivel;
+        });
+      });
+    }
+    select.addEventListener('change', atualizarCampos);
+    atualizarCampos();
+  })();
+</script>

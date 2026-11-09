@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load l10n %}
 {% block title %}Baixar Conta a Pagar{% endblock %}
 {% block breadcrumb %}Financeiro / Baixar Conta a Pagar{% endblock %}
 
@@ -23,32 +24,21 @@
     <div class="card">
       <div class="card-header"><h5 class="card-title">Registrar Pagamento</h5></div>
       <div class="card-body">
-        <form method="POST">
+        <form method="POST" data-confirm="Registrar esta baixa?" data-confirm-botao="Sim, registrar">
           {% csrf_token %}
           <div class="mb-3">
             <label class="form-label-custom">Valor da Baixa *</label>
-            <input type="text" name="valor" value="{{ conta.saldo_devedor }}" data-mask="currency" required class="form-control-custom" placeholder="0,00">
+            <input type="text" name="valor" value="{{ conta.saldo_devedor|unlocalize }}" data-mask="currency" required class="form-control-custom" placeholder="0,00">
           </div>
           <div class="mb-3">
             <label class="form-label-custom">Data do Pagamento *</label>
             <input type="date" name="data_pagamento" required class="form-control-custom"
                    value="{% now 'Y-m-d' %}">
           </div>
-          <div class="mb-3">
-            <label class="form-label-custom">Forma de Pagamento *</label>
-            <select name="forma_pagamento" required class="form-control-custom">
-              <option value="dinheiro">💵 Dinheiro</option>
-              <option value="pix">💠 PIX</option>
-              <option value="cartao_debito">💳 Cartão de Débito</option>
-              <option value="cartao_credito">💳 Cartão de Crédito</option>
-              <option value="transferencia">🏦 Transferência</option>
-              <option value="boleto">📄 Boleto</option>
-              <option value="cheque">📝 Cheque</option>
-            </select>
-          </div>
+          {% include 'financeiro/_forma_pagamento.html' %}
           <div class="mb-3">
             <label class="form-label-custom">Observações</label>
-            <textarea name="observacoes" rows="2" class="form-control-custom"></textarea>
+            <textarea name="observacoes" rows="2" class="form-control-custom">{{ dados.observacoes|default:'' }}</textarea>
           </div>
           <div class="d-flex gap-3">
             <a href="{% url 'financeiro:contas_pagar' %}" class="btn-outline-custom">Cancelar</a>

@@ -7,4 +7,5 @@ urlpatterns = [
     path('', views.index, name='index'),
     path('financeiro/', views.relatorio_financeiro, name='financeiro'),
     path('<str:tipo>/', views.relatorio_operacional, name='operacional'),
+    path('<str:tipo>/exportar/<str:formato>/', views.exportar_operacional, name='exportar_operacional'),
 ]

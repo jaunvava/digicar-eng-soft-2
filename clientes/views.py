@@ -1,12 +1,15 @@
+from django.views.decorators.http import require_GET, require_POST
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
 from django.utils import timezone
-from django.http import HttpResponse
+from django.db import IntegrityError, transaction
+from django.http import HttpResponse, JsonResponse
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
+from .consultas import buscar_clientes, cliente_da_empresa, cliente_json
 from .models import Cliente, Veiculo
 
 
@@ -267,6 +270,7 @@ def editar(request, pk):
 
 
 @login_required
+@require_POST
 def excluir(request, pk):
     cliente = get_object_or_404(Cliente, pk=pk, empresa=request.empresa)
     cliente.delete()
@@ -289,42 +293,94 @@ def veiculos(request):
     return render(request, 'clientes/veiculos.html', {'veiculos': qs, 'q': q})
 
 
+def _salvar_veiculo(request, veiculo, permitir_cliente=None):
+    """Preenche e grava o veículo a partir do POST. Levanta ValueError com mensagem."""
+    dados = request.POST
+    veiculo.cliente = cliente_da_empresa(request.empresa, dados.get('cliente'), permitir=permitir_cliente)
+    veiculo.placa = dados.get('placa', '').strip().upper().replace('-', '').replace(' ', '')
+    veiculo.modelo = dados.get('modelo', '').strip()
+    if not veiculo.placa or not veiculo.modelo:
+        raise ValueError('Placa e modelo são obrigatórios.')
+    ano = dados.get('ano', '').strip()
+    if ano:
+        if not ano.isdigit() or not 1900 <= int(ano) <= timezone.now().year + 1:
+            raise ValueError('Ano inválido.')
+        veiculo.ano = int(ano)
+    else:
+        veiculo.ano = None
+    veiculo.marca = dados.get('marca', '').strip()
+    veiculo.cor = dados.get('cor', '').strip()
+    veiculo.chassi = dados.get('chassi', '').strip().upper()
+    veiculo.observacoes = dados.get('observacoes', '').strip()
+    try:
+        with transaction.atomic():
+            veiculo.save()
+    except IntegrityError:
+        raise ValueError(f'O cliente já tem um veículo com a placa {veiculo.placa}.') from None
+
+
 @login_required
 def novo_veiculo(request):
-    clientes = Cliente.objects.filter(empresa=request.empresa, ativo=True)
+    veiculo = Veiculo()
     if request.method == 'POST':
         try:
-            Veiculo.objects.create(
-                cliente=get_object_or_404(clientes, pk=request.POST.get('cliente')),
-                placa=request.POST.get('placa', '').strip().upper(),
-                marca=request.POST.get('marca', '').strip(), modelo=request.POST.get('modelo', '').strip(),
-                ano=request.POST.get('ano') or None, cor=request.POST.get('cor', '').strip(),
-                chassi=request.POST.get('chassi', '').strip(), observacoes=request.POST.get('observacoes', '').strip(),
-            )
+            _salvar_veiculo(request, veiculo)
             messages.success(request, 'Veículo cadastrado com sucesso!')
             return redirect('clientes:veiculos')
-        except Exception as exc:
-            messages.error(request, f'Erro ao cadastrar veículo: {exc}')
-    return render(request, 'clientes/veiculo_form.html', {'clientes': clientes, 'titulo': 'Novo Veículo'})
+        except ValueError as exc:
+            messages.error(request, str(exc))
+    elif request.GET.get('cliente'):
+        # Atalho vindo da tela do cliente: já chega com o dono selecionado.
+        veiculo.cliente = Cliente.objects.filter(
+            empresa=request.empresa, ativo=True, pk=request.GET['cliente']).first()
+    return render(request, 'clientes/veiculo_form.html', {'veiculo': veiculo, 'titulo': 'Novo Veículo'})
 
 
 @login_required
 def editar_veiculo(request, pk):
-    veiculo = get_object_or_404(Veiculo, pk=pk, cliente__empresa=request.empresa)
-    clientes = Cliente.objects.filter(empresa=request.empresa, ativo=True)
+    veiculo = get_object_or_404(Veiculo.objects.select_related('cliente'), pk=pk, cliente__empresa=request.empresa)
+    cliente_atual = veiculo.cliente_id
     if request.method == 'POST':
-        veiculo.cliente = get_object_or_404(clientes, pk=request.POST.get('cliente'))
-        veiculo.placa = request.POST.get('placa', '').strip().upper()
-        veiculo.marca = request.POST.get('marca', '').strip(); veiculo.modelo = request.POST.get('modelo', '').strip()
-        veiculo.ano = request.POST.get('ano') or None; veiculo.cor = request.POST.get('cor', '').strip()
-        veiculo.chassi = request.POST.get('chassi', '').strip(); veiculo.observacoes = request.POST.get('observacoes', '').strip()
-        veiculo.save()
-        messages.success(request, 'Veículo atualizado!')
-        return redirect('clientes:veiculos')
-    return render(request, 'clientes/veiculo_form.html', {'clientes': clientes, 'veiculo': veiculo, 'titulo': 'Editar Veículo'})
+        try:
+            _salvar_veiculo(request, veiculo, permitir_cliente=cliente_atual)
+            messages.success(request, 'Veículo atualizado!')
+            return redirect('clientes:veiculos')
+        except ValueError as exc:
+            messages.error(request, str(exc))
+    return render(request, 'clientes/veiculo_form.html', {'veiculo': veiculo, 'titulo': 'Editar Veículo'})
 
 
 @login_required
+@require_GET
+def buscar(request):
+    """Busca paginada de clientes ativos (JSON) para os formulários."""
+    try:
+        pagina = int(request.GET.get('pagina', 1))
+    except ValueError:
+        pagina = 1
+    clientes, tem_mais = buscar_clientes(request.empresa, request.GET.get('q', ''), pagina)
+    return JsonResponse({
+        'resultados': [cliente_json(c) for c in clientes],
+        'pagina': pagina,
+        'tem_mais': tem_mais,
+    })
+
+
+@login_required
+@require_GET
+def veiculos_json(request, pk):
+    """Veículos ativos de um cliente (JSON), para o formulário de OS."""
+    cliente = get_object_or_404(Cliente, pk=pk, empresa=request.empresa)
+    veiculos = cliente.veiculos.filter(ativo=True).order_by('placa')
+    return JsonResponse({'resultados': [
+        {'id': v.pk, 'placa': v.placa, 'marca': v.marca, 'modelo': v.modelo,
+         'descricao': f'{v.marca} {v.modelo}'.strip(), 'ano': v.ano}
+        for v in veiculos
+    ]})
+
+
+@login_required
+@require_POST
 def excluir_veiculo(request, pk):
     veiculo = get_object_or_404(Veiculo, pk=pk, cliente__empresa=request.empresa)
     veiculo.delete()
