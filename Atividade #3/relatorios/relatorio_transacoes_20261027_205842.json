@@ -1,0 +1,38 @@
+{
+  "geradoEm": "2026-10-27T20:58:42",
+  "transacoes": [
+    {
+      "id": "PIX-8DBD9E86",
+      "dataHora": "2026-10-27T20:58:42",
+      "metodo": "Pix",
+      "detalhes": "Chave e-mail: joao@email.com",
+      "valor": 250.00,
+      "taxa": 0.00,
+      "total": 250.00
+    },
+    {
+      "id": "CC-7925DA72",
+      "dataHora": "2026-10-27T20:58:42",
+      "metodo": "Cartão de Crédito",
+      "detalhes": "Cartão final 1111 (MARIA SILVA) em 3x de R$ 424,06",
+      "valor": 1200.50,
+      "taxa": 71.67,
+      "total": 1272.17
+    },
+    {
+      "id": "PIX-752CEEDC",
+      "dataHora": "2026-10-27T20:58:42",
+      "metodo": "Pix",
+      "detalhes": "Chave CPF: 123.456.789-09",
+      "valor": 89.90,
+      "taxa": 0.00,
+      "total": 89.90
+    }
+  ],
+  "resumo": {
+    "quantidade": 3,
+    "valorBruto": 1540.40,
+    "taxas": 71.67,
+    "total": 1612.07
+  }
+}

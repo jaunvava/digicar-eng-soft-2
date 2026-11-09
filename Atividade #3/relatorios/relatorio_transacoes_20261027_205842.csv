@@ -1,0 +1,5 @@
+﻿id;data_hora;metodo;detalhes;valor;taxa;total
+PIX-8DBD9E86;27/10/2026 20:58:42;Pix;Chave e-mail: joao@email.com;250,00;0,00;250,00
+CC-7925DA72;27/10/2026 20:58:42;Cartão de Crédito;Cartão final 1111 (MARIA SILVA) em 3x de R$ 424,06;1200,50;71,67;1272,17
+PIX-752CEEDC;27/10/2026 20:58:42;Pix;Chave CPF: 123.456.789-09;89,90;0,00;89,90
+TOTAL;;;3 transação(ões);1540,40;71,67;1612,07

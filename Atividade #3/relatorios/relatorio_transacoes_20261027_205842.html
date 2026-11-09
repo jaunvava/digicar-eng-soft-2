@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Relatório de Transações</title>
+  <style>
+    body { font-family: Segoe UI, Arial, sans-serif; margin: 32px; color: #222; background: #f6f7f9; }
+    h1 { margin-bottom: 4px; }
+    .gerado { color: #666; margin-top: 0; }
+    table { border-collapse: collapse; width: 100%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.1); }
+    th, td { padding: 10px 12px; border-bottom: 1px solid #e3e5e8; text-align: left; }
+    th { background: #1f4e79; color: #fff; }
+    td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+    tbody tr:hover { background: #eef4fb; }
+    tfoot td { font-weight: bold; background: #e9eef4; }
+    .metodo { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 13px; }
+    .pix { background: #d9f5ec; color: #0b6e4f; }
+    .cartao { background: #e3e8fb; color: #2c3e9b; }
+  </style>
+</head>
+<body>
+  <h1>Relatório de Transações</h1>
+  <p class="gerado">Gerado em 27/10/2026 20:58:42</p>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th><th>Data/Hora</th><th>Método</th><th>Detalhes</th>
+        <th class="num">Valor</th><th class="num">Taxa</th><th class="num">Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>PIX-8DBD9E86</td><td>27/10/2026 20:58:42</td><td><span class="metodo pix">Pix</span></td><td>Chave e-mail: joao@email.com</td>
+        <td class="num">R$ 250,00</td><td class="num">R$ 0,00</td><td class="num">R$ 250,00</td>
+      </tr>
+      <tr>
+        <td>CC-7925DA72</td><td>27/10/2026 20:58:42</td><td><span class="metodo cartao">Cartão de Crédito</span></td><td>Cartão final 1111 (MARIA SILVA) em 3x de R$ 424,06</td>
+        <td class="num">R$ 1.200,50</td><td class="num">R$ 71,67</td><td class="num">R$ 1.272,17</td>
+      </tr>
+      <tr>
+        <td>PIX-752CEEDC</td><td>27/10/2026 20:58:42</td><td><span class="metodo pix">Pix</span></td><td>Chave CPF: 123.456.789-09</td>
+        <td class="num">R$ 89,90</td><td class="num">R$ 0,00</td><td class="num">R$ 89,90</td>
+      </tr>
+    </tbody>
+    <tfoot>
+      <tr>
+        <td colspan="4">Total: 3 transação(ões)</td>
+        <td class="num">R$ 1.540,40</td><td class="num">R$ 71,67</td><td class="num">R$ 1.612,07</td>
+      </tr>
+    </tfoot>
+  </table>
+</body>
+</html>
