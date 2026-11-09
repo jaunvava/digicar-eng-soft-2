@@ -10,79 +10,33 @@
 </div>
 
 <!-- Filtros de Pesquisa -->
-<div class="card mb-4">
-  <div class="card-header" style="padding:10px 20px;">
-    <h5 class="card-title" style="margin:0;font-size:14px;">
-      <i class="bi bi-funnel me-2"></i>Filtros de Pesquisa
-    </h5>
+<div class="card card-filtros mb-4">
+  <div class="card-header">
+    <h5 class="card-title"><i class="bi bi-funnel"></i> Filtros de Pesquisa</h5>
   </div>
-  <div class="card-body" style="padding:14px 20px;">
+  <div class="card-body">
     <form method="GET" id="filtrosForm">
-      <!-- Linha de inputs -->
-      <div class="row g-2 mb-3">
-        <div class="col-md-3">
-          <input type="text" name="q_nome" value="{{ q_nome|default:'' }}"
-                 placeholder="Pesquisar por Nome"
-                 class="form-control-custom">
+      <div class="row g-2 filtros-campos">
+        <div class="col-lg-4 col-md-6">
+          <input type="text" name="q_nome" value="{{ q_nome|default:'' }}" placeholder="Pesquisar por Nome" class="form-control-custom">
         </div>
-        <div class="col-md-2">
-          <input type="text" name="q_id" value="{{ q_id|default:'' }}"
-                 placeholder="Pesquisar por ID"
-                 class="form-control-custom">
+        <div class="col-lg-2 col-md-6">
+          <input type="text" name="q_id" value="{{ q_id|default:'' }}" placeholder="Pesquisar por ID" class="form-control-custom">
         </div>
-        <div class="col-md-3">
-          <input type="text" name="q_cpf" value="{{ q_cpf|default:'' }}"
-                 placeholder="Pesquisar por CPF ou CNPJ"
-                 class="form-control-custom">
+        <div class="col-lg-3 col-md-6">
+          <input type="text" name="q_cpf" value="{{ q_cpf|default:'' }}" placeholder="Pesquisar por CPF ou CNPJ" class="form-control-custom">
         </div>
-        <div class="col-md-2">
-          <div>
-            <select name="situacao" class="form-control-custom">
-              <option value="ativo"    {% if situacao == 'ativo'    or not situacao %}selected{% endif %}>Apenas Ativos</option>
-              <option value="inativo"  {% if situacao == 'inativo'  %}selected{% endif %}>Apenas Inativos</option>
-              <option value="todos"    {% if situacao == 'todos'    %}selected{% endif %}>Todos</option>
-            </select>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- Linha de ações -->
-      <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
-        <span style="font-size:13px;color:var(--primary);font-weight:500;">
-          {{ total }} cliente(s) no total
-        </span>
-        <div class="d-flex gap-2 flex-wrap">
-          <a href="{% url 'clientes:novo' %}" class="btn-action-green">
-            <i class="bi bi-plus-lg"></i> Novo
-          </a>
-          <button type="button" class="btn-action-teal" onclick="Swal.fire('Importação', 'Esta funcionalidade estará disponível em breve!', 'info')">
-            <i class="bi bi-upload"></i> Importar
-          </button>
-          <!-- Dropdown Imprimir / Exportar -->
-          <div class="btn-dropdown-wrap" id="printDropWrap">
-            <button type="button" class="btn-action-orange" id="printDropBtn" onclick="togglePrintDrop(event)">
-              <i class="bi bi-printer"></i> Imprimir
-              <i class="bi bi-chevron-down" style="font-size:10px;margin-left:2px;"></i>
-            </button>
-            <div class="btn-dropdown-menu" id="printDropMenu" style="display:none;">
-              <button type="button" class="btn-drop-item" onclick="abrirImpressao()">
-                <i class="bi bi-file-pdf" style="color:#ef4444;"></i> Imprimir PDF
-              </button>
-              <button type="button" class="btn-drop-item" onclick="exportarExcel()">
-                <i class="bi bi-file-earmark-excel" style="color:#16a34a;"></i> Exportar Excel
-              </button>
-            </div>
-          </div>
-
-          <a href="{% url 'clientes:lista' %}" class="btn-action-amber">
-            <i class="bi bi-x-lg"></i> Limpar
-          </a>
-          <button type="submit" class="btn-action-indigo">
-            <i class="bi bi-search"></i> Buscar
-          </button>
+        <div class="col-lg-3 col-md-6">
+          <select name="situacao" class="form-control-custom">
+            <option value="ativo" {% if situacao == 'ativo' or not situacao %}selected{% endif %}>Apenas Ativos</option>
+            <option value="inativo" {% if situacao == 'inativo' %}selected{% endif %}>Apenas Inativos</option>
+            <option value="todos" {% if situacao == 'todos' %}selected{% endif %}>Todos</option>
+          </select>
         </div>
       </div>
+      {% url 'clientes:novo' as url_novo %}
+      {% url 'clientes:lista' as url_limpar %}
+      {% include '_filtros_acoes.html' with total=total rotulo_total="cliente(s) no total" url_limpar=url_limpar url_novo=url_novo imprimir="abrirImpressao" exportar="exportarExcel" %}
     </form>
   </div>
 </div>
@@ -134,10 +88,10 @@
               <a href="{% url 'clientes:editar' c.pk %}" class="btn-outline-custom" style="padding:2px 6px;font-size:12px;" title="Editar">
                 <i class="bi bi-pencil"></i>
               </a>
-              <button onclick="confirmDelete('{% url 'clientes:excluir' c.pk %}', 'Excluir {{ c.nome }}?')"
+              <form method="post" action="{% url 'clientes:excluir' c.pk %}" class="d-inline" data-confirm="Excluir {{ c.nome }}?" data-confirm-perigo>{% csrf_token %}<button type="submit"
                       class="btn btn-sm" style="background:#fee2e2;color:#b91c1c;border:none;border-radius: 4px;padding:2px 6px;" title="Excluir">
                 <i class="bi bi-trash"></i>
-              </button>
+              </button></form>
             </div>
           </td>
         </tr>

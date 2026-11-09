@@ -1,0 +1,23 @@
+{% comment %}
+  Campo de busca de cliente com paginação no servidor (static/js/busca_cliente.js).
+  Use com um <label for="..."> apontando para o mesmo id.
+
+  Parâmetros do include:
+    cliente   cliente já escolhido (edição) — opcional
+    id        id do campo visível (padrão: cliente_busca)
+    nome      name do campo enviado com o pk (padrão: cliente)
+    opcional  True para não exigir cliente
+{% endcomment %}
+<div class="busca-cliente" data-busca-cliente data-url="{% url 'clientes:buscar' %}">
+  <i class="bi bi-search busca-cliente-icone" aria-hidden="true"></i>
+  <input type="text" id="{{ id|default:'cliente_busca' }}"
+         class="form-control-custom busca-cliente-texto"
+         placeholder="Buscar por nome, CPF/CNPJ, telefone ou código"
+         value="{{ cliente.nome|default:'' }}"
+         autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false"
+         {% if not opcional %}required{% endif %}>
+  <button type="button" class="busca-cliente-limpar" aria-label="Limpar cliente" hidden><i class="bi bi-x-lg"></i></button>
+  <span class="busca-cliente-spinner" aria-hidden="true"></span>
+  <input type="hidden" name="{{ nome|default:'cliente' }}" class="busca-cliente-id" value="{{ cliente.pk|default:'' }}">
+  <div class="busca-cliente-lista" role="listbox" hidden></div>
+</div>

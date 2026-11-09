@@ -1,53 +1,5 @@
-// Configuração global do SweetAlert2 — preenchida após DOMContentLoaded
-var SwalCustom = null;
-var Toast = null;
-
 document.addEventListener("DOMContentLoaded", function () {
-  if (typeof Swal !== "undefined") {
-    SwalCustom = Swal.mixin({
-      customClass: {
-        confirmButton: "btn btn-primary px-4 py-2",
-        cancelButton: "btn btn-secondary px-4 py-2 me-3",
-      },
-      buttonsStyling: false,
-    });
-    Toast = Swal.mixin({
-      toast: true,
-      position: "top-end",
-      showConfirmButton: false,
-      timer: 3000,
-      timerProgressBar: true,
-      didOpen: function (toast) {
-        toast.onmouseenter = Swal.stopTimer;
-        toast.onmouseleave = Swal.resumeTimer;
-      },
-    });
-  }
-});
-
-document.addEventListener("DOMContentLoaded", function () {
-  // ── Sobrescrever alertas nativos do navegador com SweetAlert2 ─────────
-  const originalAlert = window.alert;
-  window.alert = function (message) {
-    if (typeof Swal !== "undefined") {
-      Swal.fire({
-        text: message,
-        confirmButtonColor: "#2563eb",
-      });
-    } else {
-      console.warn("SweetAlert2 not loaded, falling back to native alert");
-      originalAlert(message);
-    }
-  };
-
-  const originalConfirm = window.confirm;
-  window.confirm = function (message) {
-    // Nota: window.confirm é síncrono e bloqueia a UI. Swal é assíncrono.
-    // Sobrescrever globalmente o comportamento síncrono é complexo,
-    // então mantemos o confirmDelete como padrão recomendado.
-    // Mas para alertas simples (alert), a substituição acima funciona.
-    return originalConfirm(message);
-  };
+  // Avisos, confirmações e validação: ver static/js/alertas.js
 
   const sidebar = document.getElementById("sidebar");
   const mainContent = document.getElementById("mainContent");
@@ -359,34 +311,6 @@ function formatCurrency(input) {
   let v = input.value.replace(/\D/g, "");
   v = (parseInt(v, 10) / 100).toFixed(2);
   input.value = v.replace(".", ",");
-}
-
-// ── Confirm delete (COM SWEETALERT2) ──────────────────
-function confirmDelete(
-  url,
-  message = "Deseja realmente excluir este registro?",
-) {
-  // Se o Swal (SweetAlert2) estiver disponível, usa ele. Caso contrário, usa confirm original.
-  if (typeof Swal !== "undefined") {
-    Swal.fire({
-      title: "Confirmação",
-      text: message,
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#2563eb",
-      cancelButtonColor: "#64748b",
-      confirmButtonText: "Sim, prosseguir",
-      cancelButtonText: "Cancelar",
-    }).then((result) => {
-      if (result.isConfirmed) {
-        window.location.href = url;
-      }
-    });
-  } else {
-    if (confirm(message)) {
-      window.location.href = url;
-    }
-  }
 }
 
 // ══════════════════════════════════════════════════════

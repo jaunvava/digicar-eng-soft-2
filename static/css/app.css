@@ -1,5 +1,5 @@
 /* =====================================================
-   DIGI-OS - Sistema de Ordens de Serviço
+   DigiCAR - Sistema de Ordens de Serviço
    Design System - Bootstrap 5 Custom Theme
    ===================================================== */
 
@@ -50,47 +50,7 @@
   /* Transitions */
   --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   --radius: 5px;
-}
-
-/* static/css/custom-dark-theme.css */
-
-/* Estilo do botão de alternância */
-.dark-theme-switcher {
-    padding: 8px 12px;
-    border: 1px solid var(--bs-border-color);
-    border-radius: 20px;
-    background-color: var(--bs-body-bg);
-    color: var(--bs-body-color);
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-size: 0.9rem;
-}
-
-.dark-theme-switcher:hover {
-    background-color: var(--bs-body-bg);
-    opacity: 0.9;
-}
-
-/* Ícones */
-.dark-theme-switcher .icon {
-    margin-right: 5px;
-}
-
-/* Dropdown de opções */
-.dark-theme-dropdown {
-    min-width: 150px;
-    padding: 0.5rem;
-}
-
-.dark-theme-dropdown .dropdown-item {
-    padding: 0.5rem 1rem;
-    border-radius: 5px;
-    cursor: pointer;
-}
-
-.dark-theme-dropdown .dropdown-item:hover,
-.dark-theme-dropdown .dropdown-item.active {
-    background-color: var(--bs-primary-bg-subtle);
+  --campo-altura: 40px;
 }
 
 /* =====================
@@ -1250,12 +1210,22 @@ table.dataTable tbody tr:hover > * {
 .main-footer {
   background: var(--navbar-bg);
   border-top: 1px solid var(--border-color);
-  padding: 14px 24px;
+  padding: 6px 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 12px;
+  gap: 12px;
+  font-size: 11px;
+  line-height: 1.4;
   color: var(--text-muted);
+}
+.footer-versao {
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 10.5px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: #f1f5f9;
+  color: var(--text-secondary);
 }
 
 /* =====================
@@ -1518,3 +1488,589 @@ table.dataTable tbody tr:hover > * {
     font-size: 0.85rem;
     padding: 0.35rem 0.65rem;
   }
+
+
+/* =====================
+   SWEETALERT2 (static/js/alertas.js)
+   ===================== */
+.swal2-popup {
+  font-family: inherit;
+  border-radius: var(--radius);
+}
+.swal2-popup:not(.swal2-toast) .swal2-title {
+  font-size: 1.25rem;
+  color: var(--text-primary);
+}
+.swal2-html-container {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+.swal2-toast .swal2-html-container {
+  margin: 0 .5em;
+  font-size: 13px;
+  color: var(--text-primary);
+}
+.swal-acoes {
+  gap: 10px;
+}
+.swal-perigo,
+.swal-perigo:hover {
+  background: var(--danger) !important;
+  border-color: var(--danger) !important;
+}
+.swal-lista {
+  text-align: left;
+  margin: 0;
+  padding-left: 1.2em;
+}
+.swal-lista li + li {
+  margin-top: 4px;
+}
+
+/* Campos marcados pela validação */
+.form-control-custom.is-invalid,
+input.is-invalid,
+select.is-invalid,
+textarea.is-invalid {
+  border-color: var(--danger) !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
+}
+
+
+/* =====================
+   GRÁFICOS (static/js/graficos.js)
+   ===================== */
+.grafico-container {
+  position: relative;
+  width: 100%;
+}
+.grafico-vazio {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-muted);
+  font-size: 14px;
+  text-align: center;
+}
+
+
+/* =====================
+   PAGINAÇÃO DO DATATABLES (integração Bootstrap 5)
+   O <li class="paginate_button page-item"> não deve ter estilo próprio;
+   o visual fica todo no <a class="page-link">.
+   ===================== */
+.dataTables_wrapper .dataTables_paginate {
+  padding-top: 0;
+}
+.dataTables_wrapper .dataTables_paginate .pagination {
+  margin: 0;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.dataTables_wrapper .dataTables_paginate .paginate_button.page-item,
+.dataTables_wrapper .dataTables_paginate .paginate_button.page-item:hover,
+.dataTables_wrapper .dataTables_paginate .paginate_button.page-item.active,
+.dataTables_wrapper .dataTables_paginate .paginate_button.page-item.disabled {
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+.dataTables_wrapper .dataTables_paginate .page-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 10px;
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--text-secondary);
+  background: #fff;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius) !important;
+  box-shadow: none;
+  transition: var(--transition);
+}
+.dataTables_wrapper .dataTables_paginate .page-item:not(.active):not(.disabled) .page-link:hover {
+  color: var(--primary);
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+.dataTables_wrapper .dataTables_paginate .page-link:focus {
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+.dataTables_wrapper .dataTables_paginate .page-item.active .page-link {
+  color: #fff;
+  background: var(--primary);
+  border-color: var(--primary);
+  font-weight: 600;
+}
+.dataTables_wrapper .dataTables_paginate .page-item.disabled .page-link {
+  color: var(--text-muted);
+  background: #f8fafc;
+  border-color: var(--border-color);
+  opacity: 0.7;
+}
+.dataTables_wrapper .dataTables_paginate .previous .page-link,
+.dataTables_wrapper .dataTables_paginate .next .page-link {
+  padding: 0 12px;
+}
+.dataTables_wrapper .dt-footer,
+.dataTables_wrapper > .row:last-child {
+  align-items: center;
+}
+
+/* Status de OS que estavam sem cor */
+.badge-aguardando_peca {
+  background: #ffedd5;
+  color: #9a3412;
+}
+.badge-cancelada {
+  background: #f1f5f9;
+  color: #475569;
+  text-decoration: line-through;
+}
+
+
+/* =====================
+   CAMPOS DE FORMULÁRIO — padrão único
+   Mesma altura, borda, fonte e seta em todos os inputs e selects do
+   sistema (inclusive os do Bootstrap e do DataTables). Os !important
+   vencem estilos inline antigos de padding/appearance nos templates;
+   larguras inline continuam valendo.
+   ===================== */
+.form-control-custom,
+.form-control,
+.form-select,
+.ac-wrap input[type="text"],
+.dataTables_wrapper .dataTables_length select,
+.dataTables_wrapper .dataTables_filter input {
+  height: var(--campo-altura) !important;
+  padding: 0 12px !important;
+  font-family: "Inter", sans-serif !important;
+  font-size: 14px !important;
+  font-weight: 400;
+  line-height: 1.4 !important;
+  color: var(--text-primary);
+  background-color: #fff;
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.form-control-custom::placeholder,
+.form-control::placeholder,
+.ac-wrap input[type="text"]::placeholder {
+  color: var(--text-muted);
+  opacity: 1;
+}
+
+.form-control-custom:hover:not(:disabled):not([readonly]),
+.form-control:hover:not(:disabled):not([readonly]),
+.form-select:hover:not(:disabled) {
+  border-color: #cbd5e1 !important;
+}
+
+.form-control-custom:focus,
+.form-control:focus,
+.form-select:focus,
+.ac-wrap input[type="text"]:focus,
+.dataTables_wrapper .dataTables_length select:focus,
+.dataTables_wrapper .dataTables_filter input:focus {
+  outline: none;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12) !important;
+}
+
+.form-control-custom:disabled,
+.form-control-custom[readonly],
+.form-control:disabled,
+.form-control[readonly],
+.form-select:disabled {
+  background-color: #f8fafc !important;
+  color: var(--text-secondary);
+  cursor: not-allowed;
+}
+
+/* Campo com ícone à esquerda (busca de cliente) */
+.ac-wrap input[type="text"] {
+  padding-left: 38px !important;
+}
+
+/* Textareas: mesma borda e fonte, altura livre */
+textarea.form-control-custom,
+textarea.form-control {
+  height: auto !important;
+  min-height: 84px;
+  padding: 10px 12px !important;
+  resize: vertical;
+}
+
+/* Selects: seta própria, igual em todos os navegadores */
+select.form-control-custom,
+select.form-control,
+.form-select,
+.dataTables_wrapper .dataTables_length select {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  padding-right: 34px !important;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 12px center !important;
+  background-size: 12px 12px !important;
+  cursor: pointer;
+}
+select[multiple].form-control-custom,
+select[size].form-control-custom {
+  height: auto !important;
+  background-image: none !important;
+  padding: 6px 12px !important;
+}
+
+/* Upload de arquivo */
+input[type="file"].form-control-custom,
+input[type="file"].form-control {
+  padding: 0 !important;
+  line-height: calc(var(--campo-altura) - 2px) !important;
+  cursor: pointer;
+}
+input[type="file"].form-control-custom::file-selector-button,
+input[type="file"].form-control::file-selector-button {
+  height: 100%;
+  margin: 0 12px 0 0;
+  padding: 0 14px;
+  border: 0;
+  border-right: 1px solid var(--border-color);
+  background: #f8fafc;
+  color: var(--text-primary);
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+/* Número sem setinhas (o valor é digitado) */
+input[type="number"].form-control-custom::-webkit-outer-spin-button,
+input[type="number"].form-control-custom::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"].form-control-custom {
+  -moz-appearance: textfield;
+}
+
+/* Rótulos */
+.form-label-custom,
+.form-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+
+/* DataTables: busca e "Exibir N" um pouco menores, no mesmo estilo */
+.dataTables_wrapper .dataTables_length select,
+.dataTables_wrapper .dataTables_filter input {
+  height: 34px !important;
+  font-size: 13px !important;
+}
+.dataTables_wrapper .dataTables_length select {
+  width: auto !important;
+  min-width: 72px;
+}
+
+/* =====================
+   CALENDÁRIOS (Flatpickr — static/js/calendarios.js)
+   ===================== */
+.campo-data {
+  padding-right: 36px !important;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%2364748b'%3e%3cpath d='M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z'/%3e%3c/svg%3e") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 12px center !important;
+  background-size: 14px 14px !important;
+  cursor: pointer;
+}
+
+.flatpickr-calendar {
+  font-family: "Inter", sans-serif;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.14);
+  width: 296px;
+  padding: 6px;
+}
+.flatpickr-calendar.arrowTop::before,
+.flatpickr-calendar.arrowTop::after,
+.flatpickr-calendar.arrowBottom::before,
+.flatpickr-calendar.arrowBottom::after {
+  display: none;
+}
+.flatpickr-months {
+  padding: 4px 0 6px;
+}
+.flatpickr-months .flatpickr-month {
+  height: 36px;
+  color: var(--text-primary);
+}
+.flatpickr-current-month {
+  font-size: 14px;
+  font-weight: 600;
+  padding-top: 8px;
+}
+.flatpickr-current-month .numInputWrapper {
+  width: 6ch;
+}
+.flatpickr-current-month input.cur-year {
+  font-weight: 600;
+}
+.flatpickr-months .flatpickr-prev-month,
+.flatpickr-months .flatpickr-next-month {
+  top: 6px;
+  height: 32px;
+  width: 32px;
+  padding: 9px;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  fill: var(--text-secondary);
+}
+.flatpickr-months .flatpickr-prev-month { left: 6px; }
+.flatpickr-months .flatpickr-next-month { right: 6px; }
+.flatpickr-months .flatpickr-prev-month:hover,
+.flatpickr-months .flatpickr-next-month:hover {
+  background: #eff6ff;
+}
+.flatpickr-months .flatpickr-prev-month:hover svg,
+.flatpickr-months .flatpickr-next-month:hover svg {
+  fill: var(--primary);
+}
+span.flatpickr-weekday {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+.flatpickr-innerContainer,
+.flatpickr-rContainer,
+.flatpickr-days,
+.dayContainer {
+  width: 282px;
+  min-width: 282px;
+  max-width: 282px;
+}
+.flatpickr-day {
+  height: 36px;
+  line-height: 34px;
+  max-width: 40px;
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--text-primary);
+}
+.flatpickr-day:hover,
+.flatpickr-day:focus {
+  background: #eff6ff;
+  border-color: #eff6ff;
+}
+.flatpickr-day.today {
+  border-color: var(--primary);
+  color: var(--primary);
+  font-weight: 600;
+}
+.flatpickr-day.today:hover {
+  background: #eff6ff;
+  color: var(--primary);
+}
+.flatpickr-day.selected,
+.flatpickr-day.selected:hover,
+.flatpickr-day.selected:focus {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+  font-weight: 600;
+}
+.flatpickr-day.prevMonthDay,
+.flatpickr-day.nextMonthDay {
+  color: #cbd5e1;
+}
+.flatpickr-day.flatpickr-disabled {
+  color: #e2e8f0;
+}
+.fp-rodape {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 4px 2px;
+  margin-top: 4px;
+  border-top: 1px solid var(--border-color);
+}
+.fp-rodape button {
+  border: 0;
+  background: transparent;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.fp-rodape button:last-child {
+  color: var(--primary);
+}
+.fp-rodape button:hover {
+  background: #eff6ff;
+}
+/* Modo static (dentro de modais): o calendário fica junto do campo */
+.flatpickr-wrapper {
+  display: block;
+  width: 100%;
+}
+
+
+/* =====================
+   CARD "FILTROS DE PESQUISA" — padrão de todas as listas
+   (templates/_filtros_acoes.html)
+   ===================== */
+.card-filtros .card-header {
+  padding: 10px 20px;
+}
+.card-filtros .card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 14px;
+}
+.card-filtros .card-body {
+  padding: 14px 20px;
+}
+.card-filtros .filtros-campos {
+  margin-bottom: 14px;
+}
+.filtros-acoes {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.filtros-total {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--primary);
+}
+.filtros-botoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+@media (max-width: 575px) {
+  .filtros-botoes { width: 100%; }
+  .filtros-botoes > * { flex: 1 1 auto; justify-content: center; }
+}
+
+
+/* =====================
+   BUSCA DE CLIENTE (templates/_busca_cliente.html)
+   ===================== */
+.busca-cliente {
+  position: relative;
+}
+.busca-cliente .busca-cliente-texto {
+  padding-left: 36px !important;
+  padding-right: 36px !important;
+}
+.busca-cliente-icone {
+  position: absolute;
+  left: 12px;
+  top: calc(var(--campo-altura) / 2);
+  transform: translateY(-50%);
+  font-size: 14px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+.busca-cliente-limpar {
+  position: absolute;
+  right: 6px;
+  top: calc(var(--campo-altura) / 2);
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 12px;
+  cursor: pointer;
+}
+.busca-cliente-limpar:hover {
+  background: #f1f5f9;
+  color: var(--text-primary);
+}
+.busca-cliente-spinner {
+  display: none;
+  position: absolute;
+  right: 40px;
+  top: calc(var(--campo-altura) / 2 - 7px);
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--border-color);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: busca-girar 0.7s linear infinite;
+}
+.busca-cliente.carregando .busca-cliente-spinner {
+  display: block;
+}
+@keyframes busca-girar {
+  to { transform: rotate(360deg); }
+}
+.busca-cliente-lista {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 1050;
+  max-height: 280px;
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+}
+.busca-cliente-item {
+  padding: 8px 12px;
+  border-bottom: 1px solid #f1f5f9;
+  cursor: pointer;
+}
+.busca-cliente-item:last-child {
+  border-bottom: 0;
+}
+.busca-cliente-item:hover,
+.busca-cliente-item.ativo {
+  background: #eff6ff;
+}
+.busca-cliente-nome {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+.busca-cliente-detalhe {
+  margin-top: 1px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.busca-cliente-vazio,
+.busca-cliente-erro,
+.busca-cliente-mais {
+  padding: 10px 12px;
+  font-size: 12.5px;
+  text-align: center;
+  color: var(--text-muted);
+}
+.busca-cliente-erro {
+  color: var(--danger);
+}

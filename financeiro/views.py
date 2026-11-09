@@ -1,13 +1,17 @@
-import csv
+from django.views.decorators.http import require_POST
 from decimal import Decimal, InvalidOperation
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q, Sum, F
-from django.http import HttpResponse
 from datetime import date
 from .models import ContaReceber, ContaPagar, BaixaContaReceber, BaixaContaPagar
-from clientes.models import Cliente
+from clientes.consultas import cliente_da_empresa
+from core.formatacao import formatar_moeda
+from relatorios.exportadores import ExportadorCSV
+from relatorios.operacionais import DadosRelatorio
+from .facade import FinanceiroFacade
+from .pagamentos import formas_pagamento
 
 
 def _parse_valor(raw):
@@ -60,13 +64,12 @@ def contas_receber(request):
 @login_required
 def nova_conta_receber(request):
     empresa  = request.empresa
-    clientes = Cliente.objects.filter(empresa=empresa, ativo=True)
     if request.method == 'POST':
         try:
             parcelas = int(request.POST.get('parcelas', 1) or 1)
             ContaReceber.objects.create(
                 empresa=empresa,
-                cliente_id=request.POST.get('cliente'),
+                cliente=cliente_da_empresa(empresa, request.POST.get('cliente')),
                 descricao=request.POST.get('descricao', ''),
                 numero_titulo=request.POST.get('numero_titulo', ''),
                 valor=_parse_valor(request.POST.get('valor', '0')),
@@ -81,7 +84,6 @@ def nova_conta_receber(request):
         except Exception as e:
             messages.error(request, f'Erro: {e}')
     return render(request, 'financeiro/form_conta_receber.html', {
-        'clientes': clientes,
         'total_parcelas': 1,
     })
 
@@ -90,11 +92,10 @@ def nova_conta_receber(request):
 def editar_conta_receber(request, pk):
     conta    = get_object_or_404(ContaReceber, pk=pk, empresa=request.empresa)
     empresa  = request.empresa
-    clientes = Cliente.objects.filter(empresa=empresa, ativo=True)
     if request.method == 'POST':
         try:
             parcelas = int(request.POST.get('parcelas', 1) or 1)
-            conta.cliente_id   = request.POST.get('cliente')
+            conta.cliente      = cliente_da_empresa(empresa, request.POST.get('cliente'), permitir=conta.cliente_id)
             conta.descricao    = request.POST.get('descricao', '')
             conta.numero_titulo = request.POST.get('numero_titulo', '')
             conta.valor        = _parse_valor(request.POST.get('valor', '0'))
@@ -116,12 +117,12 @@ def editar_conta_receber(request, pk):
 
     return render(request, 'financeiro/form_conta_receber.html', {
         'conta': conta,
-        'clientes': clientes,
         'total_parcelas': total_parcelas,
     })
 
 
 @login_required
+@require_POST
 def excluir_conta_receber(request, pk):
     conta = get_object_or_404(ContaReceber, pk=pk, empresa=request.empresa)
     if request.method == 'POST':
@@ -158,68 +159,40 @@ def exportar_contas_receber(request):
     if tipo_data and data_fim:
         contas = contas.filter(**{f'{tipo_data}__lte': data_fim})
 
-    response = HttpResponse(content_type='text/csv; charset=utf-8')
-    response['Content-Disposition'] = 'attachment; filename="contas_receber.csv"'
-    response.write('﻿')
+    def data(valor):
+        return valor.strftime('%d/%m/%Y') if valor else ''
 
-    writer = csv.writer(response, delimiter=';')
-    writer.writerow(['ID', 'Cliente', 'Nº Título', 'Parcela', 'Emissão', 'Vencimento',
-                     'Pagamento', 'R$ Título', 'Valor Pago', 'Desconto', 'Saldo', 'Status'])
-    for c in contas:
-        writer.writerow([
-            c.id, c.cliente.nome, c.numero_titulo, c.parcela,
-            c.emissao.strftime('%d/%m/%Y') if c.emissao else '',
-            c.vencimento.strftime('%d/%m/%Y') if c.vencimento else '',
-            c.pagamento.strftime('%d/%m/%Y') if c.pagamento else '',
-            str(c.valor).replace('.', ','),
-            str(c.valor_pago).replace('.', ','),
-            str(c.desconto).replace('.', ','),
-            str(c.saldo_devedor).replace('.', ','),
-            c.get_status_display(),
-        ])
-    return response
+    def numero(valor):
+        return str(valor).replace('.', ',')
+
+    dados = DadosRelatorio(
+        titulo='Contas a Receber',
+        colunas=['ID', 'Cliente', 'Nº Título', 'Parcela', 'Emissão', 'Vencimento',
+                 'Pagamento', 'R$ Título', 'Valor Pago', 'Desconto', 'Saldo', 'Status'],
+        linhas=[[
+            str(c.id), c.cliente.nome, c.numero_titulo, c.parcela,
+            data(c.emissao), data(c.vencimento), data(c.pagamento),
+            numero(c.valor), numero(c.valor_pago), numero(c.desconto),
+            numero(c.saldo_devedor), c.get_status_display(),
+        ] for c in contas],
+    )
+    return ExportadorCSV().exportar(dados, 'contas_receber')
 
 
 @login_required
 def baixar_conta(request, pk):
     conta = get_object_or_404(ContaReceber, pk=pk, empresa=request.empresa)
+    contexto = {'conta': conta, 'formas_pagamento': formas_pagamento()}
     if request.method == 'POST':
         try:
-            # Converte para Decimal para evitar erro de float += Decimal
-            valor_str = request.POST.get('valor', '0').replace(',', '.')
-            valor = Decimal(valor_str)
-            
-            if valor <= 0:
-                messages.error(request, 'O valor da baixa deve ser maior que zero.')
-                return render(request, 'financeiro/baixa.html', {'conta': conta})
-            
-            if valor > conta.saldo_devedor:
-                messages.error(request, f'O valor da baixa (R$ {valor}) não pode ser maior que o saldo devedor (R$ {conta.saldo_devedor}).')
-                return render(request, 'financeiro/baixa.html', {'conta': conta})
-
-            BaixaContaReceber.objects.create(
-                conta=conta,
-                valor=valor,
-                data_pagamento=request.POST.get('data_pagamento'),
-                forma_pagamento=request.POST.get('forma_pagamento'),
-                observacoes=request.POST.get('observacoes', ''),
-            )
-            
-            conta.valor_pago += valor
-            
-            # Atualiza Status
-            if conta.valor_pago >= conta.valor:
-                conta.status = 'pago'
-                conta.pagamento = request.POST.get('data_pagamento')
-            else:
-                conta.status = 'parcial'
-                
-            conta.save()
-            messages.success(request, f'Baixa de R$ {valor} registrada com sucesso!')
-            return redirect('financeiro:contas_receber')
-        except Exception as e:
-            messages.error(request, f'Erro na baixa: {e}')
-    return render(request, 'financeiro/baixa.html', {'conta': conta})
+            baixa = FinanceiroFacade().registrar_baixa_receber(conta, request.POST)
+        except ValueError as e:
+            messages.error(request, str(e))
+            contexto['dados'] = request.POST
+            return render(request, 'financeiro/baixa.html', contexto)
+        messages.success(request, f'Baixa de {formatar_moeda(baixa.valor)} registrada com sucesso!')
+        return redirect('financeiro:contas_receber')
+    return render(request, 'financeiro/baixa.html', contexto)
 
 
 @login_required
@@ -237,18 +210,8 @@ def contas_pagar(request):
     if status:
         contas = contas.filter(status=status)
 
-    from django.db.models import Sum, F
-    # Total pendente = valor do título - o que já foi pago - desconto
-    total_pendente = contas.filter(status__in=['pendente', 'parcial']).aggregate(
-        t=Sum(F('valor') - F('valor_pago') - F('desconto'))
-    )['t'] or 0
-    total_atrasado = contas.filter(status='atrasado').aggregate(
-        t=Sum(F('valor') - F('valor_pago') - F('desconto'))
-    )['t'] or 0
-
     return render(request, 'financeiro/contas_pagar.html', {
         'contas': contas, 'q': q, 'status': status,
-        'total_pendente': total_pendente, 'total_atrasado': total_atrasado,
     })
 
 
@@ -288,41 +251,17 @@ def imprimir_baixa(request, pk):
 @login_required
 def baixar_conta_pagar(request, pk):
     conta = get_object_or_404(ContaPagar, pk=pk, empresa=request.empresa)
+    contexto = {'conta': conta, 'formas_pagamento': formas_pagamento()}
     if request.method == 'POST':
         try:
-            valor_str = request.POST.get('valor', '0').replace(',', '.')
-            valor = Decimal(valor_str)
-            
-            if valor <= 0:
-                messages.error(request, 'O valor da baixa deve ser maior que zero.')
-                return render(request, 'financeiro/baixa_pagar.html', {'conta': conta})
-            
-            if valor > conta.saldo_devedor:
-                messages.error(request, f'O valor da baixa (R$ {valor}) não pode ser maior que o saldo devedor (R$ {conta.saldo_devedor}).')
-                return render(request, 'financeiro/baixa_pagar.html', {'conta': conta})
-
-            BaixaContaPagar.objects.create(
-                conta=conta,
-                valor=valor,
-                data_pagamento=request.POST.get('data_pagamento'),
-                forma_pagamento=request.POST.get('forma_pagamento'),
-                observacoes=request.POST.get('observacoes', ''),
-            )
-            
-            conta.valor_pago += valor
-            
-            if conta.valor_pago >= conta.valor:
-                conta.status = 'pago'
-                conta.pagamento = request.POST.get('data_pagamento')
-            else:
-                conta.status = 'parcial'
-                
-            conta.save()
-            messages.success(request, f'Baixa de R$ {valor} registrada com sucesso!')
-            return redirect('financeiro:contas_pagar')
-        except Exception as e:
-            messages.error(request, f'Erro na baixa: {e}')
-    return render(request, 'financeiro/baixa_pagar.html', {'conta': conta})
+            baixa = FinanceiroFacade().registrar_baixa_pagar(conta, request.POST)
+        except ValueError as e:
+            messages.error(request, str(e))
+            contexto['dados'] = request.POST
+            return render(request, 'financeiro/baixa_pagar.html', contexto)
+        messages.success(request, f'Baixa de {formatar_moeda(baixa.valor)} registrada com sucesso!')
+        return redirect('financeiro:contas_pagar')
+    return render(request, 'financeiro/baixa_pagar.html', contexto)
 
 
 @login_required

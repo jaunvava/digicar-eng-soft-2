@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.db.models import Sum, Count, F
-from datetime import timedelta, date
+from datetime import date, datetime, timedelta
 import json
 
 from core.models import Empresa, PerfilUsuario
@@ -88,6 +88,17 @@ def dashboard(request):
     rec_pago     = float(ContaReceber.objects.filter(empresa=empresa, status='pago').aggregate(t=Sum('valor'))['t'] or 0)
     rec_pendente = float(ContaReceber.objects.filter(empresa=empresa, status='pendente').aggregate(t=Sum('valor'))['t'] or 0)
 
+    # Ordens de serviço por status (gráfico de barras)
+    os_por_status = dict(
+        OrdemServico.objects.filter(empresa=empresa)
+        .order_by().values_list('status').annotate(n=Count('id'))
+    )
+    grafico_os = {
+        'chaves': [chave for chave, _ in OrdemServico.STATUS_CHOICES],
+        'rotulos': [rotulo for _, rotulo in OrdemServico.STATUS_CHOICES],
+        'valores': [os_por_status.get(chave, 0) for chave, _ in OrdemServico.STATUS_CHOICES],
+    }
+
     # Ãšltimas OS
     ultimas_os = OrdemServico.objects.filter(empresa=empresa).order_by('-data_entrada')[:8]
 
@@ -108,6 +119,11 @@ def dashboard(request):
         'rec_atrasado': rec_atrasado,
         'rec_pago': rec_pago,
         'rec_pendente': rec_pendente,
+        'grafico_recebimentos': {
+            'rotulos': ['Atrasado', 'Pago', 'Pendente'],
+            'valores': [rec_atrasado, rec_pago, rec_pendente],
+        },
+        'grafico_os': grafico_os,
         'ultimas_os': ultimas_os,
         'contas_atrasadas': contas_atrasadas,
         'banners': banners,
@@ -117,52 +133,32 @@ def dashboard(request):
 
 @login_required
 def perfil_view(request):
-    # Verifica se é uma requisição POST (edição)
-    if request.method == 'POST':
-        print("=== POST recebido em perfil_view ===")
-        print(f"POST data: {request.POST}")
-        
-        # Verifica se é o formulário de edição
-        if 'edit_perfil' in request.POST:
+    if request.method == 'POST' and 'edit_perfil' in request.POST:
+        data_texto = request.POST.get('data_nascimento', '').strip()
+        data_nascimento = None
+        if data_texto:
             try:
-                # 1. Atualiza dados do User
-                user = request.user
-                user.first_name = request.POST.get('first_name', '').strip()
-                user.last_name = request.POST.get('last_name', '').strip()
-                user.email = request.POST.get('email', '').strip()
-                user.save()
-                print(f"User atualizado: {user.username}")
-                
-                # 2. Atualiza dados do Perfil
-                perfil = request.user.perfil
-                perfil.telefone = request.POST.get('telefone', '').strip()
-                perfil.celular = request.POST.get('celular', '').strip()
-                perfil.cargo = request.POST.get('cargo', '').strip()
-                
-                # Data de nascimento - tratamento especial
-                data_nascimento = request.POST.get('data_nascimento', '')
-                if data_nascimento:
-                    from datetime import datetime
-                    try:
-                        perfil.data_nascimento = datetime.strptime(data_nascimento, '%Y-%m-%d').date()
-                        print(f"Data nascimento: {perfil.data_nascimento}")
-                    except Exception as e:
-                        print(f"Erro na data: {e}")
-                
-                perfil.save()
-                print(f"Perfil atualizado com sucesso!")
-                
-                messages.success(request, 'Perfil atualizado com sucesso!')
+                data_nascimento = datetime.strptime(data_texto, '%Y-%m-%d').date()
+            except ValueError:
+                messages.error(request, 'Data de nascimento inválida.')
                 return redirect('core:perfil')
-                
-            except Exception as e:
-                print(f"ERRO ao salvar: {str(e)}")
-                messages.error(request, f'Erro ao salvar: {str(e)}')
-                return redirect('core:perfil')
-        else:
-            print("WARNING: POST sem edit_perfil no payload")
-    
-    # GET request - apenas mostra o formulário
+
+        user = request.user
+        user.first_name = request.POST.get('first_name', '').strip()
+        user.last_name = request.POST.get('last_name', '').strip()
+        user.email = request.POST.get('email', '').strip()
+        user.save(update_fields=['first_name', 'last_name', 'email'])
+
+        perfil = user.perfil
+        perfil.telefone = request.POST.get('telefone', '').strip()
+        perfil.celular = request.POST.get('celular', '').strip()
+        perfil.cargo = request.POST.get('cargo', '').strip()
+        perfil.data_nascimento = data_nascimento  # vazio apaga a data
+        perfil.save()
+
+        messages.success(request, 'Perfil atualizado com sucesso!')
+        return redirect('core:perfil')
+
     return render(request, 'core/perfil.html')
 
 

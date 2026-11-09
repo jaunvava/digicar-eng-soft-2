@@ -122,7 +122,20 @@ Sem `DB_APP_ROUTES`, os apps Django continuam no `default`. Cada app roteado dev
 
 Uploads usam filesystem local por padrão (`FILE_STORAGE=local`). Com `FILE_STORAGE=mongo`, `MONGO_URI` e `MONGO_DATABASE` configuram o MongoDB/GridFS, e os `ImageField`/`FileField` Django passam a gravar e servir arquivos pelo GridFS.
 
-O app `storage` combina **Singleton** e **Adapter**: `StorageManager.get_instance()` (`storage/manager.py`) guarda os adapters `LocalStorageAdapter` e `MongoStorageAdapter`, que implementam a interface `ArquivoStorage`. O `ArquivoService` recebe um adapter e executa cada operação entre `conectar()` e `desconectar()`. Detalhes em [`docs/README.md`](docs/README.md).
+O app `storage` combina **Singleton** e **Adapter**: `StorageManager.get_instance()` (`storage/manager.py`) guarda os adapters `LocalStorageAdapter` e `MongoStorageAdapter`, que implementam a interface `ArquivoStorage`. O `ArquivoService` recebe um adapter e executa cada operação entre `conectar()` e `desconectar()`. Detalhes em [`docs/padroes-de-projeto.md`](docs/padroes-de-projeto.md).
+
+### Padrões de projeto
+
+| Padrão | Onde | O que resolve |
+|---|---|---|
+| **Singleton** | `storage/manager.py` (`StorageManager`) | Uma única instância guarda os adapters e o `MongoClient`. |
+| **Adapter** | `storage/local_adapter.py`, `storage/mongo_adapter.py` | Disco local e GridFS atrás da mesma interface `ArquivoStorage`. |
+| **Strategy** | `financeiro/pagamentos.py` | Cada forma de pagamento da baixa é uma estratégia (`EstrategiaPagamento`) com validação própria: troco no dinheiro, parcelas no cartão de crédito, número do cheque. O `ProcessadorPagamento` (contexto) não conhece as classes concretas. |
+| **Facade** | `financeiro/facade.py` (`FinanceiroFacade`) | As views de baixa chamam `registrar_baixa_receber()`/`registrar_baixa_pagar()`. A facade esconde a conversão do valor, a estratégia de pagamento, a criação da baixa, a atualização de saldo/status e a transação. |
+| **Factory Method** | `relatorios/operacionais.py` | Cada `RelatorioCreator` implementa `criar_relatorio()` e devolve o relatório operacional (clientes, veículos, estoque, OS). Substitui o `if/elif` por tipo na view. |
+| **Template Method** | `relatorios/exportadores.py` | `ExportadorRelatorio.exportar()` fixa as etapas (validar → cabeçalho → linhas → rodapé → resposta). `ExportadorCSV` e `ExportadorJSON` implementam só o que muda. Usado na exportação dos relatórios operacionais e de contas a receber. |
+
+A documentação completa (contexto, problema, solução, diagramas e comparação com os exemplos de aula) está em [`docs/padroes-de-projeto.md`](docs/padroes-de-projeto.md).
 
 ### Bancos com Docker (MySQL + MongoDB)
 
