@@ -134,7 +134,7 @@
   function buscarCep() {
     const cep = document.getElementById('cep').value.replace(/\D/g, '');
     if (cep.length !== 8) {
-      Swal.fire('Erro', 'CEP inválido!', 'error');
+      Alertas.erro('CEP inválido!');
       return;
     }
 
@@ -146,7 +146,7 @@
       .then(response => response.json())
       .then(data => {
         if (data.erro) {
-          Swal.fire('Erro', 'CEP não encontrado!', 'error');
+          Alertas.erro('CEP não encontrado!');
         } else {
           document.getElementById('endereco').value = data.logradouro;
           document.getElementById('bairro').value = data.bairro;
@@ -154,7 +154,7 @@
           document.getElementById('uf').value = data.uf;
         }
       })
-      .catch(error => Swal.fire('Erro', 'Falha ao consultar CEP!', 'error'))
+      .catch(error => Alertas.erro('Falha ao consultar CEP!'))
       .finally(() => icon.className = 'bi bi-search');
   }
 

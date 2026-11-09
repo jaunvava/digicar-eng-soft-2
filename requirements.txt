@@ -12,7 +12,6 @@ PyMySQL>=1.1.0
 openpyxl>=3.1.0
 djangorestframework>=3.14.0
 drf-yasg>=1.21.7
-django-bootstrap5-dark-mode-switch>=0.2.2
 
 pymongo>=4.10.0
 psycopg[binary]>=3.2.0

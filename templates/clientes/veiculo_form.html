@@ -1,1 +1,61 @@
-{% extends 'base.html' %}{% block title %}{{ titulo }}{% endblock %}{% block content %}<div class="page-header"><h1 class="page-title">{{ titulo }}</h1></div><form method="post" class="card p-4">{% csrf_token %}<div class="row g-3"><div class="col-md-6"><label class="form-label-custom">Cliente *</label><select name="cliente" required class="form-control-custom">{% for c in clientes %}<option value="{{ c.pk }}" {% if veiculo.cliente_id == c.pk %}selected{% endif %}>{{ c.nome }}</option>{% endfor %}</select></div><div class="col-md-3"><label class="form-label-custom">Placa *</label><input name="placa" required class="form-control-custom" value="{{ veiculo.placa|default:'' }}"></div><div class="col-md-3"><label class="form-label-custom">Modelo *</label><input name="modelo" required class="form-control-custom" value="{{ veiculo.modelo|default:'' }}"></div><div class="col-md-3"><label class="form-label-custom">Marca</label><input name="marca" class="form-control-custom" value="{{ veiculo.marca|default:'' }}"></div><div class="col-md-2"><label class="form-label-custom">Ano</label><input type="number" name="ano" class="form-control-custom" value="{{ veiculo.ano|default:'' }}"></div><div class="col-md-3"><label class="form-label-custom">Cor</label><input name="cor" class="form-control-custom" value="{{ veiculo.cor|default:'' }}"></div><div class="col-md-4"><label class="form-label-custom">Chassi</label><input name="chassi" class="form-control-custom" value="{{ veiculo.chassi|default:'' }}"></div><div class="col-12"><label class="form-label-custom">Observações</label><textarea name="observacoes" class="form-control-custom">{{ veiculo.observacoes|default:'' }}</textarea></div></div><div class="mt-3"><button class="btn-primary-custom">Salvar</button></div></form>{% endblock %}
+{% extends 'base.html' %}
+{% block title %}{{ titulo }}{% endblock %}
+{% block breadcrumb %}Veículos / {{ titulo }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">{{ titulo }}</h1>
+</div>
+
+<form method="post" class="card">
+  {% csrf_token %}
+  <div class="card-body p-4">
+    <div class="row g-3">
+      <div class="col-lg-6">
+        <label class="form-label-custom" for="cliente_busca">Cliente *</label>
+        {% include '_busca_cliente.html' with cliente=veiculo.cliente %}
+      </div>
+      <div class="col-lg-3 col-md-6">
+        <label class="form-label-custom" for="v_placa">Placa *</label>
+        <input id="v_placa" name="placa" required maxlength="8" class="form-control-custom text-uppercase"
+               placeholder="ABC1D23" value="{{ request.POST.placa|default:veiculo.placa|default:'' }}">
+      </div>
+      <div class="col-lg-3 col-md-6">
+        <label class="form-label-custom" for="v_modelo">Modelo *</label>
+        <input id="v_modelo" name="modelo" required maxlength="100" class="form-control-custom"
+               placeholder="Ex.: Onix LT 1.0" value="{{ request.POST.modelo|default:veiculo.modelo|default:'' }}">
+      </div>
+
+      <div class="col-lg-3 col-md-6">
+        <label class="form-label-custom" for="v_marca">Marca</label>
+        <input id="v_marca" name="marca" maxlength="100" class="form-control-custom"
+               placeholder="Ex.: Chevrolet" value="{{ request.POST.marca|default:veiculo.marca|default:'' }}">
+      </div>
+      <div class="col-lg-2 col-md-6">
+        <label class="form-label-custom" for="v_ano">Ano</label>
+        <input id="v_ano" type="number" name="ano" min="1900" max="2100" class="form-control-custom"
+               placeholder="2024" value="{{ request.POST.ano|default:veiculo.ano|default:'' }}">
+      </div>
+      <div class="col-lg-3 col-md-6">
+        <label class="form-label-custom" for="v_cor">Cor</label>
+        <input id="v_cor" name="cor" maxlength="50" class="form-control-custom"
+               value="{{ request.POST.cor|default:veiculo.cor|default:'' }}">
+      </div>
+      <div class="col-lg-4 col-md-6">
+        <label class="form-label-custom" for="v_chassi">Chassi</label>
+        <input id="v_chassi" name="chassi" maxlength="30" class="form-control-custom text-uppercase"
+               value="{{ request.POST.chassi|default:veiculo.chassi|default:'' }}">
+      </div>
+
+      <div class="col-12">
+        <label class="form-label-custom" for="v_obs">Observações</label>
+        <textarea id="v_obs" name="observacoes" rows="3" class="form-control-custom">{{ request.POST.observacoes|default:veiculo.observacoes|default:'' }}</textarea>
+      </div>
+    </div>
+  </div>
+  <div class="card-footer d-flex justify-content-end gap-2" style="background:#fff;padding:14px 24px;">
+    <a href="{% url 'clientes:veiculos' %}" class="btn-outline-custom">Cancelar</a>
+    <button type="submit" class="btn-primary-custom"><i class="bi bi-check-lg me-1"></i> Salvar</button>
+  </div>
+</form>
+{% endblock %}

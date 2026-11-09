@@ -1,0 +1,51 @@
+{% comment %}
+  Linha de ações padrão do card "Filtros de Pesquisa" (mesma ordem e cores em todo o sistema):
+  total à esquerda; Novo, Imprimir (opcional), Limpar e Buscar à direita.
+
+  Parâmetros do include:
+    total        número de registros
+    rotulo_total texto após o número (ex.: "cliente(s) no total")
+    url_novo     URL do botão Novo (omita para esconder)
+    texto_novo   texto do botão Novo (padrão: "Novo")
+    url_limpar   URL que limpa os filtros
+    imprimir     nome da função JS de impressão (omita para esconder o botão Imprimir)
+    exportar     nome da função JS de exportação para Excel (opcional)
+
+  O dropdown de impressão usa togglePrintDrop(event), definido na própria página.
+{% endcomment %}
+<div class="filtros-acoes">
+  <span class="filtros-total">{{ total }} {{ rotulo_total }}</span>
+  <div class="filtros-botoes">
+    {% if url_novo %}
+    <a href="{{ url_novo }}" class="btn-action-green">
+      <i class="bi bi-plus-lg"></i> {{ texto_novo|default:"Novo" }}
+    </a>
+    {% endif %}
+
+    {% if imprimir %}
+    <div class="btn-dropdown-wrap" id="printDropWrap">
+      <button type="button" class="btn-action-orange" id="printDropBtn" onclick="togglePrintDrop(event)">
+        <i class="bi bi-printer"></i> Imprimir
+        <i class="bi bi-chevron-down" style="font-size:10px;margin-left:2px;"></i>
+      </button>
+      <div class="btn-dropdown-menu" id="printDropMenu" style="display:none;">
+        <button type="button" class="btn-drop-item" onclick="{{ imprimir }}()">
+          <i class="bi bi-file-pdf" style="color:#ef4444;"></i> Imprimir / PDF
+        </button>
+        {% if exportar %}
+        <button type="button" class="btn-drop-item" onclick="{{ exportar }}()">
+          <i class="bi bi-file-earmark-excel" style="color:#16a34a;"></i> Exportar Excel
+        </button>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+    <a href="{{ url_limpar }}" class="btn-action-amber">
+      <i class="bi bi-x-lg"></i> Limpar
+    </a>
+    <button type="submit" class="btn-action-indigo">
+      <i class="bi bi-search"></i> Buscar
+    </button>
+  </div>
+</div>

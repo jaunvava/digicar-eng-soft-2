@@ -1,4 +1,73 @@
-{% extends 'base.html' %}{% block title %}Veículos{% endblock %}{% block breadcrumb %}Clientes / Veículos{% endblock %}
-{% block content %}<div class="page-header d-flex justify-content-between"><h1 class="page-title">Veículos</h1><a class="btn-primary-custom" href="{% url 'clientes:novo_veiculo' %}">Novo veículo</a></div>
-<form class="card p-3 mb-3"><input class="form-control-custom" name="q" value="{{ q }}" placeholder="Buscar por placa, modelo ou cliente"></form>
-<div class="card"><div class="card-body p-0"><table class="table-custom w-100"><thead><tr><th>Placa</th><th>Veículo</th><th>Cliente</th><th>Ações</th></tr></thead><tbody>{% for v in veiculos %}<tr><td><a href="{% url 'clientes:detalhe_veiculo' v.pk %}"><strong>{{ v.placa }}</strong></a></td><td>{{ v.marca }} {{ v.modelo }}{% if v.ano %} / {{ v.ano }}{% endif %}</td><td><a href="{% url 'clientes:detalhe' v.cliente.pk %}">{{ v.cliente.nome }}</a></td><td><a href="{% url 'clientes:editar_veiculo' v.pk %}">Editar</a> · <a href="{% url 'clientes:excluir_veiculo' v.pk %}">Excluir</a></td></tr>{% empty %}<tr><td colspan="4">Nenhum veículo encontrado.</td></tr>{% endfor %}</tbody></table></div></div>{% endblock %}
+{% extends 'base.html' %}
+{% block title %}Veículos{% endblock %}
+{% block breadcrumb %}Veículos{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex align-items-center justify-content-between">
+  <div>
+    <h1 class="page-title">Veículos</h1>
+  </div>
+</div>
+
+<!-- Filtros de Pesquisa -->
+<div class="card card-filtros mb-4">
+  <div class="card-header">
+    <h5 class="card-title"><i class="bi bi-funnel"></i> Filtros de Pesquisa</h5>
+  </div>
+  <div class="card-body">
+    <form method="GET" id="filtrosForm">
+      <div class="row g-2 filtros-campos">
+        <div class="col-12">
+          <input type="text" name="q" value="{{ q|default:'' }}" placeholder="Pesquisar por placa, modelo ou cliente" class="form-control-custom">
+        </div>
+      </div>
+      {% url 'clientes:novo_veiculo' as url_novo %}
+      {% url 'clientes:veiculos' as url_limpar %}
+      {% include '_filtros_acoes.html' with total=veiculos.count rotulo_total="veículo(s) no total" url_novo=url_novo url_limpar=url_limpar %}
+    </form>
+  </div>
+</div>
+
+<!-- Tabela -->
+<div class="card">
+  <div class="card-body p-0">
+    <table class="table-custom w-100" data-datatable>
+      <thead>
+        <tr>
+          <th>Placa</th>
+          <th>Veículo</th>
+          <th>Ano</th>
+          <th>Cor</th>
+          <th>Cliente</th>
+          <th data-dt-no-sort style="text-align:right; padding-right: 20px;">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for v in veiculos %}
+        <tr>
+          <td><a href="{% url 'clientes:detalhe_veiculo' v.pk %}"><strong>{{ v.placa }}</strong></a></td>
+          <td>{{ v.marca }} {{ v.modelo }}</td>
+          <td>{{ v.ano|default:"—" }}</td>
+          <td>{{ v.cor|default:"—" }}</td>
+          <td><a href="{% url 'clientes:detalhe' v.cliente.pk %}">{{ v.cliente.nome }}</a></td>
+          <td style="text-align:right; padding-right: 20px;">
+            <div class="d-flex gap-1 justify-content-end">
+              <a href="{% url 'clientes:detalhe_veiculo' v.pk %}" class="btn-outline-custom" style="padding:2px 6px;font-size:12px;" title="Ver detalhes">
+                <i class="bi bi-eye"></i>
+              </a>
+              <a href="{% url 'clientes:editar_veiculo' v.pk %}" class="btn-outline-custom" style="padding:2px 6px;font-size:12px;" title="Editar">
+                <i class="bi bi-pencil"></i>
+              </a>
+              <form method="post" action="{% url 'clientes:excluir_veiculo' v.pk %}" class="d-inline" data-confirm="Excluir o veículo {{ v.placa }}?" data-confirm-perigo>{% csrf_token %}<button type="submit"
+                      class="btn btn-sm" style="background:#fee2e2;color:#b91c1c;border:none;border-radius: 4px;padding:2px 6px;" title="Excluir">
+                <i class="bi bi-trash"></i>
+              </button></form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -212,20 +212,14 @@
             .then(response => response.json())
             .then(data => {
                 if (data.sucesso) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Sucesso',
-                        text: 'Configurações de sistema atualizadas!',
-                        timer: 3000,
-                        showConfirmButton: false
-                    });
+                    Alertas.sucesso('Configurações de sistema atualizadas!');
                 } else {
-                    Swal.fire('Erro', 'Ocorreu um erro ao salvar as configurações.', 'error');
+                    Alertas.erro('Ocorreu um erro ao salvar as configurações.');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                Swal.fire('Erro', 'Falha na comunicação com o servidor.', 'error');
+                Alertas.erro('Falha na comunicação com o servidor.');
             });
         });
     }

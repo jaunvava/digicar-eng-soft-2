@@ -1,270 +1,350 @@
 {% extends 'base.html' %}
-{% load static %}
 
 {% block title %}Meu Perfil{% endblock %}
+{% block breadcrumb %}Meu Perfil{% endblock %}
+
+{% block extra_css %}
+<style>
+  .perfil-hero {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    padding: 24px;
+  }
+  .perfil-avatar {
+    width: 76px;
+    height: 76px;
+    border-radius: 50%;
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    color: #fff;
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.25);
+  }
+  .perfil-identidade { flex: 1; min-width: 200px; }
+  .perfil-nome {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+  .perfil-sub {
+    margin: 2px 0 10px;
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+  .perfil-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+  .perfil-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .perfil-tag.azul  { background: #dbeafe; color: #1e40af; }
+  .perfil-tag.verde { background: #d1fae5; color: #065f46; }
+  .perfil-tag.cinza { background: #f1f5f9; color: #475569; }
+
+  .perfil-resumo {
+    display: flex;
+    gap: 28px;
+    flex-wrap: wrap;
+    padding-left: 24px;
+    border-left: 1px solid var(--border-color);
+  }
+  .perfil-resumo .rotulo {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--text-muted);
+  }
+  .perfil-resumo .valor {
+    margin-top: 2px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  @media (max-width: 991px) {
+    .perfil-resumo { padding-left: 0; border-left: 0; width: 100%; }
+  }
+
+  .perfil-card .card-title { display: flex; align-items: center; gap: 8px; }
+  .perfil-card .card-title i {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+  }
+  .icone-azul  { background: #dbeafe; color: var(--primary); }
+  .icone-verde { background: #d1fae5; color: #059669; }
+  .icone-roxo  { background: #ede9fe; color: #7c3aed; }
+
+  .perfil-dados { margin: 0; }
+  .perfil-dados > div {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 16px;
+    padding: 12px 0;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .perfil-dados > div:last-child { border-bottom: 0; padding-bottom: 0; }
+  .perfil-dados > div:first-child { padding-top: 0; }
+  .perfil-dados dt {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+  }
+  .perfil-dados dd {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-align: right;
+    word-break: break-word;
+  }
+  .perfil-dados .vazio {
+    font-weight: 400;
+    font-style: italic;
+    color: var(--text-muted);
+  }
+
+  #editPerfilModal .modal-content { border: 0; border-radius: 8px; }
+  #editPerfilModal .modal-header { border-bottom: 1px solid var(--border-color); padding: 16px 24px; }
+  #editPerfilModal .modal-title { font-size: 16px; font-weight: 700; color: var(--text-primary); }
+  #editPerfilModal .modal-body { padding: 20px 24px 8px; }
+  #editPerfilModal .modal-footer { border-top: 1px solid var(--border-color); padding: 14px 24px; gap: 10px; }
+  #editPerfilModal .secao {
+    margin: 4px 0 12px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+  }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container-fluid px-4">
-    <!-- Cabeçalho -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="mt-4">
-                <i class="bi bi-person-circle me-2"></i>Meu Perfil
-            </h1>
-            <ol class="breadcrumb mb-0">
-                <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
-                <li class="breadcrumb-item active">Perfil</li>
-            </ol>
-        </div>
-        <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#editPerfilModal">
-            <i class="bi bi-pencil-square me-1"></i> Editar Perfil
-        </button>
-    </div>
+{% with perfil=request.user.perfil usuario=request.user %}
 
-    <!-- Mensagens -->
-    {% if messages %}
-        {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                <i class="bi bi-check-circle-fill me-2"></i>{{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        {% endfor %}
-    {% endif %}
-
-    <div class="row">
-        <!-- Coluna da Esquerda - Card do Usuário -->
-        <div class="col-xl-4 col-md-6">
-            <div class="card mb-4">
-                <div class="card-body text-center">
-                    <div class="mb-3">
-                        <div class="bg-primary bg-gradient rounded-circle d-inline-flex p-3 text-white">
-                            <i class="bi bi-person-fill" style="font-size: 64px;"></i>
-                        </div>
-                    </div>
-                    <h3 class="mb-1">{{ request.user.get_full_name|default:request.user.username }}</h3>
-                    <p class="text-muted">@{{ request.user.username }}</p>
-                    <span class="badge bg-success">
-                        <i class="bi bi-check-circle-fill me-1"></i> Ativo
-                    </span>
-                    
-                    <hr class="my-3">
-                    
-                    <div class="text-start">
-                        <div class="mb-2">
-                            <small class="text-muted">Empresa</small>
-                            <p class="mb-0">
-                                <i class="bi bi-building me-2"></i>
-                                <strong>{{ request.user.perfil.empresa.nome }}</strong>
-                            </p>
-                        </div>
-                        <div class="mb-2">
-                            <small class="text-muted">Perfil de Acesso</small>
-                            <p class="mb-0">
-                                <i class="bi bi-shield-lock me-2"></i>
-                                <strong>{{ request.user.perfil.get_perfil_display }}</strong>
-                            </p>
-                        </div>
-                        <div class="mb-2">
-                            <small class="text-muted">Último Acesso</small>
-                            <p class="mb-0">
-                                <i class="bi bi-clock-history me-2"></i>
-                                <strong>{{ request.user.last_login|date:"d/m/Y H:i"|default:"Primeiro acesso" }}</strong>
-                            </p>
-                        </div>
-                        <div>
-                            <small class="text-muted">Cadastrado em</small>
-                            <p class="mb-0">
-                                <i class="bi bi-calendar-plus me-2"></i>
-                                <strong>{{ request.user.date_joined|date:"d/m/Y" }}</strong>
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Coluna da Direita - Informações -->
-        <div class="col-xl-8 col-md-6">
-            <!-- Cards de Informação -->
-            <div class="row">
-                <div class="col-md-6 mb-4">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center mb-3">
-                                <div class="bg-info bg-gradient rounded-circle p-2 text-white me-2">
-                                    <i class="bi bi-person-badge"></i>
-                                </div>
-                                <h5 class="card-title mb-0">Dados Pessoais</h5>
-                            </div>
-                            <hr>
-                            <div class="mb-2">
-                                <small class="text-muted">Nome Completo</small>
-                                <p class="mb-0 fw-bold">
-                                    {{ request.user.get_full_name|default:"Não informado" }}
-                                </p>
-                            </div>
-                            <div class="mb-2">
-                                <small class="text-muted">E-mail</small>
-                                <p class="mb-0 fw-bold">
-                                    {{ request.user.email|default:"Não informado" }}
-                                </p>
-                            </div>
-                            <div>
-                                <small class="text-muted">Data de Nascimento</small>
-                                <p class="mb-0 fw-bold">
-                                    {{ request.user.perfil.data_nascimento|date:"d/m/Y"|default:"Não informado" }}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-md-6 mb-4">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center mb-3">
-                                <div class="bg-success bg-gradient rounded-circle p-2 text-white me-2">
-                                    <i class="bi bi-telephone"></i>
-                                </div>
-                                <h5 class="card-title mb-0">Contato</h5>
-                            </div>
-                            <hr>
-                            <div class="mb-2">
-                                <small class="text-muted">Telefone Fixo</small>
-                                <p class="mb-0 fw-bold">
-                                    {{ request.user.perfil.telefone|default:"Não informado" }}
-                                </p>
-                            </div>
-                            <div class="mb-2">
-                                <small class="text-muted">Celular</small>
-                                <p class="mb-0 fw-bold">
-                                    {{ request.user.perfil.celular|default:"Não informado" }}
-                                </p>
-                            </div>
-                            <div>
-                                <small class="text-muted">Cargo/Função</small>
-                                <p class="mb-0 fw-bold">
-                                    {{ request.user.perfil.cargo|default:"Não informado" }}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+<div class="page-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+  <div>
+    <h1 class="page-title">Meu Perfil</h1>
+    <p class="page-subtitle">Seus dados pessoais, de contato e de acesso ao sistema.</p>
+  </div>
+  <button class="btn-primary-custom" type="button" data-bs-toggle="modal" data-bs-target="#editPerfilModal">
+    <i class="bi bi-pencil-square me-1"></i> Editar perfil
+  </button>
 </div>
 
-<!-- Modal de Edição de Perfil -->
+<!-- Identificação -->
+<div class="card mb-3">
+  <div class="perfil-hero">
+    <div class="perfil-avatar" aria-hidden="true">
+      {% if usuario.first_name %}{{ usuario.first_name|first|upper }}{{ usuario.last_name|first|upper }}{% else %}{{ usuario.username|first|upper }}{% endif %}
+    </div>
+
+    <div class="perfil-identidade">
+      <h2 class="perfil-nome">{{ usuario.get_full_name|default:usuario.username }}</h2>
+      <p class="perfil-sub">@{{ usuario.username }}{% if perfil.cargo %} · {{ perfil.cargo }}{% endif %}</p>
+      <div class="perfil-tags">
+        <span class="perfil-tag azul"><i class="bi bi-shield-lock"></i> {{ perfil.get_perfil_display }}</span>
+        {% if perfil.ativo %}
+          <span class="perfil-tag verde"><i class="bi bi-check-circle"></i> Ativo</span>
+        {% else %}
+          <span class="perfil-tag cinza"><i class="bi bi-slash-circle"></i> Inativo</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="perfil-resumo">
+      <div>
+        <div class="rotulo">Empresa</div>
+        <div class="valor">{{ perfil.empresa.nome }}</div>
+      </div>
+      <div>
+        <div class="rotulo">Último acesso</div>
+        <div class="valor">{{ usuario.last_login|date:"d/m/Y H:i"|default:"Primeiro acesso" }}</div>
+      </div>
+      <div>
+        <div class="rotulo">Membro desde</div>
+        <div class="valor">{{ usuario.date_joined|date:"d/m/Y" }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Informações -->
+<div class="row g-3">
+  <div class="col-xl-4 col-md-6">
+    <div class="card perfil-card h-100">
+      <div class="card-header">
+        <h5 class="card-title"><i class="bi bi-person-vcard icone-azul"></i> Dados pessoais</h5>
+      </div>
+      <div class="card-body">
+        <dl class="perfil-dados">
+          <div>
+            <dt>Nome completo</dt>
+            <dd>{% if usuario.get_full_name %}{{ usuario.get_full_name }}{% else %}<span class="vazio">Não informado</span>{% endif %}</dd>
+          </div>
+          <div>
+            <dt>Data de nascimento</dt>
+            <dd>{% if perfil.data_nascimento %}{{ perfil.data_nascimento|date:"d/m/Y" }}{% else %}<span class="vazio">Não informado</span>{% endif %}</dd>
+          </div>
+          <div>
+            <dt>Cargo / função</dt>
+            <dd>{% if perfil.cargo %}{{ perfil.cargo }}{% else %}<span class="vazio">Não informado</span>{% endif %}</dd>
+          </div>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-4 col-md-6">
+    <div class="card perfil-card h-100">
+      <div class="card-header">
+        <h5 class="card-title"><i class="bi bi-telephone icone-verde"></i> Contato</h5>
+      </div>
+      <div class="card-body">
+        <dl class="perfil-dados">
+          <div>
+            <dt>E-mail</dt>
+            <dd>{% if usuario.email %}{{ usuario.email }}{% else %}<span class="vazio">Não informado</span>{% endif %}</dd>
+          </div>
+          <div>
+            <dt>Celular</dt>
+            <dd>{% if perfil.celular %}{{ perfil.celular }}{% else %}<span class="vazio">Não informado</span>{% endif %}</dd>
+          </div>
+          <div>
+            <dt>Telefone fixo</dt>
+            <dd>{% if perfil.telefone %}{{ perfil.telefone }}{% else %}<span class="vazio">Não informado</span>{% endif %}</dd>
+          </div>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-4 col-md-12">
+    <div class="card perfil-card h-100">
+      <div class="card-header">
+        <h5 class="card-title"><i class="bi bi-key icone-roxo"></i> Acesso</h5>
+      </div>
+      <div class="card-body">
+        <dl class="perfil-dados">
+          <div>
+            <dt>Usuário</dt>
+            <dd>{{ usuario.username }}</dd>
+          </div>
+          <div>
+            <dt>Código da empresa</dt>
+            <dd>{{ perfil.empresa.codigo }}</dd>
+          </div>
+          <div>
+            <dt>Perfil de acesso</dt>
+            <dd>{{ perfil.get_perfil_display }}</dd>
+          </div>
+        </dl>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de edição -->
 <div class="modal fade" id="editPerfilModal" tabindex="-1" aria-labelledby="editPerfilModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title" id="editPerfilModalLabel">
-                    <i class="bi bi-pencil-square me-2"></i>Editar Perfil
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editPerfilModalLabel">Editar perfil</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+      <form method="post" id="formEditarPerfil">
+        {% csrf_token %}
+        <input type="hidden" name="edit_perfil" value="1">
+
+        <div class="modal-body">
+          <p class="secao">Dados pessoais</p>
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label-custom" for="pf_nome">Nome</label>
+              <input type="text" id="pf_nome" name="first_name" class="form-control-custom" maxlength="150"
+                     value="{{ usuario.first_name }}">
             </div>
-            <form method="post" id="formEditarPerfil">
-                {% csrf_token %}
-                <input type="hidden" name="edit_perfil" value="1">
-                
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Nome</label>
-                            <input type="text" name="first_name" class="form-control" 
-                                   value="{{ request.user.first_name }}">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Sobrenome</label>
-                            <input type="text" name="last_name" class="form-control" 
-                                   value="{{ request.user.last_name }}">
-                        </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">E-mail</label>
-                        <input type="email" name="email" class="form-control" 
-                               value="{{ request.user.email }}">
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Telefone Fixo</label>
-                            <input type="text" name="telefone" class="form-control telefone-input" 
-                                   value="{{ request.user.perfil.telefone|default:'' }}"
-                                   placeholder="(00) 0000-0000">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Celular</label>
-                            <input type="text" name="celular" class="form-control celular-input" 
-                                   value="{{ request.user.perfil.celular|default:'' }}"
-                                   placeholder="(00) 00000-0000">
-                        </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Cargo/Função</label>
-                            <input type="text" name="cargo" class="form-control" 
-                                   value="{{ request.user.perfil.cargo|default:'' }}">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Data de Nascimento</label>
-                            <input type="date" name="data_nascimento" class="form-control" 
-                                   value="{{ request.user.perfil.data_nascimento|date:'Y-m-d' }}">
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="bi bi-x-circle me-1"></i> Cancelar
-                    </button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-save me-1"></i> Salvar Alterações
-                    </button>
-                </div>
-            </form>
+            <div class="col-md-6">
+              <label class="form-label-custom" for="pf_sobrenome">Sobrenome</label>
+              <input type="text" id="pf_sobrenome" name="last_name" class="form-control-custom" maxlength="150"
+                     value="{{ usuario.last_name }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label-custom" for="pf_cargo">Cargo / função</label>
+              <input type="text" id="pf_cargo" name="cargo" class="form-control-custom" maxlength="100"
+                     value="{{ perfil.cargo|default:'' }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label-custom" for="pf_nascimento">Data de nascimento</label>
+              <input type="date" id="pf_nascimento" name="data_nascimento" class="form-control-custom"
+                     value="{{ perfil.data_nascimento|date:'Y-m-d' }}">
+            </div>
+          </div>
+
+          <p class="secao">Contato</p>
+          <div class="row g-3 mb-3">
+            <div class="col-md-12">
+              <label class="form-label-custom" for="pf_email">E-mail</label>
+              <input type="email" id="pf_email" name="email" class="form-control-custom"
+                     value="{{ usuario.email }}" placeholder="nome@empresa.com.br">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label-custom" for="pf_celular">Celular</label>
+              <input type="text" id="pf_celular" name="celular" class="form-control-custom" data-mascara-telefone
+                     value="{{ perfil.celular|default:'' }}" placeholder="(00) 00000-0000">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label-custom" for="pf_telefone">Telefone fixo</label>
+              <input type="text" id="pf_telefone" name="telefone" class="form-control-custom" data-mascara-telefone
+                     value="{{ perfil.telefone|default:'' }}" placeholder="(00) 0000-0000">
+            </div>
+          </div>
         </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-outline-custom" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn-primary-custom">
+            <i class="bi bi-check-lg me-1"></i> Salvar alterações
+          </button>
+        </div>
+      </form>
     </div>
+  </div>
 </div>
+
+{% endwith %}
+{% endblock %}
 
 {% block extra_js %}
 <script>
-    // Máscaras para telefone
-    document.addEventListener('DOMContentLoaded', function() {
-        // Máscara para Telefone Fixo (10 dígitos)
-        const telefoneInput = document.querySelector('.telefone-input');
-        if (telefoneInput) {
-            telefoneInput.addEventListener('input', function(e) {
-                let value = e.target.value.replace(/\D/g, '');
-                if (value.length <= 10) {
-                    value = value.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
-                }
-                e.target.value = value;
-            });
-        }
-        
-        // Máscara para Celular (11 dígitos)
-        const celularInput = document.querySelector('.celular-input');
-        if (celularInput) {
-            celularInput.addEventListener('input', function(e) {
-                let value = e.target.value.replace(/\D/g, '');
-                if (value.length <= 11) {
-                    value = value.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
-                }
-                e.target.value = value;
-            });
-        }
-        
-        // Se houver erros no formulário, manter o modal aberto
-        {% if form_errors %}
-            var myModal = new bootstrap.Modal(document.getElementById('editPerfilModal'));
-            myModal.show();
-        {% endif %}
+  // Máscara de telefone: (00) 0000-0000 ou (00) 00000-0000, enquanto digita.
+  document.querySelectorAll('[data-mascara-telefone]').forEach(function (campo) {
+    campo.addEventListener('input', function () {
+      var d = campo.value.replace(/\D/g, '').slice(0, 11);
+      var meio = d.length > 10 ? 7 : 6;
+      var texto = d;
+      if (d.length > 2) texto = '(' + d.slice(0, 2) + ') ' + d.slice(2, meio);
+      if (d.length > meio) texto += '-' + d.slice(meio);
+      campo.value = texto;
     });
+  });
 </script>
-{% endblock %}
 {% endblock %}

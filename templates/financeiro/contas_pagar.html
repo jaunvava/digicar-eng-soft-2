@@ -7,42 +7,33 @@
   <div>
     <h1 class="page-title">Contas a Pagar</h1>
   </div>
-  <a href="{% url 'financeiro:nova_conta_pagar' %}" class="btn-primary-custom">
-    <i class="bi bi-plus-lg"></i> Nova Conta
-  </a>
 </div>
 
-<div class="row g-3 mb-4">
-  <div class="col-md-4">
-    <div class="stat-card warning">
-      <div class="stat-icon"><i class="bi bi-clock"></i></div>
-      <div class="stat-label">Total Pendente</div>
-      <div class="stat-value" style="font-size:20px;">R$ {{ total_pendente|floatformat:2 }}</div>
-    </div>
+<!-- Filtros de Pesquisa -->
+<div class="card card-filtros mb-4">
+  <div class="card-header">
+    <h5 class="card-title"><i class="bi bi-funnel"></i> Filtros de Pesquisa</h5>
   </div>
-  <div class="col-md-4">
-    <div class="stat-card danger">
-      <div class="stat-icon"><i class="bi bi-exclamation-triangle"></i></div>
-      <div class="stat-label">Total Atrasado</div>
-      <div class="stat-value" style="font-size:20px;">R$ {{ total_atrasado|floatformat:2 }}</div>
-    </div>
-  </div>
-</div>
-
-<div class="card mb-4">
-  <div class="card-body" style="padding:14px 20px;">
-    <form method="GET" class="d-flex gap-3 flex-wrap">
-      <div style="flex:1;min-width:200px;position:relative;">
-        <i class="bi bi-search" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-muted);"></i>
-        <input type="text" name="q" value="{{ q }}" placeholder="Buscar fornecedor ou descrição..." class="form-control-custom" style="padding-left:36px;">
+  <div class="card-body">
+    <form method="GET" id="filtrosForm">
+      <div class="row g-2 filtros-campos">
+        <div class="col-lg-8 col-md-7">
+          <input type="text" name="q" value="{{ q|default:'' }}" placeholder="Pesquisar por fornecedor ou descrição" class="form-control-custom">
+        </div>
+        <div class="col-lg-4 col-md-5">
+          <select name="status" class="form-control-custom">
+            <option value="">Todos os status</option>
+            <option value="pendente" {% if status == 'pendente' %}selected{% endif %}>Pendente</option>
+            <option value="parcial" {% if status == 'parcial' %}selected{% endif %}>Parcial</option>
+            <option value="atrasado" {% if status == 'atrasado' %}selected{% endif %}>Atrasado</option>
+            <option value="pago" {% if status == 'pago' %}selected{% endif %}>Pago</option>
+            <option value="cancelado" {% if status == 'cancelado' %}selected{% endif %}>Cancelado</option>
+          </select>
+        </div>
       </div>
-      <select name="status" class="form-control-custom" style="width:160px;">
-        <option value="">Todos</option>
-        <option value="pendente"  {% if status == 'pendente' %}selected{% endif %}>Pendente</option>
-        <option value="atrasado"  {% if status == 'atrasado' %}selected{% endif %}>Atrasado</option>
-        <option value="pago"      {% if status == 'pago' %}selected{% endif %}>Pago</option>
-      </select>
-      <button type="submit" class="btn-primary-custom">Filtrar</button>
+      {% url 'financeiro:nova_conta_pagar' as url_novo %}
+      {% url 'financeiro:contas_pagar' as url_limpar %}
+      {% include '_filtros_acoes.html' with total=contas.count rotulo_total="conta(s) encontrada(s)" url_limpar=url_limpar url_novo=url_novo texto_novo="Nova Conta" %}
     </form>
   </div>
 </div>

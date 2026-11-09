@@ -18,6 +18,17 @@
     </div>
 </div>
 
+<div class="card mt-2">
+    <div class="card-header">
+        <h5 class="card-title m-0"><i class="bi bi-bar-chart me-2"></i>Top 10 devedores (contas em atraso)</h5>
+    </div>
+    <div class="card-body">
+        <div class="grafico-container" style="height:320px;">
+            <canvas id="devedoresChart" aria-label="Total devido por cliente"></canvas>
+        </div>
+    </div>
+</div>
+
 <div class="row g-4 mt-2">
     <!-- Rank de Devedores -->
     <div class="col-md-6">
@@ -77,4 +88,21 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+{{ grafico_devedores|json_script:"dados-devedores" }}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var d = Graficos.ler('dados-devedores');
+    Graficos.barras('devedoresChart', {
+      rotulos: d.rotulos,
+      valores: d.valores,
+      cores: Graficos.CORES.perigo,
+      moeda: true,
+      horizontal: true,
+      vazio: 'Nenhuma conta em atraso. 🎉'
+    });
+  });
+</script>
 {% endblock %}

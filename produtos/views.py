@@ -1,3 +1,4 @@
+from django.views.decorators.http import require_POST
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db import transaction
 from decimal import Decimal, InvalidOperation
@@ -244,6 +245,7 @@ def editar(request, pk):
 
 
 @login_required
+@require_POST
 def excluir(request, pk):
     produto = get_object_or_404(Produto, pk=pk, empresa=request.empresa)
     if produto.imagem:

@@ -23,14 +23,7 @@
       <p>Sistema de Ordens de Serviço</p>
     </div>
 
-    <!-- Erros -->
-    {% if messages %}
-      {% for msg in messages %}
-        <div class="alert alert-danger mb-3" style="border-radius: 5px;font-size:13px;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);color:#fca5a5;">
-          <i class="bi bi-exclamation-triangle me-2"></i>{{ msg }}
-        </div>
-      {% endfor %}
-    {% endif %}
+    {% include '_mensagens.html' %}
 
     <!-- Formulário -->
     <form method="POST" action="{% url 'core:login' %}">
@@ -93,6 +86,8 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.6/dist/sweetalert2.all.min.js"></script>
+<script src="{% static 'js/alertas.js' %}"></script>
 <script>
   function togglePass() {
     const inp = document.getElementById('password');

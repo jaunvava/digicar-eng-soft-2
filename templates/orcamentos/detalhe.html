@@ -9,7 +9,7 @@
     <p class="page-subtitle">{{ orcamento.cliente.nome }} | Validade: {{ orcamento.validade|date:"d/m/Y" }}</p>
   </div>
   <div class="d-flex gap-2">
-    <form method="POST" action="{% url 'orcamentos:status' orcamento.pk %}" class="d-flex gap-2">
+    <form method="POST" action="{% url 'orcamentos:status' orcamento.pk %}" class="d-flex gap-2" data-confirm="Alterar o status deste orçamento?" data-confirm-botao="Sim, alterar">
       {% csrf_token %}
       <select name="status" class="form-control-custom" style="width:160px;">
         <option value="rascunho" {% if orcamento.status == 'rascunho' %}selected{% endif %}>Rascunho</option>
